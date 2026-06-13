@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GoResume - Build your ATS Resume</title>
+  <title>ResumeLab - Build your ATS Resume</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -951,7 +951,7 @@
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
         </svg>
       </div>
-      GoResume
+      ResumeLab
     </a>
     <div class="nav-right">
       <button class="btn-theme" aria-label="Toggle theme">
@@ -1156,7 +1156,7 @@
 
       <div class="testi-card">
         <div class="testi-rating">5.0</div>
-        <div class="testi-text">I landed 3 interviews within a week of updating my resume on GoResume.</div>
+        <div class="testi-text">I landed 3 interviews within a week of updating my resume on ResumeLab.</div>
         <div class="testi-author">
           <div class="testi-avatar" style="background:#fff3e0;color:#f59e0b;">J</div>
           <div>
@@ -1188,10 +1188,10 @@
 
       <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">
-          Is GoResume free to use?
+          Is ResumeLab free to use?
           <div class="faq-icon">+</div>
         </div>
-        <div class="faq-answer">Yes, GoResume is completely free to use. You can create, edit, and download your resume without any charges or sign-up required.</div>
+        <div class="faq-answer">Yes, ResumeLab is completely free to use. You can create, edit, and download your resume without any charges or sign-up required.</div>
       </div>
 
       <div class="faq-item" onclick="toggleFaq(this)">
@@ -1207,12 +1207,12 @@
           Can I create a resume online without experience?
           <div class="faq-icon">+</div>
         </div>
-        <div class="faq-answer">Absolutely. GoResume is designed for freshers and experienced professionals alike. Our templates and tips guide you through building a strong resume even with no work experience.</div>
+        <div class="faq-answer">Absolutely. ResumeLab is designed for freshers and experienced professionals alike. Our templates and tips guide you through building a strong resume even with no work experience.</div>
       </div>
 
       <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">
-          Are GoResume resumes ATS-friendly?
+          Are ResumeLab resumes ATS-friendly?
           <div class="faq-icon">+</div>
         </div>
         <div class="faq-answer">Yes, all our templates are designed to pass ATS (Applicant Tracking System) scans. The text is fully selectable and parseable by recruitment software.</div>
@@ -1220,10 +1220,10 @@
 
       <div class="faq-item" onclick="toggleFaq(this)">
         <div class="faq-question">
-          What does GoResume help you do?
+          What does ResumeLab help you do?
           <div class="faq-icon">+</div>
         </div>
-        <div class="faq-answer">GoResume helps you build a professional, ATS-friendly resume in minutes. Choose a template, fill in your details, and download a polished PDF - completely free.</div>
+        <div class="faq-answer">ResumeLab helps you build a professional, ATS-friendly resume in minutes. Choose a template, fill in your details, and download a polished PDF - completely free.</div>
       </div>
 
     </div>
@@ -1259,13 +1259,13 @@
         themeToggle.innerHTML = isDark ? themeMoonIcon : themeSunIcon;
       }
       try {
-        localStorage.setItem('goresume-theme', theme);
+        localStorage.setItem('ResumeLab-theme', theme);
       } catch (error) {}
     }
 
     const savedTheme = (() => {
       try {
-        return localStorage.getItem('goresume-theme');
+        return localStorage.getItem('ResumeLab-theme');
       } catch (error) {
         return null;
       }
