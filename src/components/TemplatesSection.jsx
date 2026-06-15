@@ -7,6 +7,7 @@ const templates = [
     users: '5.8K users',
     variant: 'bear',
     thumbClass: 'bg-[linear-gradient(135deg,#f0eeff_0%,#e8e0ff_100%)]',
+    isPreview: true,
   },
   {
     badge: 'ATS friendly',
@@ -14,6 +15,7 @@ const templates = [
     users: '2.3K users',
     variant: 'swan',
     thumbClass: 'bg-[linear-gradient(135deg,#e8e0ff_0%,#d4ccff_100%)]',
+    isPreview: true,
   },
   {
     badge: 'New',

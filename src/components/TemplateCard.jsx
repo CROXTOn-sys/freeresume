@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 function MiniResumeBear() {
   const line = 'mb-[2px] h-[2.5px] rounded-[2px] bg-[var(--mini-line)]';
   return (
@@ -96,22 +98,49 @@ function MiniResumeNova() {
   );
 }
 
-export default function TemplateCard({ badge, title, users, variant, thumbClass = '' }) {
+export default function TemplateCard({ badge, title, users, variant, thumbClass = '', isPreview = false }) {
   return (
-    <div className="relative flex-[0_0_clamp(118px,38vw,130px)] cursor-pointer overflow-hidden rounded-[20px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-[2px] hover:border-[color:rgba(95,84,240,0.45)] hover:shadow-[0_16px_34px_rgba(95,84,240,0.12)]">
-      <div className="absolute left-[10px] top-[10px] z-[2] rounded-full border border-[color:var(--badge-border)] bg-[var(--badge-bg)] px-[8px] py-[5px] text-[10px] font-extrabold uppercase tracking-[0.08em] text-[var(--badge-text)] shadow-[0_8px_18px_rgba(17,24,39,0.08)]">
+    <div className="relative flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
+      <div className="absolute left-[10px] top-[10px] z-[2] rounded-full border border-[color:var(--badge-border)] bg-[var(--badge-bg)] px-[7px] py-[4px] text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--badge-text)] shadow-[0_8px_18px_rgba(17,24,39,0.06)]">
         {badge}
       </div>
 
-      <div className={`relative flex h-[176px] w-full items-center justify-center overflow-hidden ${thumbClass}`}>
-        {variant === 'bear' && <MiniResumeBear />}
-        {variant === 'swan' && <MiniResumeSwan />}
+      <div className={`relative flex h-[174px] w-full items-center justify-center overflow-hidden ${thumbClass}`}>
+        {isPreview && variant === 'bear' && (
+          <div className="flex h-full w-full items-center justify-center bg-white px-[8px] py-[8px]">
+            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
+              <Image
+                src="/images/template1.png"
+                alt="Resume template preview"
+                fill
+                sizes="(max-width: 480px) 38vw, 130px"
+                className="object-contain object-center"
+                priority
+              />
+            </div>
+          </div>
+        )}
+        {isPreview && variant === 'swan' && (
+          <div className="flex h-full w-full items-center justify-center bg-white px-[8px] py-[8px]">
+            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
+              <Image
+                src="/images/template2.png"
+                alt="Resume template preview"
+                fill
+                sizes="(max-width: 480px) 38vw, 130px"
+                className="object-contain object-center"
+              />
+            </div>
+          </div>
+        )}
+        {!isPreview && variant === 'bear' && <MiniResumeBear />}
+        {!isPreview && variant === 'swan' && <MiniResumeSwan />}
         {variant === 'henna' && <MiniResumeHenna />}
         {variant === 'nova' && <MiniResumeNova />}
       </div>
 
-      <div className="px-[11px] pb-[13px] pt-[12px]">
-        <div className="mb-[5px] text-[13.5px] font-extrabold tracking-[-0.01em] text-[var(--text-dark)]">
+      <div className="px-[11px] pb-[12px] pt-[11px]">
+        <div className="mb-[4px] text-[13.5px] font-extrabold tracking-[-0.01em] text-[var(--text-dark)]">
           {title}
         </div>
         <div className="flex items-center gap-[4px] text-[11px] leading-[1.25] text-[var(--text-light)]">
