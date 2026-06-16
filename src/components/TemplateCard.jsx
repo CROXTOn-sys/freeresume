@@ -1,6 +1,7 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
-function MiniResumeBear() {
+function MiniResumeShakra() {
   const line = 'mb-[2px] h-[2.5px] rounded-[2px] bg-[var(--mini-line)]';
   return (
     <div className="w-[86px] rounded-[6px] bg-[var(--mini-bg)] p-[7px_6px] shadow-[var(--mini-shadow)]">
@@ -24,7 +25,7 @@ function MiniResumeBear() {
   );
 }
 
-function MiniResumeSwan() {
+function MiniResumeAshish() {
   return (
     <div className="flex w-[86px] gap-[4px] rounded-[6px] bg-[var(--mini-bg)] p-[5px] shadow-[var(--mini-shadow)]">
       <div className="w-[28px] rounded-[2px] bg-[var(--purple)] p-[3px_2px]">
@@ -98,15 +99,21 @@ function MiniResumeNova() {
   );
 }
 
-export default function TemplateCard({ badge, title, users, variant, thumbClass = '', isPreview = false }) {
+export default function TemplateCard({ badge, title, users, variant, thumbClass = '', isPreview = false, href, templateId }) {
+  const CardTag = href ? Link : 'div';
+  const cardProps = href ? { href } : {};
+
   return (
-    <div className="relative flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)]">
+    <CardTag
+      {...cardProps}
+      className="relative flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)]"
+    >
       <div className="absolute left-[10px] top-[10px] z-[2] rounded-full border border-[color:var(--badge-border)] bg-[var(--badge-bg)] px-[7px] py-[4px] text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--badge-text)] shadow-[0_8px_18px_rgba(17,24,39,0.06)]">
         {badge}
       </div>
 
       <div className={`relative flex h-[174px] w-full items-center justify-center overflow-hidden ${thumbClass}`}>
-        {isPreview && variant === 'bear' && (
+        {isPreview && templateId === 1 && (
           <div className="flex h-full w-full items-center justify-center bg-white px-[8px] py-[8px]">
             <div className="relative h-full w-full overflow-hidden rounded-[6px]">
               <Image
@@ -120,7 +127,7 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
             </div>
           </div>
         )}
-        {isPreview && variant === 'swan' && (
+        {isPreview && templateId === 2 && (
           <div className="flex h-full w-full items-center justify-center bg-white px-[8px] py-[8px]">
             <div className="relative h-full w-full overflow-hidden rounded-[6px]">
               <Image
@@ -133,8 +140,8 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
             </div>
           </div>
         )}
-        {!isPreview && variant === 'bear' && <MiniResumeBear />}
-        {!isPreview && variant === 'swan' && <MiniResumeSwan />}
+        {!isPreview && templateId === 1 && <MiniResumeShakra />}
+        {!isPreview && templateId === 2 && <MiniResumeAshish />}
         {variant === 'henna' && <MiniResumeHenna />}
         {variant === 'nova' && <MiniResumeNova />}
       </div>
@@ -150,6 +157,6 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
           Chosen by {users}
         </div>
       </div>
-    </div>
+    </CardTag>
   );
 }

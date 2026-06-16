@@ -3,25 +3,30 @@ import TemplateCard from './TemplateCard';
 const templates = [
   {
     badge: 'Popular',
-    title: 'Bear',
+    title: 'Shakra',
     users: '5.8K users',
-    variant: 'bear',
+    variant: 'Shakra',
+    templateId: 1,
     thumbClass: 'bg-[linear-gradient(135deg,#f0eeff_0%,#e8e0ff_100%)]',
     isPreview: true,
+    href: '/template-details?template=1',
   },
   {
     badge: 'ATS friendly',
-    title: 'Swan',
+    title: 'Ashish',
     users: '2.3K users',
-    variant: 'swan',
+    variant: 'Ashish',
+    templateId: 2,
     thumbClass: 'bg-[linear-gradient(135deg,#e8e0ff_0%,#d4ccff_100%)]',
     isPreview: true,
+    href: '/template-details?template=2',
   },
   {
     badge: 'New',
     title: 'Henna',
     users: '1.9K users',
     variant: 'henna',
+    templateId: 3,
     thumbClass: 'bg-[linear-gradient(135deg,#fff0f0_0%,#ffe0e0_100%)]',
   },
   {
@@ -29,6 +34,7 @@ const templates = [
     title: 'Nova',
     users: '1.1K users',
     variant: 'nova',
+    templateId: 4,
     thumbClass: 'bg-[linear-gradient(135deg,#f0fff4_0%,#d4f5e2_100%)]',
   },
 ];
