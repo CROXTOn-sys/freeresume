@@ -106,7 +106,7 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
   return (
     <CardTag
       {...cardProps}
-      className="relative flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)]"
+      className="relative block flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)]"
     >
       <div className="absolute left-[10px] top-[10px] z-[2] rounded-full border border-[color:var(--badge-border)] bg-[var(--badge-bg)] px-[7px] py-[4px] text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--badge-text)] shadow-[0_8px_18px_rgba(17,24,39,0.06)]">
         {badge}

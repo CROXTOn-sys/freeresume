@@ -1,4 +1,29 @@
-export default function Hero() {
+'use client';
+
+import { useEffect, useState } from 'react';
+
+export default function Hero({ onCreateResume }) {
+  const [count, setCount] = useState(1);
+
+  useEffect(() => {
+    let current = 1;
+    const duration = 1000;
+    const steps = 7;
+    const interval = duration / steps;
+
+    const timer = window.setInterval(() => {
+      current += 1;
+      if (current > 8) {
+        window.clearInterval(timer);
+        return;
+      }
+      setCount(current);
+      if (current === 8) window.clearInterval(timer);
+    }, interval);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <section
       className="border-b border-[color:var(--border-soft)] px-[22px] pb-[28px] pt-[30px] text-center shadow-[var(--shadow-sm)]"
@@ -19,11 +44,15 @@ export default function Hero() {
       </p>
 
       <p className="mb-[18px] text-[14.5px] font-semibold text-[var(--text-dark)]">
-        Land <span className="font-extrabold text-[var(--purple)]">8x</span> more interviews
+        Land <span className="font-extrabold text-[var(--purple)]">{count}x</span> more interviews
       </p>
 
       <a
         href="#"
+        onClick={(e) => {
+          e.preventDefault();
+          onCreateResume?.();
+        }}
         className="mb-0 block w-full rounded-[50px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[24px] py-[16px] text-[15.5px] font-bold text-white no-underline shadow-[0_16px_30px_rgba(95,84,240,0.22)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(95,84,240,0.26)]"
       >
         Create My Free Resume
