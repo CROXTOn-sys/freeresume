@@ -84,6 +84,7 @@ export default function TemplateDetailsClient() {
   const templateId = searchParams.get('template') || '1';
   const template = templateMeta[templateId] || templateMeta['1'];
   const [showBuildModal, setShowBuildModal] = useState(false);
+  const isPopularTemplate = templateId === '1';
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black [scroll-behavior:smooth]">
@@ -130,15 +131,20 @@ export default function TemplateDetailsClient() {
         <div className="mx-auto flex w-full max-w-[920px] justify-center">
           <button
             type="button"
-            onClick={() => setShowBuildModal(true)}
-            className="h-[56px] w-[90%] max-w-[720px] rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white shadow-[0_14px_28px_rgba(108,99,255,0.24)] transition-transform duration-200 active:scale-[0.98]"
+            onClick={isPopularTemplate ? () => setShowBuildModal(true) : undefined}
+            disabled={!isPopularTemplate}
+            className={`h-[56px] w-[90%] max-w-[720px] rounded-[16px] text-[15px] font-bold shadow-[0_14px_28px_rgba(108,99,255,0.24)] transition-transform duration-200 active:scale-[0.98] ${
+              isPopularTemplate
+                ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white'
+                : 'cursor-not-allowed bg-[#e8e9f3] text-[#7b7f8f] shadow-none'
+            }`}
           >
             Create Resume
           </button>
         </div>
       </div>
 
-      {showBuildModal ? (
+      {showBuildModal && isPopularTemplate ? (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">
           <div className="relative w-full max-w-[520px] rounded-[24px] bg-white p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
             <button
