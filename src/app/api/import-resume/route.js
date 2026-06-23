@@ -99,7 +99,8 @@ function normalizeImportedSchema(payload = {}) {
     id: makeId(),
     projectName: item.projectName || item.project_name || '',
     technologiesUsed: item.technologiesUsed || item.technologies || '',
-    bullets: Array.isArray(item.bullets) ? item.bullets.filter(Boolean) : typeof item.description === 'string' ? [item.description] : [''],
+    bullets: Array.isArray(item.bullets) ? item.bullets.filter((b) => !/^live[:\s]|^code[:\s]|^https?:\/\//i.test(b)).filter(Boolean) : typeof item.description === 'string' ? [item.description] : [''],
+    links: Array.isArray(item.links) ? item.links.filter(Boolean) : Array.isArray(item.bullets) ? item.bullets.filter((b) => /^live[:\s]|^code[:\s]|^https?:\/\//i.test(b)) : [],
   }));
   resume.certifications = (Array.isArray(payload.certifications) ? payload.certifications : []).map((item) => ({
     id: makeId(),
@@ -461,10 +462,15 @@ function heuristicImport(text) {
     }
     flushP();
 
-    resume.projects = entries.filter((p) => p.name || p.bullets.length).map((p) => ({
-      id: makeId(), projectName: p.name, technologiesUsed: p.tech,
-      bullets: p.bullets.length ? p.bullets : [''],
-    })).slice(0, 10);
+    resume.projects = entries.filter((p) => p.name || p.bullets.length).map((p) => {
+      const links = p.bullets.filter((b) => /^live[:\s]|^code[:\s]|^https?:\/\//i.test(b));
+      const bullets = p.bullets.filter((b) => !/^live[:\s]|^code[:\s]|^https?:\/\//i.test(b));
+      return {
+        id: makeId(), projectName: p.name, technologiesUsed: p.tech,
+        bullets: bullets.length ? bullets : [''],
+        links,
+      };
+    }).slice(0, 10);
   }
 
   // --- CERTIFICATIONS ---
