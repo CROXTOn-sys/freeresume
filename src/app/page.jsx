@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import TemplatesSection from '../components/TemplatesSection';
@@ -89,10 +90,15 @@ const themeVars = {
 };
 
 export default function Page() {
+  const router = useRouter();
   const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
   const [openIndex, setOpenIndex] = useState(null);
   const [showBuildModal, setShowBuildModal] = useState(false);
+  const [showTemplatePrompt, setShowTemplatePrompt] = useState(false);
+  const [highlightTemplates, setHighlightTemplates] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const uploadInputRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -122,19 +128,101 @@ export default function Page() {
     setOpenIndex((current) => (current === index ? null : index));
   };
 
+  const promptTemplateSelection = () => {
+    setShowBuildModal(false);
+    setShowTemplatePrompt(true);
+    setHighlightTemplates(true);
+
+    window.setTimeout(() => {
+      document.getElementById('templates-section')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 140);
+
+    window.setTimeout(() => {
+      setShowTemplatePrompt(false);
+    }, 1000);
+
+    window.setTimeout(() => {
+      setHighlightTemplates(false);
+    }, 1300);
+  };
+
+  const handleHomepageFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/import-resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.details || payload?.error || 'Import failed');
+      }
+
+      try {
+        window.sessionStorage.setItem(
+          'ResumeLab-imported-resume',
+          JSON.stringify({
+            data: payload.data || {},
+            rawText: payload.rawText || '',
+            sourceType: payload.sourceType || '',
+          })
+        );
+        if (payload.rawText) {
+          window.sessionStorage.setItem('ResumeLab-imported-raw-text', payload.rawText);
+        }
+      } catch {
+        // ignore storage issues
+      }
+
+      router.push('/resume-builder/editor?template=1');
+    } catch (error) {
+      window.alert(error?.message || 'Unable to import resume right now.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <main
       style={themeVars[theme]}
       className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,var(--overlay-1),transparent_26%),radial-gradient(circle_at_top_right,var(--overlay-2),transparent_22%),linear-gradient(180deg,var(--page-bg-start)_0%,var(--page-bg-mid)_42%,var(--page-bg-end)_100%)] pb-[96px] pt-[68px] text-[var(--text-dark)] transition-colors duration-200"
     >
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="sr-only"
+        onChange={handleHomepageFileChange}
+      />
+
       <div className="mx-auto w-full max-w-[480px]">
         <Navbar theme={theme} onToggleTheme={onToggleTheme} />
-        <Hero onCreateResume={() => setShowBuildModal(true)} />
-        <TemplatesSection />
+        <Hero onCreateResume={promptTemplateSelection} />
+        <TemplatesSection highlight={highlightTemplates} />
         <TestimonialsSection />
         <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
       </div>
-      <StickyCta onCreateResume={() => setShowBuildModal(true)} />
+      <StickyCta onCreateResume={promptTemplateSelection} />
+
+      {showTemplatePrompt ? (
+        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-[rgba(17,24,39,0.18)] px-[12px] pt-[96px] backdrop-blur-[2px]">
+          <div className="rounded-[18px] border border-[color:rgba(95,84,240,0.18)] bg-white px-[14px] py-[10px] text-center shadow-[0_18px_40px_rgba(17,24,39,0.18)]">
+            <div className="text-[13px] font-bold text-[var(--purple)]">Please choose a template first</div>
+            <div className="mt-[3px] text-[11px] text-[#6b7280]">We&apos;re taking you there now</div>
+          </div>
+        </div>
+      ) : null}
 
       {showBuildModal ? (
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">
@@ -158,13 +246,24 @@ export default function Page() {
                 </p>
 
                 <div className="mt-[22px] grid grid-cols-2 gap-[12px]">
-                  <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-                    <div className="flex justify-center text-[30px] text-[#666]">☁</div>
-                    <div className="mt-[10px] text-center">
-                      <h2 className="text-[15px] font-bold text-black">Upload resume</h2>
-                      <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">
-                        PDF, DOCX, or image (.png, .jpeg, .jpg)
-                      </p>
+                  <div className="relative cursor-pointer text-left">
+                    <input
+                      ref={uploadInputRef}
+                      type="file"
+                      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="absolute inset-0 z-[2] h-full w-full cursor-pointer opacity-0"
+                      onChange={handleHomepageFileChange}
+                    />
+                    <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                      <div className="flex justify-center text-[30px] text-[#666]">☁</div>
+                      <div className="mt-[10px] text-center">
+                        <h2 className="text-[15px] font-bold text-black">
+                          {importing ? 'Importing...' : 'Upload resume'}
+                        </h2>
+                        <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">
+                          PDF, DOCX, or image (.png, .jpeg, .jpg)
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="rounded-[16px] border border-[color:#d9d9e3] bg-white p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">

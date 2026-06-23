@@ -96,6 +96,109 @@ const addItem = (list, item) => [...list, item];
 const updateItem = (list, index, updater) => list.map((item, i) => (i === index ? updater(item) : item));
 const removeItem = (list, index) => list.filter((_, i) => i !== index);
 
+function parseImportedRawText(rawText = '') {
+  const empty = initialData;
+  const text = String(rawText || '').trim();
+  if (!text) return empty;
+
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^[-•\u2022]\s*/, '').trim())
+    .filter(Boolean);
+  if (!lines.length) return empty;
+
+  const joined = lines.join(' ');
+  const email = joined.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
+  const phone = joined.match(/(\+?\d[\d\s().-]{7,}\d)/)?.[0] || '';
+  const linkedin = joined.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s)]+/i)?.[0] || '';
+  const name = lines[0] || '';
+  const title = lines.find((line) => /(engineer|developer|analyst|manager|designer|student|automation|data|software|web|intern|associate)/i.test(line)) || lines[1] || '';
+
+  const sectionRange = (startPatterns) => {
+    const start = lines.findIndex((line) => startPatterns.some((pattern) => pattern.test(line)));
+    if (start === -1) return [];
+    const end = lines.findIndex((line, index) => index > start && /^(skills|experience|projects|certifications|education|summary|professional summary|profile|objective|about)$/i.test(line));
+    return lines.slice(start + 1, end === -1 ? lines.length : end);
+  };
+
+  const summaryBlock = sectionRange([/^(summary|professional summary|profile|objective|about)$/i]);
+  const skillBlock = sectionRange([/^(skills|technical skills|core competencies|competencies|technical expertise)$/i]);
+  const experienceBlock = sectionRange([/^(experience|work experience|professional experience|employment history|internship)$/i]);
+  const projectBlock = sectionRange([/^(projects|project experience|academic projects)$/i]);
+  const certificationBlock = sectionRange([/^(certifications|certificates|awards & certifications|awards)$/i]);
+  const educationBlock = sectionRange([/^(education|academic details|qualifications)$/i]);
+
+  const splitTokens = (value) =>
+    String(value || '')
+      .split(/,|;|\||\/|-/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+  const skills = Array.from(new Set(splitTokens(skillBlock.join(' ')).concat(splitTokens(joined).filter((item) => /(sql|python|excel|power bi|tableau|communication|critical thinking|teamwork|adaptability|project management|data analysis|javascript|typescript|react|node|next\.?js|vercel|automation|n8n)/i.test(item)))));
+
+  const experience = experienceBlock.length
+    ? [
+        {
+          id: makeId(),
+          companyName: experienceBlock.find((line) => /(technologies|solutions|company|ltd|inc|studio|school|college|institution)/i.test(line)) || '',
+          role: experienceBlock.find((line) => /(engineer|developer|analyst|manager|intern|associate|specialist|lead)/i.test(line)) || '',
+          startDate: joined.match(/((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{2,4}|\b\d{4}\s*[-–—]\s*(?:present|current|\d{4})\b)/i)?.[0] || '',
+          endDate: '',
+          bullets: experienceBlock.filter((line) => !/^(experience|work experience|professional experience|employment history|internship)$/i.test(line)).slice(0, 4),
+        },
+      ]
+    : [];
+
+  const projects = projectBlock.length
+    ? [
+        {
+          id: makeId(),
+          projectName: projectBlock[0] || '',
+          technologiesUsed: projectBlock.find((line) => /(sql|python|react|next\.?js|node\.?js|vercel|n8n|javascript|typescript|excel|power bi|tableau|aws)/i.test(line)) || '',
+          bullets: projectBlock.slice(1, 5),
+        },
+      ]
+    : [];
+
+  const certifications = certificationBlock
+    .filter((line) => /(certification|certificate|hackathon|workshop|msme|ieee|vbrit|course|credential)/i.test(line))
+    .map((line) => ({
+      id: makeId(),
+      certificationName: line,
+      issuer: '',
+    }));
+
+  const education = educationBlock.length
+    ? [
+        {
+          id: makeId(),
+          degree: educationBlock.find((line) => /(ece|b\.?tech|b\.?sc|m\.?tech|m\.?sc|diploma|engineering)/i.test(line)) || educationBlock[0] || '',
+          institution: educationBlock.find((line) => /(college|university|institute|institution|campus|school)/i.test(line)) || educationBlock[1] || '',
+          graduationYear: joined.match(/\b(19|20)\d{2}\b/)?.[0] || '',
+          gpa: joined.match(/\b\d(?:\.\d+)?\s*\/\s*\d(?:\.\d+)?\b|\b\d\.\d+\b/)?.[0] || '',
+        },
+      ]
+    : [];
+
+  return {
+    personal: {
+      fullName: name,
+      professionalTitle: title,
+      phoneNumber: phone,
+      emailAddress: email,
+      linkedInUrl: linkedin,
+    },
+    summary: summaryBlock.slice(0, 4).join(' ') || lines.slice(1, 5).join(' '),
+    skills: skills.length ? [{ id: makeId(), category: 'Skills', items: skills.slice(0, 24) }] : empty.skills,
+    experience: experience.length ? experience : empty.experience,
+    projects: projects.length ? projects : empty.projects,
+    certifications: certifications.length ? certifications : empty.certifications,
+    education: education.length ? education : empty.education,
+  };
+}
+
 export default function ResumeBuilderClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,6 +206,7 @@ export default function ResumeBuilderClient() {
   const [step, setStep] = useState(0);
   const [mobileView, setMobileView] = useState('form');
   const [data, setData] = useState(initialData);
+  const [enhancing, setEnhancing] = useState({});
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
 
@@ -113,6 +217,70 @@ export default function ResumeBuilderClient() {
       inline: 'center',
     });
   }, [step]);
+
+  useEffect(() => {
+    try {
+      const imported = window.sessionStorage.getItem('ResumeLab-imported-resume');
+      const rawTextStored = window.sessionStorage.getItem('ResumeLab-imported-raw-text') || '';
+      if (!imported) return;
+      const parsed = JSON.parse(imported);
+      console.log('[resume-builder] imported resume payload', {
+        personal: parsed?.personal,
+        summaryLength: parsed?.summary?.length || 0,
+        skillsCount: parsed?.skills?.length || 0,
+        experienceCount: parsed?.experience?.length || 0,
+        projectsCount: parsed?.projects?.length || 0,
+        certificationsCount: parsed?.certifications?.length || 0,
+        educationCount: parsed?.education?.length || 0,
+        rawTextLength: typeof parsed?.rawText === 'string' ? parsed.rawText.length : 0,
+        rawTextStoredLength: rawTextStored.length,
+      });
+      if (parsed && typeof parsed === 'object') {
+        const importedData = parsed.data && typeof parsed.data === 'object' ? parsed.data : {};
+        const rawText = typeof parsed.rawText === 'string' && parsed.rawText.trim()
+          ? parsed.rawText
+          : rawTextStored;
+        const fallbackParsed = rawText ? parseImportedRawText(rawText) : initialData;
+        const hasStructuredContent = importedData && Object.values(importedData).some((value) => {
+          if (typeof value === 'string') return value.trim();
+          if (Array.isArray(value)) return value.length > 0;
+          if (value && typeof value === 'object') return Object.values(value).some(Boolean);
+          return false;
+        });
+        const source = hasStructuredContent ? importedData : fallbackParsed;
+        console.log('[resume-builder] resolved import source', {
+          usedStructuredData: hasStructuredContent,
+          usedRawTextFallback: !hasStructuredContent && Boolean(rawText),
+          rawTextLength: rawText.length,
+        });
+        const pickText = (incoming, currentValue) => (typeof incoming === 'string' && incoming.trim() ? incoming : currentValue);
+        const pickArray = (incoming, currentValue) => (Array.isArray(incoming) && incoming.length ? incoming : currentValue);
+        setData((current) => ({
+          ...current,
+          ...source,
+          personal: {
+            ...current.personal,
+            ...(source.personal || {}),
+            fullName: pickText(source.personal?.fullName, current.personal.fullName),
+            professionalTitle: pickText(source.personal?.professionalTitle, current.personal.professionalTitle),
+            phoneNumber: pickText(source.personal?.phoneNumber, current.personal.phoneNumber),
+            emailAddress: pickText(source.personal?.emailAddress, current.personal.emailAddress),
+            linkedInUrl: pickText(source.personal?.linkedInUrl, current.personal.linkedInUrl),
+          },
+          summary: pickText(source.summary, current.summary),
+          skills: pickArray(source.skills, current.skills),
+          experience: pickArray(source.experience, current.experience),
+          projects: pickArray(source.projects, current.projects),
+          certifications: pickArray(source.certifications, current.certifications),
+          education: pickArray(source.education, current.education),
+        }));
+      }
+      window.sessionStorage.removeItem('ResumeLab-imported-resume');
+      window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
+    } catch {
+      // ignore storage issues
+    }
+  }, []);
 
   const previewData = useMemo(
     () => ({
@@ -164,7 +332,31 @@ export default function ResumeBuilderClient() {
       </div>
     </Card>,
     <Card key="summary" title="Summary" description="Write a short professional summary.">
-      <TextArea value={data.summary} onChange={(v) => setData((p) => ({ ...p, summary: v }))} placeholder="Tell a recruiter who you are, what you do, and what you are good at." />
+      <div className="relative">
+        <TextArea value={data.summary} onChange={(v) => setData((p) => ({ ...p, summary: v }))} placeholder="Tell a recruiter who you are, what you do, and what you are good at." />
+        <button
+          type="button"
+          onClick={() =>
+          enhanceText({
+              section: 'summary',
+              text: data.summary,
+              context: 'resume summary',
+              keyId: 'summary',
+              onSuccess: (value) => setData((p) => ({ ...p, summary: value })),
+            })
+          }
+          disabled={Boolean(enhancing.summary)}
+          className="absolute bottom-[10px] right-[10px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
+          aria-label="Enhance summary with AI"
+          title="Enhance with AI"
+        >
+          {enhancing.summary ? (
+            <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
+          ) : (
+            <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
+          )}
+        </button>
+      </div>
     </Card>,
     <Card key="skills" title="Skills" description="Create categories and list the skills inside each category.">
       <div className="grid gap-[12px]">
@@ -301,20 +493,51 @@ export default function ResumeBuilderClient() {
               </div>
               {exp.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
-                  <input
-                    value={b}
-                    onChange={(e) =>
-                      setData((p) => ({
-                        ...p,
-                        experience: updateItem(p.experience, ei, (item) => ({
-                          ...item,
-                          bullets: updateItem(item.bullets, bi, () => e.target.value),
-                        })),
-                      }))
-                    }
-                    placeholder="Add bullet point"
-                    className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      value={b}
+                      onChange={(e) =>
+                        setData((p) => ({
+                          ...p,
+                          experience: updateItem(p.experience, ei, (item) => ({
+                            ...item,
+                            bullets: updateItem(item.bullets, bi, () => e.target.value),
+                          })),
+                        }))
+                      }
+                      placeholder="Add bullet point"
+                      className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] px-[14px] pr-[42px] text-[14px] outline-none focus:border-[color:var(--purple)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        enhanceText({
+                          section: 'experience_bullet',
+                          text: b,
+                          context: `Experience bullet for ${exp.companyName || 'company'} - ${exp.role || 'role'}`,
+                          keyId: `experience:${ei}:${bi}`,
+                          onSuccess: (value) =>
+                            setData((p) => ({
+                              ...p,
+                              experience: updateItem(p.experience, ei, (item) => ({
+                                ...item,
+                                bullets: updateItem(item.bullets, bi, () => value),
+                              })),
+                            })),
+                        })
+                      }
+                      disabled={Boolean(enhancing[`experience:${ei}:${bi}`])}
+                      className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
+                      aria-label="Enhance experience bullet"
+                      title="Enhance with AI"
+                    >
+                      {enhancing[`experience:${ei}:${bi}`] ? (
+                        <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
+                      ) : (
+                        <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
+                      )}
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() =>
@@ -365,20 +588,51 @@ export default function ResumeBuilderClient() {
               <Input label="Technologies Used" value={p.technologiesUsed} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, technologiesUsed: v })) }))} placeholder="React, Node, SQL" />
               {p.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
-                  <input
-                    value={b}
-                    onChange={(e) =>
-                      setData((d) => ({
-                        ...d,
-                        projects: updateItem(d.projects, pi, (item) => ({
-                          ...item,
-                          bullets: updateItem(item.bullets, bi, () => e.target.value),
-                        })),
-                      }))
-                    }
-                    placeholder="Add project bullet point"
-                    className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      value={b}
+                      onChange={(e) =>
+                        setData((d) => ({
+                          ...d,
+                          projects: updateItem(d.projects, pi, (item) => ({
+                            ...item,
+                            bullets: updateItem(item.bullets, bi, () => e.target.value),
+                          })),
+                        }))
+                      }
+                      placeholder="Add project bullet point"
+                      className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] px-[14px] pr-[42px] text-[14px] outline-none focus:border-[color:var(--purple)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        enhanceText({
+                          section: 'project_bullet',
+                          text: b,
+                          context: `Project bullet for ${p.projectName || 'project'} using ${p.technologiesUsed || 'unknown technologies'}`,
+                          keyId: `project:${pi}:${bi}`,
+                          onSuccess: (value) =>
+                            setData((d) => ({
+                              ...d,
+                              projects: updateItem(d.projects, pi, (item) => ({
+                                ...item,
+                                bullets: updateItem(item.bullets, bi, () => value),
+                              })),
+                            })),
+                        })
+                      }
+                      disabled={Boolean(enhancing[`project:${pi}:${bi}`])}
+                      className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
+                      aria-label="Enhance project bullet"
+                      title="Enhance with AI"
+                    >
+                      {enhancing[`project:${pi}:${bi}`] ? (
+                        <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
+                      ) : (
+                        <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
+                      )}
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() =>
@@ -424,7 +678,38 @@ export default function ResumeBuilderClient() {
           <div key={c.id} className="rounded-[14px] border border-[color:#eceef2] p-[12px]">
             <div className="grid gap-[12px]">
               <Input label="Certification Name" value={c.certificationName} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, certificationName: v })) }))} placeholder="Certification name" />
-              <Input label="Issuer" value={c.issuer} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Issuer" />
+              <div className="relative">
+                <Input label="Issuer" value={c.issuer} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Issuer" />
+                <button
+                  type="button"
+                  onClick={() =>
+                    enhanceText({
+                      section: 'issuer',
+                      text: c.issuer,
+                      context: `Certification issuer for ${c.certificationName || 'certification'}`,
+                      keyId: `issuer:${ci}`,
+                      onSuccess: (value) =>
+                        setData((d) => ({
+                          ...d,
+                          certifications: updateItem(d.certifications, ci, (item) => ({
+                            ...item,
+                            issuer: value,
+                          })),
+                        })),
+                    })
+                  }
+                  disabled={Boolean(enhancing[`issuer:${ci}`])}
+                  className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
+                  aria-label="Enhance issuer"
+                  title="Enhance with AI"
+                >
+                  {enhancing[`issuer:${ci}`] ? (
+                    <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
+                  ) : (
+                    <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -483,6 +768,57 @@ export default function ResumeBuilderClient() {
   ];
 
   const activeTip = slideTips[step] || slideTips[0];
+
+  const enhanceText = async ({ section, text, context, onSuccess, keyId }) => {
+    const currentText = String(text || '').trim();
+    if (!currentText) return;
+
+    const key = keyId || `${section}:${context || 'default'}`;
+    setEnhancing((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const res = await fetch('/api/ai-enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section, text: currentText, context }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = payload?.details ? `${payload?.error || 'Enhancement failed'}: ${payload.details}` : payload?.error || 'Enhancement failed';
+        throw new Error(message);
+      }
+      const enhanced = String(payload?.text || '').trim();
+      if (enhanced) onSuccess(enhanced);
+    } catch (err) {
+      console.error('AI enhancement error:', err);
+    } finally {
+      setEnhancing((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const res = await fetch('/api/resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(previewData),
+      });
+      if (!res.ok) throw new Error('PDF generation failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'resume.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black">
@@ -576,6 +912,13 @@ export default function ResumeBuilderClient() {
               className="rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[18px] py-[12px] text-[14px] font-bold text-white"
             >
               Next
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="rounded-[14px] bg-black px-[16px] py-[12px] text-[14px] font-bold text-white transition hover:opacity-80"
+            >
+              Download PDF
             </button>
           </div>
 
