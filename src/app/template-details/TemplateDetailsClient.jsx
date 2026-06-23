@@ -158,7 +158,7 @@ export default function TemplateDetailsClient() {
 
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => router.push('/')}
         aria-label="Close"
         className="fixed right-[16px] top-[16px] z-[50] flex h-[42px] w-[42px] items-center justify-center rounded-full bg-white shadow-[0_10px_24px_rgba(17,24,39,0.12)] transition-transform duration-200 active:scale-95"
       >

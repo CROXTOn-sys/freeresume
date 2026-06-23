@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const TEMPLATE = `<!doctype html>
 <html>
@@ -120,10 +120,66 @@ function renderTemplate(data) {
 
 export default function Template1Preview({ data = {}, previewMode = false }) {
   const html = useMemo(() => renderTemplate(data), [data]);
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(0.45);
+
+  useEffect(() => {
+    if (!previewMode) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateScale = () => {
+      const w = container.offsetWidth;
+      if (w > 0) {
+        setScale(w / 794);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(container);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      observer.disconnect();
+    };
+  }, [previewMode]);
+
+  if (previewMode) {
+    return (
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          overflow: 'hidden',
+          position: 'relative',
+          // Height is determined by A4 aspect ratio scaled to container width
+          height: `${1122 * scale}px`,
+        }}
+      >
+        <iframe
+          srcDoc={html}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '794px',
+            height: '1122px',
+            border: 'none',
+            background: '#fff',
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+          }}
+          title="Resume Preview"
+        />
+      </div>
+    );
+  }
+
   return (
     <iframe
       srcDoc={html}
-      style={{ width: '100%', height: previewMode ? '100%' : '842px', border: 'none', display: 'block', background: '#fff' }}
+      style={{ width: '100%', height: '842px', border: 'none', display: 'block', background: '#fff' }}
       title="Resume Preview"
     />
   );

@@ -207,6 +207,8 @@ export default function ResumeBuilderClient() {
   const [mobileView, setMobileView] = useState('form');
   const [data, setData] = useState(initialData);
   const [enhancing, setEnhancing] = useState({});
+  const [isImported, setIsImported] = useState(false);
+  const [activeSkillCategory, setActiveSkillCategory] = useState(0);
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
 
@@ -277,6 +279,7 @@ export default function ResumeBuilderClient() {
       }
       window.sessionStorage.removeItem('ResumeLab-imported-resume');
       window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
+      setIsImported(true);
     } catch {
       // ignore storage issues
     }
@@ -360,12 +363,62 @@ export default function ResumeBuilderClient() {
     </Card>,
     <Card key="skills" title="Skills" description="Create categories and list the skills inside each category.">
       <div className="grid gap-[12px]">
+        {!isImported && (
+        <div className="rounded-[16px] bg-[linear-gradient(180deg,#fbfbff_0%,#f6f4ff_100%)] p-[12px]">
+          <div className="mb-[10px] flex items-center justify-between gap-[10px]">
+            <span className="text-[12px] font-semibold text-black">Suggested skills</span>
+          </div>
+          <div className="flex flex-wrap gap-[8px]">
+            {skillSuggestions.map((skill) => {
+              const isSelected = data.skills.some((g) => g.items.includes(skill));
+              return (
+                <button
+                  key={skill}
+                  type="button"
+                  onClick={() => {
+                    if (isSelected) return;
+                    setData((p) => ({
+                      ...p,
+                      skills: p.skills.length
+                        ? updateItem(p.skills, Math.min(activeSkillCategory, p.skills.length - 1), (group) => ({
+                            ...group,
+                            items: addItem(group.items, skill),
+                          }))
+                        : [{ id: makeId(), category: 'Skills', items: [skill] }],
+                    }));
+                  }}
+                  className={`rounded-full border px-[12px] py-[8px] text-[12px] font-semibold shadow-[0_6px_14px_rgba(17,24,39,0.04)] ${
+                    isSelected
+                      ? 'border-green-300 bg-green-50 text-green-700'
+                      : 'border-[color:#d8d2ff] bg-white text-black'
+                  }`}
+                >
+                  {isSelected ? '✓' : '+'} {skill}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        )}
         {data.skills.map((g, gi) => (
           <div key={g.id} className="rounded-[18px] border border-[color:#e8e8f0] bg-white p-[12px] shadow-[0_8px_18px_rgba(17,24,39,0.04)]">
             <div className="grid gap-[12px]">
               <div className="flex items-start justify-between gap-[10px]">
                 <div className="flex-1">
-                  <Input label={`Category ${gi + 1}`} value={g.category} onChange={(v) => setData((p) => ({ ...p, skills: updateItem(p.skills, gi, (item) => ({ ...item, category: v })) }))} placeholder="Programming & Querying" />
+                  <label className="block">
+                    <span className="mb-[6px] block text-[12px] font-semibold text-black">Category {gi + 1}</span>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={g.category}
+                        onFocus={() => setActiveSkillCategory(gi)}
+                        onChange={(e) => setData((p) => ({ ...p, skills: updateItem(p.skills, gi, (item) => ({ ...item, category: e.target.value })) }))}
+                        placeholder="Programming & Querying"
+                        className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] pr-[24px] text-[14px] font-bold text-black outline-none focus:border-[color:var(--purple)]"
+                      />
+                      <span className="pointer-events-none absolute right-[12px] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black">:</span>
+                    </div>
+                  </label>
                 </div>
                 <button
                   type="button"
@@ -373,53 +426,14 @@ export default function ResumeBuilderClient() {
                   className="mt-[24px] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[18px] leading-none text-black"
                   aria-label="Remove category"
                 >
-                  X
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                 </button>
-              </div>
-              <div className="rounded-[16px] bg-[linear-gradient(180deg,#fbfbff_0%,#f6f4ff_100%)] p-[12px]">
-                <div className="mb-[10px] flex items-center justify-between gap-[10px]">
-                  <span className="text-[12px] font-semibold text-black">Suggested skills</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setData((p) => ({
-                        ...p,
-                        skills: updateItem(p.skills, gi, (group) => ({
-                          ...group,
-                          items: addItem(group.items, ''),
-                        })),
-                      }))
-                    }
-                    className="rounded-full border border-[color:#cfc8ff] bg-white px-[12px] py-[6px] text-[12px] font-semibold text-[color:var(--purple)]"
-                  >
-                    + Add skills
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-[8px]">
-                  {skillSuggestions.map((skill) => (
-                    <button
-                      key={skill}
-                      type="button"
-                      onClick={() =>
-                        setData((p) => ({
-                          ...p,
-                          skills: updateItem(p.skills, gi, (group) => ({
-                            ...group,
-                            items: group.items.includes(skill) ? group.items : addItem(group.items, skill),
-                          })),
-                        }))
-                      }
-                      className="rounded-full border border-[color:#d8d2ff] bg-white px-[12px] py-[8px] text-[12px] font-semibold text-black shadow-[0_6px_14px_rgba(17,24,39,0.04)]"
-                    >
-                      + {skill}
-                    </button>
-                  ))}
-                </div>
               </div>
               {g.items.map((item, ii) => (
                 <div key={ii} className="flex gap-[8px]">
                   <input
                     value={item}
+                    onFocus={() => setActiveSkillCategory(gi)}
                     onChange={(e) =>
                       setData((p) => ({
                         ...p,
@@ -442,9 +456,10 @@ export default function ResumeBuilderClient() {
                         })),
                       }))
                     }
-                    className="rounded-[12px] border border-[color:#e5e7eb] px-[12px] text-[13px] font-semibold text-black"
+                    className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+                    aria-label="Remove"
                   >
-                    Remove
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
               ))}
@@ -483,7 +498,15 @@ export default function ResumeBuilderClient() {
     <Card key="experience" title="Experience" description="Add unlimited work experience entries with bullet points.">
       <div className="grid gap-[12px]">
         {data.experience.map((exp, ei) => (
-          <div key={exp.id} className="rounded-[14px] border border-[color:#eceef2] p-[12px]">
+          <div key={exp.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
+            <button
+              type="button"
+              onClick={() => setData((p) => ({ ...p, experience: removeItem(p.experience, ei) }))}
+              className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+              aria-label="Remove experience"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
             <div className="grid gap-[12px]">
               <Input label="Company Name" value={exp.companyName} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, companyName: v })) }))} placeholder="Company name" />
               <Input label="Role / Position" value={exp.role} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, role: v })) }))} placeholder="Role / position" />
@@ -549,12 +572,30 @@ export default function ResumeBuilderClient() {
                         })),
                       }))
                     }
-                    className="rounded-[12px] border border-[color:#e5e7eb] px-[12px] text-[13px] font-semibold text-black"
+                    className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+                    aria-label="Remove"
                   >
-                    Remove
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setData((p) => ({
+                    ...p,
+                    experience: updateItem(p.experience, ei, (item) => ({
+                      ...item,
+                      bullets: addItem(item.bullets, ''),
+                    })),
+                  }))
+                }
+                className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-dashed border-[color:#cfc8ff] bg-[rgba(108,99,255,0.04)] text-[color:var(--purple)] hover:bg-[rgba(108,99,255,0.1)] transition-colors"
+                aria-label="Add bullet point"
+                title="Add bullet point"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
             </div>
           </div>
         ))}
@@ -582,10 +623,19 @@ export default function ResumeBuilderClient() {
     <Card key="projects" title="Projects" description="Add unlimited projects with technologies and bullet points.">
       <div className="grid gap-[12px]">
         {data.projects.map((p, pi) => (
-          <div key={p.id} className="rounded-[14px] border border-[color:#eceef2] p-[12px]">
+          <div key={p.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
+            <button
+              type="button"
+              onClick={() => setData((d) => ({ ...d, projects: removeItem(d.projects, pi) }))}
+              className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+              aria-label="Remove project"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
             <div className="grid gap-[12px]">
               <Input label="Project Name" value={p.projectName} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, projectName: v })) }))} placeholder="Project name" />
               <Input label="Technologies Used" value={p.technologiesUsed} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, technologiesUsed: v })) }))} placeholder="React, Node, SQL" />
+              <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Project Summary</span>
               {p.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
                   <div className="relative flex-1">
@@ -644,12 +694,30 @@ export default function ResumeBuilderClient() {
                         })),
                       }))
                     }
-                    className="rounded-[12px] border border-[color:#e5e7eb] px-[12px] text-[13px] font-semibold text-black"
+                    className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+                    aria-label="Remove"
                   >
-                    Remove
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setData((d) => ({
+                    ...d,
+                    projects: updateItem(d.projects, pi, (item) => ({
+                      ...item,
+                      bullets: addItem(item.bullets, ''),
+                    })),
+                  }))
+                }
+                className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-dashed border-[color:#cfc8ff] bg-[rgba(108,99,255,0.04)] text-[color:var(--purple)] hover:bg-[rgba(108,99,255,0.1)] transition-colors"
+                aria-label="Add bullet point"
+                title="Add bullet point"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
             </div>
           </div>
         ))}
@@ -675,7 +743,15 @@ export default function ResumeBuilderClient() {
     <Card key="certifications" title="Certifications" description="Add unlimited certifications with issuer details.">
       <div className="grid gap-[12px]">
         {data.certifications.map((c, ci) => (
-          <div key={c.id} className="rounded-[14px] border border-[color:#eceef2] p-[12px]">
+          <div key={c.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
+            <button
+              type="button"
+              onClick={() => setData((d) => ({ ...d, certifications: removeItem(d.certifications, ci) }))}
+              className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+              aria-label="Remove certification"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
             <div className="grid gap-[12px]">
               <Input label="Certification Name" value={c.certificationName} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, certificationName: v })) }))} placeholder="Certification name" />
               <div className="relative">
@@ -734,7 +810,15 @@ export default function ResumeBuilderClient() {
     <Card key="education" title="Education" description="Add unlimited education entries with optional CGPA or GPA.">
       <div className="grid gap-[12px]">
         {data.education.map((e, ei) => (
-          <div key={e.id} className="rounded-[14px] border border-[color:#eceef2] p-[12px]">
+          <div key={e.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
+            <button
+              type="button"
+              onClick={() => setData((d) => ({ ...d, education: removeItem(d.education, ei) }))}
+              className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+              aria-label="Remove education"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
             <div className="grid gap-[12px]">
               <Input label="Degree" value={e.degree} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, degree: v })) }))} placeholder="Degree" />
               <Input label="Institution" value={e.institution} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, institution: v })) }))} placeholder="Institution" />
@@ -824,7 +908,7 @@ export default function ResumeBuilderClient() {
     <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black">
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => mobileView === 'preview' ? setMobileView('form') : router.push(`/template-details?template=${templateId}`)}
         className="fixed right-[16px] top-[16px] z-[50] flex h-[42px] w-[42px] items-center justify-center rounded-full bg-white shadow-[0_10px_24px_rgba(17,24,39,0.12)]"
       >
         <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-none stroke-black stroke-[2.4]">
@@ -913,13 +997,6 @@ export default function ResumeBuilderClient() {
             >
               Next
             </button>
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="rounded-[14px] bg-black px-[16px] py-[12px] text-[14px] font-bold text-white transition hover:opacity-80"
-            >
-              Download PDF
-            </button>
           </div>
 
           <div className="rounded-[18px] border border-[color:#b7d9ef] bg-[linear-gradient(180deg,#eef8ff_0%,#dcefff_100%)] px-[14px] py-[12px] shadow-[0_8px_18px_rgba(17,24,39,0.04)]">
@@ -965,12 +1042,14 @@ export default function ResumeBuilderClient() {
               <div className="flex items-center justify-between gap-[10px]">
                 <button
                   type="button"
+                  onClick={() => router.push('/#templates-section')}
                   className="rounded-full border border-[color:#d8d2ff] bg-white px-[14px] py-[8px] text-[12px] font-semibold text-[color:var(--purple)]"
                 >
                   Templates
                 </button>
                 <button
                   type="button"
+                  onClick={handleDownload}
                   className="rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] py-[8px] text-[12px] font-semibold text-white"
                 >
                   Download PDF
@@ -984,12 +1063,14 @@ export default function ResumeBuilderClient() {
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
           <button
             type="button"
+            onClick={() => router.push('/#templates-section')}
             className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)]"
           >
             Templates
           </button>
           <button
             type="button"
+            onClick={handleDownload}
             className="h-[42px] flex-[1.35] rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white"
           >
             Download PDF
