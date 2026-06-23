@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const templateMeta = {
@@ -84,10 +84,78 @@ export default function TemplateDetailsClient() {
   const templateId = searchParams.get('template') || '1';
   const template = templateMeta[templateId] || templateMeta['1'];
   const [showBuildModal, setShowBuildModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const uploadInputRef = useRef(null);
   const isPopularTemplate = templateId === '1';
+
+  const handleUploadClick = () => {
+    uploadInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/import-resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      console.log('[upload] API response status:', response.status);
+      console.log('[upload] API payload:', {
+        hasData: Boolean(payload.data),
+        dataKeys: payload.data ? Object.keys(payload.data) : [],
+        rawTextLength: payload.rawText?.length || 0,
+        sourceType: payload.sourceType,
+        warning: payload.warning,
+        error: payload.error,
+      });
+      if (!response.ok) {
+        throw new Error(payload?.details || payload?.error || 'Import failed');
+      }
+
+      try {
+        window.sessionStorage.setItem(
+          'ResumeLab-imported-resume',
+          JSON.stringify({
+            data: payload.data || {},
+            rawText: payload.rawText || '',
+            sourceType: payload.sourceType || '',
+          })
+        );
+        if (payload.rawText) {
+          window.sessionStorage.setItem('ResumeLab-imported-raw-text', payload.rawText);
+        }
+      } catch {
+        // ignore storage issues
+      }
+
+      setShowBuildModal(false);
+      router.push(`/resume-builder/editor?template=${templateId}`);
+    } catch (error) {
+      window.alert(error?.message || 'Unable to import resume right now.');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black [scroll-behavior:smooth]">
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="sr-only"
+        onChange={handleFileChange}
+      />
+
       <button
         type="button"
         onClick={() => router.back()}
@@ -147,16 +215,29 @@ export default function TemplateDetailsClient() {
       {showBuildModal && isPopularTemplate ? (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">
           <div className="relative w-full max-w-[520px] rounded-[24px] bg-white p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
+            {importing ? (
+              <div className="absolute inset-0 z-[5] flex items-center justify-center rounded-[24px] bg-[rgba(255,255,255,0.75)] backdrop-blur-[8px]">
+                <div className="rounded-[18px] border border-[color:#e5e7eb] bg-white px-[18px] py-[16px] shadow-[0_14px_34px_rgba(17,24,39,0.14)]">
+                  <div className="flex items-center gap-[12px]">
+                    <span className="h-[18px] w-[18px] animate-spin rounded-full border-[2px] border-[color:var(--purple)] border-t-transparent" />
+                    <div>
+                      <div className="text-[14px] font-bold text-black">Importing resume</div>
+                      <div className="text-[12px] text-[#666]">Extracting text and filling fields...</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <button
               type="button"
               aria-label="Close"
               onClick={() => setShowBuildModal(false)}
-              className="absolute right-[14px] top-[14px] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[20px] font-light leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
+              className="absolute right-[14px] top-[14px] z-[10] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[20px] font-light leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
             >
               ×
             </button>
 
-            <main className="bg-white px-[4px] py-[8px] text-black">
+            <main className="relative z-[1] bg-white px-[4px] py-[8px] text-black">
               <div className="mx-auto flex w-full max-w-[520px] flex-col">
                 <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">
                   How would you like to build your resume?
@@ -166,10 +247,21 @@ export default function TemplateDetailsClient() {
                 </p>
 
                 <div className="mt-[22px] grid grid-cols-2 gap-[12px]">
-                  <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleUploadClick}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleUploadClick();
+                      }
+                    }}
+                    className={`cursor-pointer rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)] ${importing ? 'opacity-60' : ''}`}
+                  >
                     <div className="flex justify-center text-[30px] text-[#666]">☁</div>
                     <div className="mt-[10px] text-center">
-                      <h2 className="text-[15px] font-bold text-black">Upload resume</h2>
+                      <h2 className="text-[15px] font-bold text-black">{importing ? 'Importing...' : 'Upload resume'}</h2>
                       <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">
                         PDF, DOCX, or image (.png, .jpeg, .jpg)
                       </p>
@@ -208,7 +300,7 @@ export default function TemplateDetailsClient() {
                 <Link
                   href={`/resume-builder/editor?template=${templateId}`}
                   onClick={() => setShowBuildModal(false)}
-                  className="flex h-[52px] items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white shadow-[0_14px_28px_rgba(108,99,255,0.22)]"
+                  className={`flex h-[52px] items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white shadow-[0_14px_28px_rgba(108,99,255,0.22)] ${importing ? 'pointer-events-none opacity-60' : ''}`}
                 >
                   + Start from scratch
                 </Link>

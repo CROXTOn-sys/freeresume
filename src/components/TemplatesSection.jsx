@@ -39,9 +39,14 @@ const templates = [
   },
 ];
 
-export default function TemplatesSection() {
+export default function TemplatesSection({ highlight = false }) {
   return (
-    <section className="mt-[12px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[22px] pt-[28px] shadow-[var(--shadow-sm)]">
+    <section
+      id="templates-section"
+      className={`mt-[12px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[22px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 ${
+        highlight ? 'ring-4 ring-[rgba(95,84,240,0.22)] ring-offset-2 ring-offset-transparent' : ''
+      }`}
+    >
       <div className="mb-[16px] flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-[var(--text-dark)]">
           Get started with a template
