@@ -1,3 +1,15 @@
+# Stage 1: Build
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Production
 FROM node:20-slim
 
 # Install Chromium and all required shared libraries for Puppeteer
@@ -41,21 +53,20 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package.json package-lock.json* ./
+# Copy built application and production dependencies from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/templates ./templates
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json* ./
+COPY --from=builder /app/next.config* ./
+
+# Install only production dependencies in final image
 RUN npm ci --omit=dev
 
-# Copy the rest of the application
-COPY . .
-
-# Build the Next.js application
-RUN npm run build
-
-# Expose the port
 EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Start the application
 CMD ["npm", "start"]
