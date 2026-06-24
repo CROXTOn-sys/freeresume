@@ -2,9 +2,42 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import Mustache from 'mustache';
 import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 
 const templatePath = path.join(process.cwd(), 'templates', 'resume-template.html');
-const edgeExecutablePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+
+async function getBrowser() {
+  if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
+    // Production (Railway Linux container): use @sparticuz/chromium bundled binary
+    return puppeteer.launch({
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+  }
+
+  // Local development: try common browser paths
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+  ].filter(Boolean);
+
+  const { existsSync } = await import('node:fs');
+  const executablePath = candidates.find((p) => existsSync(p)) || candidates[0];
+
+  return puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
 
 function decodePayload(value) {
   if (!value) return {};
@@ -288,11 +321,7 @@ export async function POST(request) {
     const data = await request.json();
     const html = await renderResumeHtml(data);
 
-    const browser = await puppeteer.launch({
-      executablePath: edgeExecutablePath,
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const browser = await getBrowser();
 
     const page = await browser.newPage();
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
