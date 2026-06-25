@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function ChoiceCard({ title, description, children, active = false }) {
@@ -141,12 +140,20 @@ function BuilderChoice() {
           <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
         </div>
 
-        <Link
-          href={`/resume-builder/editor?template=${templateId}`}
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              window.sessionStorage.removeItem('ResumeLab-editor-state');
+              window.sessionStorage.removeItem('ResumeLab-imported-resume');
+              window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
+            } catch {}
+            router.push(`/resume-builder/editor?template=${templateId}&fresh=true`);
+          }}
           className="flex h-[52px] items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white shadow-[0_14px_28px_rgba(108,99,255,0.22)]"
         >
           + Start from scratch
-        </Link>
+        </button>
       </div>
     </main>
   );

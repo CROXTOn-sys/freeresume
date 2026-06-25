@@ -217,7 +217,20 @@ function heuristicImport(text) {
   };
 
   // --- PERSONAL INFO ---
-  const emailMatch = joinedText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  // Try email in joined text first, then scan header lines individually (handles spaced-out extraction)
+  let emailMatch = joinedText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  if (!emailMatch) {
+    // Try each line individually (some PDFs extract contact lines separately)
+    for (const line of lines.slice(0, 10)) {
+      const m = line.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+      if (m) { emailMatch = m; break; }
+    }
+  }
+  if (!emailMatch) {
+    // Handle spaced-out email: collapse spaces around @ and dots
+    const collapsed = joinedText.replace(/\s*@\s*/g, '@').replace(/\s*\.\s*/g, '.');
+    emailMatch = collapsed.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  }
   const phoneMatch = joinedText.match(/(\+?\d[\d\s().\-X]{7,}[\dX])/i);
   const linkedInMatch = joinedText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s),|]+/i);
   const firstSectionIdx = lines.findIndex((l) => isSectionHeading(l));

@@ -25,7 +25,7 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)]">
+    <section id="reviews-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)]">
       <h2 className="mb-[8px] text-[21px] font-extrabold leading-[1.25] tracking-[-0.03em] text-[var(--text-dark)]">
         Hear From Job Seekers Who Got Results
       </h2>
