@@ -10,7 +10,7 @@ const makeId = () => Date.now() + Math.random();
 const initialData = {
   personal: { fullName: '', professionalTitle: '', phoneNumber: '', emailAddress: '', linkedInUrl: '' },
   summary: '',
-  skills: [{ id: makeId(), category: 'Programming & Querying', items: ['SQL', 'Python'] }],
+  skills: [{ id: makeId(), category: '', items: [''] }],
   experience: [{ id: makeId(), companyName: '', role: '', startDate: '', endDate: '', bullets: [''] }],
   projects: [{ id: makeId(), projectName: '', technologiesUsed: '', bullets: [''], links: [] }],
   certifications: [{ id: makeId(), certificationName: '', issuer: '' }],
@@ -209,6 +209,9 @@ export default function ResumeBuilderClient() {
   const [enhancing, setEnhancing] = useState({});
   const [isImported, setIsImported] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
 
@@ -222,68 +225,111 @@ export default function ResumeBuilderClient() {
 
   useEffect(() => {
     try {
-      const imported = window.sessionStorage.getItem('ResumeLab-imported-resume');
-      const rawTextStored = window.sessionStorage.getItem('ResumeLab-imported-raw-text') || '';
-      if (!imported) return;
-      const parsed = JSON.parse(imported);
-      console.log('[resume-builder] imported resume payload', {
-        personal: parsed?.personal,
-        summaryLength: parsed?.summary?.length || 0,
-        skillsCount: parsed?.skills?.length || 0,
-        experienceCount: parsed?.experience?.length || 0,
-        projectsCount: parsed?.projects?.length || 0,
-        certificationsCount: parsed?.certifications?.length || 0,
-        educationCount: parsed?.education?.length || 0,
-        rawTextLength: typeof parsed?.rawText === 'string' ? parsed.rawText.length : 0,
-        rawTextStoredLength: rawTextStored.length,
-      });
-      if (parsed && typeof parsed === 'object') {
-        const importedData = parsed.data && typeof parsed.data === 'object' ? parsed.data : {};
-        const rawText = typeof parsed.rawText === 'string' && parsed.rawText.trim()
-          ? parsed.rawText
-          : rawTextStored;
-        const fallbackParsed = rawText ? parseImportedRawText(rawText) : initialData;
-        const hasStructuredContent = importedData && Object.values(importedData).some((value) => {
-          if (typeof value === 'string') return value.trim();
-          if (Array.isArray(value)) return value.length > 0;
-          if (value && typeof value === 'object') return Object.values(value).some(Boolean);
-          return false;
-        });
-        const source = hasStructuredContent ? importedData : fallbackParsed;
-        console.log('[resume-builder] resolved import source', {
-          usedStructuredData: hasStructuredContent,
-          usedRawTextFallback: !hasStructuredContent && Boolean(rawText),
-          rawTextLength: rawText.length,
-        });
-        const pickText = (incoming, currentValue) => (typeof incoming === 'string' && incoming.trim() ? incoming : currentValue);
-        const pickArray = (incoming, currentValue) => (Array.isArray(incoming) && incoming.length ? incoming : currentValue);
-        setData((current) => ({
-          ...current,
-          ...source,
-          personal: {
-            ...current.personal,
-            ...(source.personal || {}),
-            fullName: pickText(source.personal?.fullName, current.personal.fullName),
-            professionalTitle: pickText(source.personal?.professionalTitle, current.personal.professionalTitle),
-            phoneNumber: pickText(source.personal?.phoneNumber, current.personal.phoneNumber),
-            emailAddress: pickText(source.personal?.emailAddress, current.personal.emailAddress),
-            linkedInUrl: pickText(source.personal?.linkedInUrl, current.personal.linkedInUrl),
-          },
-          summary: pickText(source.summary, current.summary),
-          skills: pickArray(source.skills, current.skills),
-          experience: pickArray(source.experience, current.experience),
-          projects: pickArray(source.projects, current.projects),
-          certifications: pickArray(source.certifications, current.certifications),
-          education: pickArray(source.education, current.education),
-        }));
+      // Check if this is a fresh start via URL param
+      const isFreshStart = searchParams.get('fresh') === 'true';
+      // Also check the sessionStorage flag (backup)
+      const freshFlag = window.sessionStorage.getItem('ResumeLab-fresh-start');
+
+      if (isFreshStart || freshFlag) {
+        window.sessionStorage.removeItem('ResumeLab-fresh-start');
+        window.sessionStorage.removeItem('ResumeLab-editor-state');
+        window.sessionStorage.removeItem('ResumeLab-imported-resume');
+        window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
+        setData(initialData);
+        return; // Keep initialData, don't load anything
       }
-      window.sessionStorage.removeItem('ResumeLab-imported-resume');
-      window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
-      setIsImported(true);
+
+      // First check if there's a new import waiting
+      const imported = window.sessionStorage.getItem('ResumeLab-imported-resume');
+      if (imported) {
+        const rawTextStored = window.sessionStorage.getItem('ResumeLab-imported-raw-text') || '';
+        const parsed = JSON.parse(imported);
+        console.log('[resume-builder] imported resume payload', {
+          personal: parsed?.personal,
+          summaryLength: parsed?.summary?.length || 0,
+          skillsCount: parsed?.skills?.length || 0,
+          experienceCount: parsed?.experience?.length || 0,
+          projectsCount: parsed?.projects?.length || 0,
+          certificationsCount: parsed?.certifications?.length || 0,
+          educationCount: parsed?.education?.length || 0,
+          rawTextLength: typeof parsed?.rawText === 'string' ? parsed.rawText.length : 0,
+          rawTextStoredLength: rawTextStored.length,
+        });
+        if (parsed && typeof parsed === 'object') {
+          const importedData = parsed.data && typeof parsed.data === 'object' ? parsed.data : {};
+          const rawText = typeof parsed.rawText === 'string' && parsed.rawText.trim()
+            ? parsed.rawText
+            : rawTextStored;
+          const fallbackParsed = rawText ? parseImportedRawText(rawText) : initialData;
+          const hasStructuredContent = importedData && Object.values(importedData).some((value) => {
+            if (typeof value === 'string') return value.trim();
+            if (Array.isArray(value)) return value.length > 0;
+            if (value && typeof value === 'object') return Object.values(value).some(Boolean);
+            return false;
+          });
+          const source = hasStructuredContent ? importedData : fallbackParsed;
+          const pickText = (incoming, currentValue) => (typeof incoming === 'string' && incoming.trim() ? incoming : currentValue);
+          const pickArray = (incoming, currentValue) => (Array.isArray(incoming) && incoming.length ? incoming : currentValue);
+          setData((current) => ({
+            ...current,
+            ...source,
+            personal: {
+              ...current.personal,
+              ...(source.personal || {}),
+              fullName: pickText(source.personal?.fullName, current.personal.fullName),
+              professionalTitle: pickText(source.personal?.professionalTitle, current.personal.professionalTitle),
+              phoneNumber: pickText(source.personal?.phoneNumber, current.personal.phoneNumber),
+              emailAddress: pickText(source.personal?.emailAddress, current.personal.emailAddress),
+              linkedInUrl: pickText(source.personal?.linkedInUrl, current.personal.linkedInUrl),
+            },
+            summary: pickText(source.summary, current.summary),
+            skills: pickArray(source.skills, current.skills),
+            experience: pickArray(source.experience, current.experience),
+            projects: pickArray(source.projects, current.projects),
+            certifications: pickArray(source.certifications, current.certifications),
+            education: pickArray(source.education, current.education),
+          }));
+        }
+        window.sessionStorage.removeItem('ResumeLab-imported-resume');
+        window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
+        setIsImported(true);
+        return;
+      }
+
+      // No new import — restore previously saved editor state (survives refresh)
+      const saved = window.sessionStorage.getItem('ResumeLab-editor-state');
+      if (saved) {
+        const savedData = JSON.parse(saved);
+        if (savedData && typeof savedData === 'object' && savedData.personal) {
+          setData(savedData);
+          setIsImported(true);
+        }
+      }
     } catch {
       // ignore storage issues
     }
   }, []);
+
+  // Persist editor state to sessionStorage on every change (survives refresh)
+  useEffect(() => {
+    // Don't save if data is still the initial empty state
+    const hasContent = data.personal.fullName || data.personal.emailAddress || data.summary || data.experience.some((e) => e.companyName || e.role);
+    if (!hasContent) return;
+    try {
+      const serialized = JSON.stringify(data);
+      window.sessionStorage.setItem('ResumeLab-editor-state', serialized);
+    } catch (e) {
+      // If quota exceeded, clear old state and try once more
+      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+        try {
+          window.sessionStorage.removeItem('ResumeLab-editor-state');
+          window.sessionStorage.setItem('ResumeLab-editor-state', JSON.stringify(data));
+        } catch {
+          // Truly out of space — silently skip
+        }
+      }
+    }
+  }, [data]);
 
   const previewData = useMemo(
     () => ({
@@ -291,7 +337,7 @@ export default function ResumeBuilderClient() {
       job_title: data.personal.professionalTitle || 'Professional Title',
       phone: data.personal.phoneNumber || 'Phone Number',
       email: data.personal.emailAddress || 'Email Address',
-      linkedin: 'LinkedIn',
+      linkedin: data.personal.linkedInUrl || 'LinkedIn',
       linkedin_url: data.personal.linkedInUrl || '#',
       summary: data.summary,
       skills_categories: data.skills.map((s) => ({
@@ -443,6 +489,7 @@ export default function ResumeBuilderClient() {
                         })),
                       }))
                     }
+                    placeholder={ii === 0 ? 'SQL' : ii === 1 ? 'Python' : 'Enter skill'}
                     className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
                   />
                   <button
@@ -501,7 +548,7 @@ export default function ResumeBuilderClient() {
           <div key={exp.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
             <button
               type="button"
-              onClick={() => setData((p) => ({ ...p, experience: removeItem(p.experience, ei) }))}
+              onClick={() => setConfirmModal({ message: 'Delete this experience entry?', onConfirm: () => setData((p) => ({ ...p, experience: removeItem(p.experience, ei) })) })}
               className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
               aria-label="Remove experience"
             >
@@ -627,7 +674,7 @@ export default function ResumeBuilderClient() {
           <div key={p.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
             <button
               type="button"
-              onClick={() => setData((d) => ({ ...d, projects: removeItem(d.projects, pi) }))}
+              onClick={() => setConfirmModal({ message: 'Delete this project entry?', onConfirm: () => setData((d) => ({ ...d, projects: removeItem(d.projects, pi) })) })}
               className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
               aria-label="Remove project"
             >
@@ -800,7 +847,7 @@ export default function ResumeBuilderClient() {
           <div key={c.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
             <button
               type="button"
-              onClick={() => setData((d) => ({ ...d, certifications: removeItem(d.certifications, ci) }))}
+              onClick={() => setConfirmModal({ message: 'Delete this certification?', onConfirm: () => setData((d) => ({ ...d, certifications: removeItem(d.certifications, ci) })) })}
               className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
               aria-label="Remove certification"
             >
@@ -867,7 +914,7 @@ export default function ResumeBuilderClient() {
           <div key={e.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
             <button
               type="button"
-              onClick={() => setData((d) => ({ ...d, education: removeItem(d.education, ei) }))}
+              onClick={() => setConfirmModal({ message: 'Delete this education entry?', onConfirm: () => setData((d) => ({ ...d, education: removeItem(d.education, ei) })) })}
               className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
               aria-label="Remove education"
             >
@@ -927,8 +974,10 @@ export default function ResumeBuilderClient() {
       }
       const enhanced = String(payload?.text || '').trim();
       if (enhanced) onSuccess(enhanced);
+      else throw new Error('No enhanced text returned');
     } catch (err) {
       console.error('AI enhancement error:', err);
+      window.alert('AI enhancement is temporarily unavailable. Please try again in a moment.');
     } finally {
       setEnhancing((prev) => {
         const next = { ...prev };
@@ -939,6 +988,8 @@ export default function ResumeBuilderClient() {
   };
 
   const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
     try {
       const res = await fetch('/api/resume', {
         method: 'POST',
@@ -955,20 +1006,14 @@ export default function ResumeBuilderClient() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download error:', err);
+      window.alert('PDF generation failed. Please try again.');
+    } finally {
+      setDownloading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black">
-      <button
-        type="button"
-        onClick={() => mobileView === 'preview' ? setMobileView('form') : router.push(`/template-details?template=${templateId}`)}
-        className="fixed right-[16px] top-[16px] z-[50] flex h-[42px] w-[42px] items-center justify-center rounded-full bg-white shadow-[0_10px_24px_rgba(17,24,39,0.12)]"
-      >
-        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-none stroke-black stroke-[2.4]">
-          <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
-        </svg>
-      </button>
+    <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black" style={{ overscrollBehavior: 'none' }}>
 
       <div className="mx-auto flex min-h-[100svh] w-full max-w-[1280px] flex-col gap-[12px] px-[8px] pb-[12px] pt-[8px] md:px-[16px] lg:grid lg:min-h-0 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
         <div
@@ -983,11 +1028,11 @@ export default function ResumeBuilderClient() {
                   POPULAR
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-[8px] md:gap-[10px]">
+              <div className="flex items-center gap-[8px]">
                 <button
                   type="button"
                   onClick={() => setMobileView('form')}
-                  className={`rounded-full px-[12px] py-[10px] text-[12px] font-bold md:px-[14px] md:py-[11px] md:text-[13px] ${
+                  className={`flex-1 rounded-full px-[12px] py-[10px] text-[12px] font-bold md:px-[14px] md:py-[11px] md:text-[13px] ${
                     mobileView === 'form'
                       ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white'
                       : 'bg-[rgba(108,99,255,0.08)] text-[color:var(--purple)]'
@@ -998,13 +1043,65 @@ export default function ResumeBuilderClient() {
                 <button
                   type="button"
                   onClick={() => setMobileView('preview')}
-                  className={`rounded-full px-[12px] py-[10px] text-[12px] font-bold md:px-[14px] md:py-[11px] md:text-[13px] ${
+                  className={`flex-1 rounded-full px-[12px] py-[10px] text-[12px] font-bold md:px-[14px] md:py-[11px] md:text-[13px] ${
                     mobileView === 'preview'
                       ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white'
                       : 'bg-[rgba(108,99,255,0.08)] text-[color:var(--purple)]'
                   }`}
                 >
                   Preview
+                </button>
+                {/* 3-dot menu */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreMenu((v) => !v)}
+                    className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#f4f4f6] shadow-[0_4px_12px_rgba(17,24,39,0.06)]"
+                    aria-label="More options"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-black">
+                      <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                    </svg>
+                  </button>
+                  {showMoreMenu && (
+                    <>
+                      <div className="fixed inset-0 z-[49]" onClick={() => setShowMoreMenu(false)} />
+                      <div className="absolute right-0 top-[46px] z-[50] w-[200px] rounded-[14px] border border-[color:#eceef2] bg-white py-[6px] shadow-[0_12px_32px_rgba(17,24,39,0.14)]">
+                        <button type="button" onClick={() => { setShowMoreMenu(false); setMobileView('preview'); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                          Preview Resume
+                        </button>
+                        <button type="button" onClick={() => { setShowMoreMenu(false); handleDownload(); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          Export Resume
+                        </button>
+                        <button type="button" className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-[#aaa] cursor-default">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                          Duplicate Resume
+                        </button>
+                        <div className="my-[4px] border-t border-[color:#eceef2]" />
+                        <button type="button" onClick={() => { setShowMoreMenu(false); setConfirmModal({ message: 'This will delete all your resume data. This action cannot be undone.', onConfirm: () => { setData(initialData); try { window.sessionStorage.removeItem('ResumeLab-editor-state'); } catch {} } }); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-red-500 hover:bg-red-50">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                          Clear All Data
+                        </button>
+                        <button type="button" className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-[#aaa] cursor-default">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                          Reset Template
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {/* X close button */}
+                <button
+                  type="button"
+                  onClick={() => mobileView === 'preview' ? setMobileView('form') : router.push(`/template-details?template=${templateId}`)}
+                  className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#f4f4f6] shadow-[0_4px_12px_rgba(17,24,39,0.06)]"
+                  aria-label="Close"
+                >
+                  <svg viewBox="0 0 24 24" className="h-[16px] w-[16px] fill-none stroke-black stroke-[2.4]">
+                    <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1092,6 +1189,12 @@ export default function ResumeBuilderClient() {
                 </div>
               </div>
             </div>
+            <div className="mt-[8px] flex items-start gap-[8px] rounded-[12px] bg-[rgba(108,99,255,0.06)] px-[12px] py-[10px]">
+              <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="mt-[1px] h-[16px] w-[16px] shrink-0 object-contain" />
+              <p className="text-[11px] leading-[1.4] text-[#555]">
+                Tap <strong className="text-[color:var(--purple)]">✦</strong> on any field to enhance your text with AI — make every bullet sound professional and recruiter-ready.
+              </p>
+            </div>
             <div className="mt-auto hidden shrink-0 rounded-[18px] border border-[color:#eceef2] bg-white p-[10px] shadow-[0_8px_18px_rgba(17,24,39,0.06)] md:block">
               <div className="flex items-center justify-between gap-[10px]">
                 <button
@@ -1104,9 +1207,10 @@ export default function ResumeBuilderClient() {
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] py-[8px] text-[12px] font-semibold text-white"
+                  disabled={downloading}
+                  className="rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] py-[8px] text-[12px] font-semibold text-white disabled:opacity-70"
                 >
-                  Download PDF
+                  {downloading ? 'Generating...' : 'Download PDF'}
                 </button>
               </div>
             </div>
@@ -1125,12 +1229,42 @@ export default function ResumeBuilderClient() {
           <button
             type="button"
             onClick={handleDownload}
-            className="h-[42px] flex-[1.35] rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white"
+            disabled={downloading}
+            className="h-[42px] flex-[1.35] rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70"
           >
-            Download PDF
+            {downloading ? 'Generating...' : 'Download PDF'}
           </button>
         </div>
       </div>
+
+      {/* Confirm delete modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 backdrop-blur-[2px] px-[16px]">
+          <div className="w-full max-w-[320px] rounded-[20px] bg-white p-[24px] shadow-[0_20px_50px_rgba(17,24,39,0.18)]">
+            <div className="mb-[16px] flex h-[44px] w-[44px] items-center justify-center rounded-full bg-red-50">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </div>
+            <h3 className="text-[16px] font-bold text-black">Are you sure?</h3>
+            <p className="mt-[6px] text-[13px] leading-[1.4] text-[#666]">{confirmModal.message}</p>
+            <div className="mt-[20px] flex gap-[10px]">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 rounded-[12px] border border-[color:#e5e7eb] bg-white py-[10px] text-[13px] font-semibold text-black"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }}
+                className="flex-1 rounded-[12px] bg-red-500 py-[10px] text-[13px] font-semibold text-white"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

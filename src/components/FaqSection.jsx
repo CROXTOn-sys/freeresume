@@ -30,7 +30,7 @@ const faqs = [
 
 export default function FaqSection({ openIndex, onToggle }) {
   return (
-    <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[28px] pt-[32px] shadow-[var(--shadow-sm)]">
+    <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[28px] pt-[32px] shadow-[var(--shadow-sm)]">
       <h2 className="mb-[22px] text-center text-[23px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">
         Still in Doubt?
       </h2>
