@@ -9,6 +9,7 @@ import TemplatesSection from '../components/TemplatesSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FaqSection from '../components/FaqSection';
 import StickyCta from '../components/StickyCta';
+import BugReport from '../components/BugReport';
 
 const themeVars = {
   light: {
@@ -214,6 +215,7 @@ export default function Page() {
         <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
       </div>
       <StickyCta onCreateResume={promptTemplateSelection} />
+      <BugReport />
 
       {showTemplatePrompt ? (
         <div className="fixed inset-0 z-[120] flex items-start justify-center bg-[rgba(17,24,39,0.18)] px-[12px] pt-[96px] backdrop-blur-[2px]">
