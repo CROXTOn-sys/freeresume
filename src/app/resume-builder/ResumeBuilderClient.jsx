@@ -61,7 +61,7 @@ const slideTips = [
   },
 ];
 
-const Input = ({ label, value, onChange, placeholder, type = 'text' }) => (
+const Input = ({ label, value, onChange, placeholder, type = 'text', error = false }) => (
   <label className="block">
     <span className="mb-[6px] block text-[12px] font-semibold text-black">{label}</span>
     <input
@@ -69,18 +69,18 @@ const Input = ({ label, value, onChange, placeholder, type = 'text' }) => (
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
+      className={`h-[44px] w-full rounded-[12px] border bg-white px-[14px] text-[14px] text-black outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:#e5e7eb]'}`}
     />
   </label>
 );
 
-const TextArea = ({ value, onChange, placeholder }) => (
+const TextArea = ({ value, onChange, placeholder, error = false }) => (
   <textarea
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
     rows={6}
-    className="w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] py-[12px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
+    className={`w-full rounded-[12px] border bg-white px-[14px] py-[12px] text-[14px] text-black outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:#e5e7eb]'}`}
   />
 );
 
@@ -212,6 +212,8 @@ export default function ResumeBuilderClient() {
   const [downloading, setDownloading] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
 
@@ -373,16 +375,16 @@ export default function ResumeBuilderClient() {
   const sections = [
     <Card key="personal" title="Personal Information" description="These details fill the resume header immediately.">
       <div className="grid gap-[12px]">
-        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Enter full name" />
-        <Input label="Professional Title" value={data.personal.professionalTitle} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, professionalTitle: v } }))} placeholder="Enter professional title" />
+        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Enter full name" error={showErrors && !data.personal.fullName.trim()} />
+        <Input label="Professional Title" value={data.personal.professionalTitle} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, professionalTitle: v } }))} placeholder="Enter professional title" error={showErrors && !data.personal.professionalTitle.trim()} />
         <Input label="Phone Number" value={data.personal.phoneNumber} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phoneNumber: v } }))} placeholder="Enter phone number" />
-        <Input label="Email Address" value={data.personal.emailAddress} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, emailAddress: v } }))} placeholder="Enter email address" />
+        <Input label="Email Address" value={data.personal.emailAddress} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, emailAddress: v } }))} placeholder="Enter email address" error={showErrors && !data.personal.emailAddress.trim()} />
         <Input label="LinkedIn URL" value={data.personal.linkedInUrl} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedInUrl: v } }))} placeholder="https://linkedin.com/in/your-profile" />
       </div>
     </Card>,
     <Card key="summary" title="Summary" description="Write a short professional summary.">
       <div className="relative">
-        <TextArea value={data.summary} onChange={(v) => setData((p) => ({ ...p, summary: v }))} placeholder="Tell a recruiter who you are, what you do, and what you are good at." />
+        <TextArea value={data.summary} onChange={(v) => setData((p) => ({ ...p, summary: v }))} placeholder="Tell a recruiter who you are, what you do, and what you are good at." error={showErrors && !data.summary.trim()} />
         <button
           type="button"
           onClick={() =>
@@ -555,8 +557,8 @@ export default function ResumeBuilderClient() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
             <div className="grid gap-[12px]">
-              <Input label="Company Name" value={exp.companyName} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, companyName: v })) }))} placeholder="Company name" />
-              <Input label="Role / Position" value={exp.role} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, role: v })) }))} placeholder="Role / position" />
+              <Input label="Company Name" value={exp.companyName} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, companyName: v })) }))} placeholder="Company name" error={showErrors && !exp.companyName.trim()} />
+              <Input label="Role / Position" value={exp.role} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, role: v })) }))} placeholder="Role / position" error={showErrors && !exp.role.trim()} />
               <div className="grid grid-cols-2 gap-[10px]">
                 <Input label="Start Date" value={exp.startDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Jan 2023" />
                 <Input label="End Date" value={exp.endDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Present" />
@@ -681,7 +683,7 @@ export default function ResumeBuilderClient() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
             <div className="grid gap-[12px]">
-              <Input label="Project Name" value={p.projectName} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, projectName: v })) }))} placeholder="Project name" />
+              <Input label="Project Name" value={p.projectName} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, projectName: v })) }))} placeholder="Project name" error={showErrors && !p.projectName.trim()} />
               <Input label="Technologies Used" value={p.technologiesUsed} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, technologiesUsed: v })) }))} placeholder="React, Node, SQL" />
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Project Summary</span>
               {p.bullets.map((b, bi) => (
@@ -854,7 +856,7 @@ export default function ResumeBuilderClient() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
             <div className="grid gap-[12px]">
-              <Input label="Certification Name" value={c.certificationName} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, certificationName: v })) }))} placeholder="Certification name" />
+              <Input label="Certification Name" value={c.certificationName} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, certificationName: v })) }))} placeholder="Certification name" error={showErrors && !c.certificationName.trim()} />
               <div className="relative">
                 <Input label="Issuer" value={c.issuer} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Issuer" />
                 <button
@@ -921,8 +923,8 @@ export default function ResumeBuilderClient() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
             <div className="grid gap-[12px]">
-              <Input label="Degree" value={e.degree} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, degree: v })) }))} placeholder="Degree" />
-              <Input label="Institution" value={e.institution} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, institution: v })) }))} placeholder="Institution" />
+              <Input label="Degree" value={e.degree} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, degree: v })) }))} placeholder="Degree" error={showErrors && !e.degree.trim()} />
+              <Input label="Institution" value={e.institution} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, institution: v })) }))} placeholder="Institution" error={showErrors && !e.institution.trim()} />
               <div className="grid grid-cols-2 gap-[10px]">
                 <Input label="Graduation Year" value={e.graduationYear} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, graduationYear: v })) }))} placeholder="2025" />
                 <Input label="CGPA / GPA (optional)" value={e.gpa} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, gpa: v })) }))} placeholder="8.5 / 10" />
@@ -1004,6 +1006,8 @@ export default function ResumeBuilderClient() {
       a.download = 'resume.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 1200);
     } catch (err) {
       console.error('Download error:', err);
       window.alert('PDF generation failed. Please try again.');
@@ -1011,6 +1015,39 @@ export default function ResumeBuilderClient() {
       setDownloading(false);
     }
   };
+
+  const hasEmptyFields = () => {
+    const p = data.personal;
+    if (!p.fullName.trim() || !p.professionalTitle.trim() || !p.emailAddress.trim()) return true;
+    if (!data.summary.trim()) return true;
+    if (data.skills.some((s) => !s.category.trim() || s.items.some((i) => !i.trim()))) return true;
+    if (data.experience.some((e) => !e.companyName.trim() || !e.role.trim() || e.bullets.some((b) => !b.trim()))) return true;
+    if (data.projects.some((pr) => !pr.projectName.trim() || pr.bullets.some((b) => !b.trim()))) return true;
+    if (data.certifications.some((c) => !c.certificationName.trim())) return true;
+    if (data.education.some((ed) => !ed.degree.trim() || !ed.institution.trim())) return true;
+    return false;
+  };
+
+  const handleNext = () => {
+    setShowErrors(true);
+    setStep((p) => Math.min(p + 1, steps.length - 1));
+  };
+
+  const handleDownloadWithValidation = () => {
+    if (hasEmptyFields()) {
+      setShowErrors(true);
+      setConfirmModal({
+        message: 'Some fields are empty. Please fill all details or delete unused entries before downloading.',
+        onConfirm: () => { setConfirmModal(null); },
+      });
+      return;
+    }
+    setShowErrors(false);
+    handleDownload();
+  };
+
+  // CSS class for error state
+  const errorBorder = (value) => showErrors && !String(value || '').trim() ? 'border-red-400' : 'border-[color:#e5e7eb]';
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black" style={{ overscrollBehavior: 'none' }}>
@@ -1071,7 +1108,7 @@ export default function ResumeBuilderClient() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                           Preview Resume
                         </button>
-                        <button type="button" onClick={() => { setShowMoreMenu(false); handleDownload(); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                        <button type="button" onClick={() => { setShowMoreMenu(false); handleDownloadWithValidation(); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                           Export Resume
                         </button>
@@ -1143,7 +1180,7 @@ export default function ResumeBuilderClient() {
             </button>
             <button
               type="button"
-              onClick={() => setStep((p) => Math.min(p + 1, steps.length - 1))}
+              onClick={handleNext}
               className="rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[18px] py-[12px] text-[14px] font-bold text-white"
             >
               Next
@@ -1206,7 +1243,7 @@ export default function ResumeBuilderClient() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleDownload}
+                  onClick={handleDownloadWithValidation}
                   disabled={downloading}
                   className="rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] py-[8px] text-[12px] font-semibold text-white disabled:opacity-70"
                 >
@@ -1228,7 +1265,7 @@ export default function ResumeBuilderClient() {
           </button>
           <button
             type="button"
-            onClick={handleDownload}
+            onClick={handleDownloadWithValidation}
             disabled={downloading}
             className="h-[42px] flex-[1.35] rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70"
           >
@@ -1238,6 +1275,27 @@ export default function ResumeBuilderClient() {
       </div>
 
       {/* Confirm delete modal */}
+
+      {/* Success animation */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center animate-[successPop_0.4s_ease-out]">
+            <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-[#10b981] shadow-[0_12px_40px_rgba(16,185,129,0.4)]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <p className="mt-[12px] text-[14px] font-bold text-black bg-white/90 px-[16px] py-[6px] rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.1)]">Downloaded!</p>
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes successPop {
+          0% { transform: scale(0.5); opacity: 0; }
+          60% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
       {confirmModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 backdrop-blur-[2px] px-[16px]">
           <div className="w-full max-w-[320px] rounded-[20px] bg-white p-[24px] shadow-[0_20px_50px_rgba(17,24,39,0.18)]">
