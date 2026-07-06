@@ -69,5 +69,6 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 
 CMD ["npm", "start"]
