@@ -11,9 +11,9 @@ const initialData = {
   personal: { fullName: '', professionalTitle: '', phoneNumber: '', emailAddress: '', linkedInUrl: '' },
   summary: '',
   skills: [{ id: makeId(), category: '', items: [''] }],
-  experience: [{ id: makeId(), companyName: '', role: '', startDate: '', endDate: '', bullets: [''] }],
-  projects: [{ id: makeId(), projectName: '', technologiesUsed: '', bullets: [''], links: [] }],
-  certifications: [{ id: makeId(), certificationName: '', issuer: '' }],
+  experience: [{ id: makeId(), companyName: '', role: '', startDate: '', endDate: '', toolsUsed: '', bullets: [''] }],
+  projects: [{ id: makeId(), projectName: '', technologiesUsed: '', startDate: '', endDate: '', bullets: [''], links: [] }],
+  certifications: [{ id: makeId(), certificationName: '', issuer: '', description: '' }],
   education: [{ id: makeId(), degree: '', institution: '', graduationYear: '', gpa: '' }],
 };
 
@@ -214,8 +214,10 @@ export default function ResumeBuilderClient() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
+  const downloadMenuRef = useRef(null);
 
   useEffect(() => {
     stepButtonRefs.current[step]?.scrollIntoView({
@@ -333,6 +335,15 @@ export default function ResumeBuilderClient() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (!showDownloadMenu) return;
+    const handleClickOutside = (e) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target)) setShowDownloadMenu(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDownloadMenu]);
+
   const previewData = useMemo(
     () => ({
       name: data.personal.fullName || 'Your Name',
@@ -351,21 +362,25 @@ export default function ResumeBuilderClient() {
         role: e.role,
         start_date: e.startDate,
         end_date: e.endDate,
+        tools_used: e.toolsUsed || '',
         bullets: e.bullets.filter(Boolean),
       })),
       projects: data.projects.map((p) => ({
         project_name: p.projectName,
         technologies: p.technologiesUsed,
+        start_date: p.startDate || '',
+        end_date: p.endDate || '',
         bullets: [...p.bullets.filter(Boolean), ...(p.links || []).filter(Boolean)],
       })),
       certifications: data.certifications.map((c) => ({
         cert_title: c.certificationName,
         issuer: c.issuer,
+        cert_description: c.description || '',
       })),
       education: data.education.map((e) => ({
         degree: e.degree,
         institution: e.institution,
-        graduation_date: e.graduationYear,
+        graduation_date: e.graduationYear || e.endDate || '',
         score: e.gpa,
       })),
     }),
@@ -563,6 +578,7 @@ export default function ResumeBuilderClient() {
                 <Input label="Start Date" value={exp.startDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Jan 2023" />
                 <Input label="End Date" value={exp.endDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Present" />
               </div>
+              <Input label="Tools Used" value={exp.toolsUsed || ''} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="Excel, SQL, Power BI" />
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Experience Summary</span>
               {exp.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
@@ -660,6 +676,7 @@ export default function ResumeBuilderClient() {
                 role: '',
                 startDate: '',
                 endDate: '',
+                toolsUsed: '',
                 bullets: [''],
               }),
             }))
@@ -685,6 +702,10 @@ export default function ResumeBuilderClient() {
             <div className="grid gap-[12px]">
               <Input label="Project Name" value={p.projectName} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, projectName: v })) }))} placeholder="Project name" error={showErrors && !p.projectName.trim()} />
               <Input label="Technologies Used" value={p.technologiesUsed} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, technologiesUsed: v })) }))} placeholder="React, Node, SQL" />
+              <div className="grid grid-cols-2 gap-[10px]">
+                <Input label="Start Date" value={p.startDate || ''} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, startDate: v })) }))} placeholder="March 2025" />
+                <Input label="End Date" value={p.endDate || ''} onChange={(v) => setData((d) => ({ ...d, projects: updateItem(d.projects, pi, (item) => ({ ...item, endDate: v })) }))} placeholder="April 2025" />
+              </div>
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Project Summary</span>
               {p.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
@@ -832,6 +853,8 @@ export default function ResumeBuilderClient() {
                 id: makeId(),
                 projectName: '',
                 technologiesUsed: '',
+                startDate: '',
+                endDate: '',
                 bullets: [''],
                 links: [],
               }),
@@ -859,30 +882,33 @@ export default function ResumeBuilderClient() {
               <Input label="Certification Name" value={c.certificationName} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, certificationName: v })) }))} placeholder="Certification name" error={showErrors && !c.certificationName.trim()} />
               <div className="relative">
                 <Input label="Issuer" value={c.issuer} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Issuer" />
+              </div>
+              <div className="relative">
+                <Input label="Description (optional)" value={c.description || ''} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Completed 8 practical case studies..." />
                 <button
                   type="button"
                   onClick={() =>
                     enhanceText({
-                      section: 'issuer',
-                      text: c.issuer,
-                      context: `Certification issuer for ${c.certificationName || 'certification'}`,
-                      keyId: `issuer:${ci}`,
+                      section: 'cert_description',
+                      text: c.description,
+                      context: `Certification description for ${c.certificationName || 'certification'}`,
+                      keyId: `cert_desc:${ci}`,
                       onSuccess: (value) =>
                         setData((d) => ({
                           ...d,
                           certifications: updateItem(d.certifications, ci, (item) => ({
                             ...item,
-                            issuer: value,
+                            description: value,
                           })),
                         })),
                     })
                   }
-                  disabled={Boolean(enhancing[`issuer:${ci}`])}
+                  disabled={Boolean(enhancing[`cert_desc:${ci}`])}
                   className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
-                  aria-label="Enhance issuer"
+                  aria-label="Enhance description"
                   title="Enhance with AI"
                 >
-                  {enhancing[`issuer:${ci}`] ? (
+                  {enhancing[`cert_desc:${ci}`] ? (
                     <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
                   ) : (
                     <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
@@ -901,6 +927,7 @@ export default function ResumeBuilderClient() {
                 id: makeId(),
                 certificationName: '',
                 issuer: '',
+                description: '',
               }),
             }))
           }
@@ -926,7 +953,7 @@ export default function ResumeBuilderClient() {
               <Input label="Degree" value={e.degree} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, degree: v })) }))} placeholder="Degree" error={showErrors && !e.degree.trim()} />
               <Input label="Institution" value={e.institution} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, institution: v })) }))} placeholder="Institution" error={showErrors && !e.institution.trim()} />
               <div className="grid grid-cols-2 gap-[10px]">
-                <Input label="Graduation Year" value={e.graduationYear} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, graduationYear: v })) }))} placeholder="2025" />
+                <Input label="Graduation Year" value={e.graduationYear || e.endDate || ''} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, graduationYear: v, endDate: v })) }))} placeholder="2025" />
                 <Input label="CGPA / GPA (optional)" value={e.gpa} onChange={(v) => setData((d) => ({ ...d, education: updateItem(d.education, ei, (item) => ({ ...item, gpa: v })) }))} placeholder="8.5 / 10" />
               </div>
             </div>
@@ -992,6 +1019,7 @@ export default function ResumeBuilderClient() {
   const handleDownload = async () => {
     if (downloading) return;
     setDownloading(true);
+    setShowDownloadMenu(false);
     try {
       const res = await fetch('/api/resume', {
         method: 'POST',
@@ -1016,6 +1044,34 @@ export default function ResumeBuilderClient() {
     }
   };
 
+  const handleDownloadDocx = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    setShowDownloadMenu(false);
+    try {
+      const res = await fetch('/api/resume-docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(previewData),
+      });
+      if (!res.ok) throw new Error('DOCX generation failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'resume.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 1200);
+    } catch (err) {
+      console.error('Download error:', err);
+      window.alert('DOCX generation failed. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const hasEmptyFields = () => {
     const p = data.personal;
     if (!p.fullName.trim() || !p.professionalTitle.trim() || !p.emailAddress.trim()) return true;
@@ -1033,7 +1089,7 @@ export default function ResumeBuilderClient() {
     setStep((p) => Math.min(p + 1, steps.length - 1));
   };
 
-  const handleDownloadWithValidation = () => {
+  const handleDownloadWithValidation = (downloadFn) => {
     if (hasEmptyFields()) {
       setShowErrors(true);
       setConfirmModal({
@@ -1043,7 +1099,7 @@ export default function ResumeBuilderClient() {
       return;
     }
     setShowErrors(false);
-    handleDownload();
+    (downloadFn || handleDownload)();
   };
 
   // CSS class for error state
@@ -1108,7 +1164,7 @@ export default function ResumeBuilderClient() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                           Preview Resume
                         </button>
-                        <button type="button" onClick={() => { setShowMoreMenu(false); handleDownloadWithValidation(); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                        <button type="button" onClick={() => { setShowMoreMenu(false); setShowDownloadMenu(true); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                           Export Resume
                         </button>
@@ -1241,14 +1297,26 @@ export default function ResumeBuilderClient() {
                 >
                   Templates
                 </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadWithValidation}
-                  disabled={downloading}
-                  className="rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] py-[8px] text-[12px] font-semibold text-white disabled:opacity-70"
-                >
-                  {downloading ? 'Generating...' : 'Download PDF'}
-                </button>
+                <div className="relative" ref={downloadMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowDownloadMenu((v) => !v)}
+                    disabled={downloading}
+                    className="rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] py-[8px] text-[12px] font-semibold text-white disabled:opacity-70"
+                  >
+                    {downloading ? 'Generating...' : 'Download'}
+                  </button>
+                  {showDownloadMenu && (
+                    <div className="absolute bottom-full right-0 mb-[6px] w-[180px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
+                      <button type="button" onClick={() => { setShowDownloadMenu(false); handleDownloadWithValidation(handleDownload); }} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                        <span className="text-[15px]">📄</span> Download as .pdf
+                      </button>
+                      <button type="button" onClick={() => { setShowDownloadMenu(false); handleDownloadWithValidation(handleDownloadDocx); }} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                        <span className="text-[15px]">📝</span> Download as .docx
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1263,14 +1331,26 @@ export default function ResumeBuilderClient() {
           >
             Templates
           </button>
-          <button
-            type="button"
-            onClick={handleDownloadWithValidation}
-            disabled={downloading}
-            className="h-[42px] flex-[1.35] rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70"
-          >
-            {downloading ? 'Generating...' : 'Download PDF'}
-          </button>
+          <div className="relative flex-[1.35]" ref={downloadMenuRef}>
+            <button
+              type="button"
+              onClick={() => setShowDownloadMenu((v) => !v)}
+              disabled={downloading}
+              className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70"
+            >
+              {downloading ? 'Generating...' : 'Download'}
+            </button>
+            {showDownloadMenu && (
+              <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
+                <button type="button" onClick={() => { setShowDownloadMenu(false); handleDownloadWithValidation(handleDownload); }} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                  <span className="text-[15px]">📄</span> .pdf
+                </button>
+                <button type="button" onClick={() => { setShowDownloadMenu(false); handleDownloadWithValidation(handleDownloadDocx); }} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                  <span className="text-[15px]">📝</span> .docx
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

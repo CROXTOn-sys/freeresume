@@ -86,7 +86,7 @@ export default function TemplateDetailsClient() {
   const [showBuildModal, setShowBuildModal] = useState(false);
   const [importing, setImporting] = useState(false);
   const uploadInputRef = useRef(null);
-  const isPopularTemplate = templateId === '1';
+  const isPopularTemplate = templateId === '1' || templateId === '2';
 
   const handleUploadClick = () => {
     uploadInputRef.current?.click();
@@ -138,7 +138,7 @@ export default function TemplateDetailsClient() {
       }
 
       setShowBuildModal(false);
-      router.push(`/resume-builder/editor?template=${templateId}`);
+      router.push(`/resume-builder/${templateId === '2' ? 'editor2' : 'editor'}?template=${templateId}`);
     } catch (error) {
       window.alert(error?.message || 'Unable to import resume right now.');
     } finally {
@@ -201,11 +201,10 @@ export default function TemplateDetailsClient() {
             type="button"
             onClick={isPopularTemplate ? () => setShowBuildModal(true) : undefined}
             disabled={!isPopularTemplate}
-            className={`h-[56px] w-[90%] max-w-[720px] rounded-[16px] text-[15px] font-bold shadow-[0_14px_28px_rgba(108,99,255,0.24)] transition-transform duration-200 active:scale-[0.98] ${
-              isPopularTemplate
-                ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white'
-                : 'cursor-not-allowed bg-[#e8e9f3] text-[#7b7f8f] shadow-none'
-            }`}
+            className={`h-[56px] w-[90%] max-w-[720px] rounded-[16px] text-[15px] font-bold shadow-[0_14px_28px_rgba(108,99,255,0.24)] transition-transform duration-200 active:scale-[0.98] ${isPopularTemplate
+              ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white'
+              : 'cursor-not-allowed bg-[#e8e9f3] text-[#7b7f8f] shadow-none'
+              }`}
           >
             Create Resume
           </button>
@@ -298,7 +297,7 @@ export default function TemplateDetailsClient() {
                 </div>
 
                 <Link
-                  href={`/resume-builder/editor?template=${templateId}`}
+                  href={`/resume-builder/${templateId === '2' ? 'editor2' : 'editor'}?template=${templateId}&fresh=true`}
                   onClick={() => setShowBuildModal(false)}
                   className={`flex h-[52px] items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white shadow-[0_14px_28px_rgba(108,99,255,0.22)] ${importing ? 'pointer-events-none opacity-60' : ''}`}
                 >

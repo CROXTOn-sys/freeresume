@@ -5,6 +5,7 @@ import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 
 const templatePath = path.join(process.cwd(), 'templates', 'resume-template.html');
+const template2Path = path.join(process.cwd(), 'templates', 'resume-template2.html');
 
 async function getBrowser() {
   const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
@@ -92,6 +93,9 @@ function normalizeData(data = {}) {
     phone: data.phone || personal.phoneNumber || 'Phone Number',
     email: data.email || personal.emailAddress || 'Email Address',
     linkedin: data.linkedin || personal.linkedInUrl || 'LinkedIn',
+    github: data.github || personal.github || '',
+    github_url: data.github_url || data.github || personal.github || '',
+    linkedin_url: data.linkedin_url || data.linkedin || personal.linkedInUrl || '',
     summary: data.summary || '',
     skills_categories: Array.isArray(data.skills_categories)
       ? data.skills_categories.map((group) => ({
@@ -108,40 +112,64 @@ function normalizeData(data = {}) {
         })),
     experience: experience.map((item) => ({
       company: item.company || item.companyName || '',
+      location: item.location || '',
       role: item.role || item.position || item.title || '',
       start_date: item.start_date || item.startDate || '',
       end_date: item.end_date || item.endDate || '',
       bullets: Array.isArray(item.bullets) ? item.bullets.filter(Boolean) : [],
+      tools_used: item.tools_used || item.toolsUsed || '',
     })),
     projects: projects.map((item) => ({
       project_name: item.project_name || item.projectName || '',
       technologies: item.technologies || item.technologiesUsed || '',
       bullets: Array.isArray(item.bullets) ? item.bullets.filter(Boolean) : [],
+      year: item.year || '',
+      description: item.description || '',
+      start_date: item.start_date || item.startDate || '',
+      end_date: item.end_date || item.endDate || '',
     })),
     certifications: certifications.map((item) => ({
       cert_title: item.cert_title || item.certificationName || '',
       issuer: item.issuer || '',
+      cert_description: item.cert_description || item.description || '',
     })),
     education: education.map((item) => ({
       degree: item.degree || '',
       institution: item.institution || '',
       graduation_date: item.graduation_date || item.graduationYear || '',
+      start_date: item.start_date || item.startDate || '',
+      end_date: item.end_date || item.endDate || item.graduation_date || item.graduationYear || '',
       score: item.score || item.gpa || '',
+      score_label: item.score_label || item.scoreLabel || 'CGPA',
+      coursework: item.coursework || '',
     })),
   };
 }
 
-async function loadTemplateHtml() {
+async function loadTemplateHtml(templateId) {
   try {
-    return await readFile(templatePath, 'utf8');
-  } catch {
+    const filePath = templateId === '2' ? template2Path : templatePath;
+    console.log('[resume] loading template:', { templateId, filePath });
+    const content = await readFile(filePath, 'utf8');
+    console.log('[resume] template loaded, length:', content.length);
+    return content;
+  } catch (err) {
+    console.error('[resume] failed to load template:', err.message);
     return '';
   }
 }
 
-async function renderResumeHtml(data) {
-  const template = await loadTemplateHtml();
+async function renderResumeHtml(data, templateId) {
+  const template = await loadTemplateHtml(templateId);
   const normalized = normalizeData(data);
+  // For template 2, add boolean flags for conditional sections
+  if (templateId === '2') {
+    normalized.has_skills = (normalized.skills_categories || []).length > 0;
+    normalized.has_experience = (normalized.experience || []).length > 0;
+    normalized.has_education = (normalized.education || []).length > 0;
+    normalized.has_projects = (normalized.projects || []).length > 0;
+    normalized.has_certs = (normalized.certifications || []).length > 0;
+  }
   return template && template.trim() ? Mustache.render(template, normalized) : buildFallbackHtml(normalized);
 }
 
@@ -331,7 +359,8 @@ export async function GET(request) {
   const url = new URL(request.url);
   const data = decodePayload(url.searchParams.get('data'));
   const mode = url.searchParams.get('mode') || 'preview';
-  const html = await renderResumeHtml(data);
+  const templateId = url.searchParams.get('template') || '1';
+  const html = await renderResumeHtml(data, templateId);
 
   if (mode === 'preview') {
     return new Response(html, {
@@ -347,7 +376,10 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const data = await request.json();
-    const html = await renderResumeHtml(data);
+    const templateId = data._templateId || '1';
+    console.log('[resume POST] templateId:', templateId, 'has projects:', data.projects?.length, 'has certs:', data.certifications?.length);
+    const html = await renderResumeHtml(data, templateId);
+    console.log('[resume POST] html length:', html.length, 'has Project Work:', html.includes('Project Work'));
 
     const browser = await getBrowser();
 
