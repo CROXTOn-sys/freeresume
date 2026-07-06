@@ -24,8 +24,11 @@ body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .entry{break-inside:avoid;page-break-inside:avoid}
 .entry-header,.project-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .entry-org,.project-name{font-weight:700}
-.entry-dates,.project-tech{font-style:italic;white-space:nowrap;text-align:right}
+.entry-dates{font-style:italic;white-space:nowrap;text-align:right}
+.project-tech{font-style:italic;font-weight:400}
 .entry-role{font-style:italic}
+.entry-role-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.entry-tools{font-style:italic;white-space:nowrap;text-align:right}
 .entry-bullets,.cert-list{list-style:none;padding:0}
 .entry-bullets li,.cert-list li{position:relative;padding-left:11px}
 .entry-bullets li::before{content:'\\2013';position:absolute;left:0}
@@ -78,7 +81,7 @@ w.querySelectorAll('.entry').forEach(function(e){e.style.marginBottom=p.em+'px';
 w.querySelectorAll('.entry-bullets li,.cert-list li').forEach(function(b){b.style.fontSize=BF+'pt';b.style.lineHeight=String(p.blh);b.style.marginBottom='0';});
 w.querySelectorAll('.cert-list li').forEach(function(c){c.style.marginBottom=p.cmb+'px';});
 w.querySelectorAll('.entry-org,.project-name,.edu-degree').forEach(function(e){e.style.fontSize=RF+'pt';});
-w.querySelectorAll('.entry-dates,.project-tech,.entry-role,.edu-institution,.edu-dates,.edu-score').forEach(function(e){e.style.fontSize=SF+'pt';});
+w.querySelectorAll('.entry-dates,.entry-role,.edu-institution,.edu-dates,.edu-score').forEach(function(e){e.style.fontSize=SF+'pt';});
 var sm=w.querySelector('.summary-text');if(sm){sm.style.fontSize=BF+'pt';sm.style.lineHeight=String(p.lh);}
 w.querySelectorAll('.skills-table td').forEach(function(td){td.style.fontSize=BF+'pt';td.style.lineHeight=String(p.lh);td.style.padding=p.sp;});
 w.querySelectorAll('.skills-category-label').forEach(function(l){l.style.paddingRight='8px';});
@@ -99,10 +102,10 @@ function esc(str) {
 function renderTemplate(data) {
   const d = data || {};
   const skillsHtml = (d.skills_categories || []).map((s) => `<tr><td class="skills-category-label">${esc(s.category_label)}:</td><td>${esc(s.skills_list)}</td></tr>`).join('');
-  const experienceHtml = (d.experience || []).map((e) => { const b = (e.bullets || []).map((x) => `<li>${esc(x)}</li>`).join(''); return `<div class="entry"><div class="entry-header"><div class="entry-org">${esc(e.company)}</div><div class="entry-dates">${esc(e.start_date)} - ${esc(e.end_date)}</div></div><div class="entry-role">${esc(e.role)}</div><ul class="entry-bullets">${b}</ul></div>`; }).join('');
-  const projectsHtml = (d.projects || []).map((p) => { const b = (p.bullets || []).map((x) => `<li>${esc(x)}</li>`).join(''); return `<div class="entry"><div class="project-header"><div class="project-name">${esc(p.project_name)}</div><div class="project-tech">${esc(p.technologies)}</div></div><ul class="entry-bullets">${b}</ul></div>`; }).join('');
-  const certificationsHtml = (d.certifications || []).map((c) => `<li><strong>${esc(c.cert_title)}</strong> - ${esc(c.issuer)}</li>`).join('');
-  const educationHtml = (d.education || []).map((e) => `<div class="edu-entry"><div><div class="edu-degree">${esc(e.degree)}</div><div class="edu-institution">${esc(e.institution)}</div></div><div style="text-align:right"><div class="edu-dates">${esc(e.graduation_date)}</div><div class="edu-score">${esc(e.score)}</div></div></div>`).join('');
+  const experienceHtml = (d.experience || []).map((e) => { const b = (e.bullets || []).map((x) => `<li>${esc(x)}</li>`).join(''); const tools = e.tools_used ? `<div class="entry-tools">Tools Used: ${esc(e.tools_used)}</div>` : ''; return `<div class="entry"><div class="entry-header"><div class="entry-org">${esc(e.company)}</div><div class="entry-dates">${esc(e.start_date)} - ${esc(e.end_date)}</div></div><div class="entry-role-row"><div class="entry-role">${esc(e.role)}</div>${tools}</div><ul class="entry-bullets">${b}</ul></div>`; }).join('');
+  const projectsHtml = (d.projects || []).map((p) => { const b = (p.bullets || []).map((x) => `<li>${esc(x)}</li>`).join(''); const tech = p.technologies ? ` | <span class="project-tech">${esc(p.technologies)}</span>` : ''; const dates = p.start_date ? `<div class="entry-dates">${esc(p.start_date)} – ${esc(p.end_date)}</div>` : ''; return `<div class="entry"><div class="project-header"><div class="project-name">${esc(p.project_name)}${tech}</div>${dates}</div><ul class="entry-bullets">${b}</ul></div>`; }).join('');
+  const certificationsHtml = (d.certifications || []).map((c) => { const issuer = c.issuer ? ` - ${esc(c.issuer)}` : ''; const desc = c.cert_description ? `: ${esc(c.cert_description)}` : ''; return `<li><strong>${esc(c.cert_title)}</strong>${issuer}${desc}</li>`; }).join('');
+  const educationHtml = (d.education || []).map((e) => { const gradDate = e.graduation_date ? `<div class="edu-dates">Graduated: ${esc(e.graduation_date)}</div>` : ''; const score = e.score ? `<div class="edu-score">CGPA: ${esc(e.score)}</div>` : ''; return `<div class="edu-entry"><div><div class="edu-degree">${esc(e.degree)}</div><div class="edu-institution">${esc(e.institution)}</div></div><div style="text-align:right">${gradDate}${score}</div></div>`; }).join('');
 
   return TEMPLATE
     .replace('{{name}}', esc(d.name || 'Your Name'))

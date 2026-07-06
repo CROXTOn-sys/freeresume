@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{name}} – Resume</title>
+
+  <!--
+    TYPOGRAPHY ANALYSIS — Ashish Pratap Singh PDF
+    ──────────────────────────────────────────────
+    Font family : Georgia (or similar classical serif)
+    Evidence    : Serif letterforms throughout body and headings,
+                  traditional resume aesthetic, no rounded humanist feel
+    Name        : ~20pt, plain weight (not uppercase, not heavy bold)
+    Section hdgs: 10.5pt bold, bottom border only, NO uppercase
+    Body text   : 10pt Georgia serif, line-height 1.4
+    Contact line: 9pt, icons + pipe separators, centered
+    Bullets     : round • dots, 10pt
+    Company     : bold left, dates italic right (same line)
+    Role        : italic, line below company
+    Skills      : bold label + colon inline, values normal weight
+    Projects    : bullet list style (not entry blocks)
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── BASE TYPOGRAPHY ──
+       Primary  : Georgia (installed on all OS natively)
+       Fallback : Lora (Google Fonts — closest free serif match)
+       Then     : Times New Roman → serif chain
+    */
+    html {
+      font-size: 10pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body {
+      font-family: 'Georgia', 'Lora', 'Times New Roman', Times, serif;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #000000;
+      background: #ffffff;
+    }
+
+    /* ── PRINT / PAGE ── */
+    @page {
+      size: A4;
+      margin: 12mm 15mm 12mm 15mm;
+    }
+
+    @media print {
+      body { background: #ffffff; font-size: 10pt; }
+      .resume-wrapper { padding: 0; max-width: none; box-shadow: none; }
+      section { page-break-inside: avoid; }
+      .entry { page-break-inside: avoid; }
+      a { color: #000 !important; text-decoration: none !important; }
+    }
+
+    /* ── WRAPPER ── */
+    .resume-wrapper {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 22px 28px;
+      background: #ffffff;
+    }
+
+    /* ══════════════════════════════════════════
+       HEADER
+       Name: ~20pt, normal/semibold weight, no uppercase
+       Contact: 9pt, icon + text pairs, pipe separated
+    ══════════════════════════════════════════ */
+    .resume-header {
+      text-align: center;
+      margin-bottom: 10px;
+      padding-bottom: 0;
+    }
+
+    .resume-header h1 {
+      font-family: 'Georgia', 'Lora', serif;
+      font-size: 20pt;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: #000000;
+      line-height: 1.2;
+      margin-bottom: 5px;
+    }
+
+    .contact-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      font-size: 9pt;
+      color: #000000;
+    }
+
+    .contact-line a {
+      color: #000000;
+      text-decoration: none;
+    }
+
+    .contact-line .c-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .contact-line .c-sep {
+      margin: 0 7px;
+      color: #555;
+    }
+
+    /* ══════════════════════════════════════════
+       SECTION HEADINGS
+       Georgia bold, NOT uppercase, bottom border only
+       Slightly larger than body: 10.5pt
+    ══════════════════════════════════════════ */
+    .section-title {
+      font-family: 'Georgia', 'Lora', serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      color: #000000;
+      padding-bottom: 2px;
+      border-bottom: 0.8px solid #000000;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    /* ══════════════════════════════════════════
+       SKILLS SECTION
+       Bold label + colon, values inline same line
+    ══════════════════════════════════════════ */
+    .skills-block { margin-bottom: 3px; }
+
+    .skills-block p {
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #000000;
+    }
+
+    .skills-label {
+      font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════════
+       WORK EXPERIENCE ENTRIES
+       Company bold left — dates italic right (same line)
+       Role italic on next line
+       Bullets: round •, 10pt
+    ══════════════════════════════════════════ */
+    .entry {
+      margin-bottom: 9px;
+    }
+
+    .entry:last-child { margin-bottom: 0; }
+
+    /* Company ← → Dates on same line */
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .entry-org {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #000000;
+    }
+
+    .entry-location {
+      font-weight: 400;
+      font-size: 10pt;
+    }
+
+    .entry-dates {
+      font-size: 9.5pt;
+      font-style: italic;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    /* Role italic below company */
+    .entry-role {
+      font-size: 10pt;
+      font-style: italic;
+      color: #000000;
+      margin-bottom: 3px;
+    }
+
+    /* Tech stack line at bottom of entry (italic, smaller) */
+    .entry-tech {
+      font-size: 9pt;
+      font-style: italic;
+      color: #222;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* Round bullet list */
+    .entry-bullets {
+      list-style: disc;
+      padding-left: 16px;
+      margin: 3px 0 2px;
+    }
+
+    .entry-bullets li {
+      font-size: 10pt;
+      color: #000000;
+      line-height: 1.45;
+      margin-bottom: 2px;
+    }
+
+    /* ══════════════════════════════════════════
+       EDUCATION
+       Institution bold left — dates right
+       Degree italic below, CGPA inline
+    ══════════════════════════════════════════ */
+    .edu-entry {
+      margin-bottom: 7px;
+    }
+
+    .edu-entry:last-child { margin-bottom: 0; }
+
+    .edu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .edu-institution {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #000000;
+    }
+
+    .edu-dates {
+      font-size: 9.5pt;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    .edu-degree-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-top: 1px;
+    }
+
+    .edu-degree {
+      font-size: 10pt;
+      font-style: italic;
+      color: #000000;
+    }
+
+    .edu-score {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    .edu-coursework {
+      font-size: 9.5pt;
+      color: #000000;
+      line-height: 1.45;
+      margin-top: 2px;
+    }
+
+    /* ══════════════════════════════════════════
+       PROJECTS — bullet list style
+       Each project: bold title + year inline, then description
+    ══════════════════════════════════════════ */
+    .project-list {
+      list-style: disc;
+      padding-left: 16px;
+      margin: 0;
+    }
+
+    .project-list li {
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #000000;
+      margin-bottom: 5px;
+    }
+
+    .project-list li:last-child { margin-bottom: 0; }
+
+    .project-title {
+      font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════════
+       AWARDS & CERTIFICATIONS
+    ══════════════════════════════════════════ */
+    .cert-list {
+      list-style: disc;
+      padding-left: 16px;
+      margin: 0;
+    }
+
+    .cert-list li {
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #000000;
+      margin-bottom: 2px;
+    }
+
+    .cert-list li:last-child { margin-bottom: 0; }
+
+    /* ══════════════════════════════════════════
+       CUSTOM SECTIONS
+    ══════════════════════════════════════════ */
+    .custom-content {
+      font-size: 10pt;
+      color: #000000;
+      line-height: 1.45;
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE (screen only)
+    ══════════════════════════════════════════ */
+    @media screen and (max-width: 600px) {
+      .resume-wrapper { padding: 14px 12px; }
+      .entry-header, .edu-header { flex-direction: column; }
+      .entry-dates, .edu-dates { text-align: left; font-style: normal; }
+      .contact-line { flex-direction: column; align-items: center; }
+      .contact-line .c-sep { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="resume-wrapper">
+
+  <!-- ══════════════════════════════════════════
+       HEADER
+       {{name}}
+       {{email}} | {{phone}} | {{github}} | {{linkedin}}
+  ══════════════════════════════════════════ -->
+  <header class="resume-header">
+    <h1>{{name}}</h1>
+    <div class="contact-line">
+      {{#email}}<span class="c-item"><a href="mailto:{{email}}">{{email}}</a></span>{{/email}}
+      {{#phone}}<span class="c-sep">|</span><span class="c-item">{{phone}}</span>{{/phone}}
+      {{#github}}<span class="c-sep">|</span><span class="c-item"><a href="{{github_url}}" target="_blank">{{github}}</a></span>{{/github}}
+      {{#linkedin}}<span class="c-sep">|</span><span class="c-item"><a href="{{linkedin_url}}" target="_blank">{{linkedin}}</a></span>{{/linkedin}}
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════
+       SKILLS
+       {{#skills_categories}}
+         {{category_label}}: {{skills_list}}
+       {{/skills_categories}}
+  ══════════════════════════════════════════ -->
+  {{#has_skills}}
+  <section aria-label="Skills">
+    <h2 class="section-title">Skills</h2>
+    {{#skills_categories}}
+    <div class="skills-block">
+      <p><span class="skills-label">{{category_label}}:</span> {{skills_list}}</p>
+    </div>
+    {{/skills_categories}}
+  </section>
+  {{/has_skills}}
+
+  <!-- ══════════════════════════════════════════
+       WORK EXPERIENCE
+       {{#experience}}
+         {{company}}, {{location}} | {{start_date}} - {{end_date}}
+         {{role}}
+         {{#bullets}}{{.}}{{/bullets}}
+         {{tools_used}}
+       {{/experience}}
+  ══════════════════════════════════════════ -->
+  {{#has_experience}}
+  <section aria-label="Work Experience">
+    <h2 class="section-title">Work Experience</h2>
+    {{#experience}}
+    <div class="entry">
+      <div class="entry-header">
+        <span class="entry-org">{{company}}{{#location}}, <span class="entry-location">{{location}}</span>{{/location}}</span>
+        <span class="entry-dates">{{start_date}} - {{end_date}}</span>
+      </div>
+      <p class="entry-role">{{role}}</p>
+      <ul class="entry-bullets">
+        {{#bullets}}<li>{{.}}</li>{{/bullets}}
+        {{#tools_used}}<li>{{tools_used}}</li>{{/tools_used}}
+      </ul>
+    </div>
+    {{/experience}}
+  </section>
+  {{/has_experience}}
+
+  <!-- ══════════════════════════════════════════
+       EDUCATION
+       {{#education}}
+         {{institution}} | {{start_date}} - {{end_date}}
+         {{degree}} | CGPA: {{score}}
+         {{coursework}}
+       {{/education}}
+  ══════════════════════════════════════════ -->
+  {{#has_education}}
+  <section aria-label="Education">
+    <h2 class="section-title">Education</h2>
+    {{#education}}
+    <div class="edu-entry">
+      <div class="edu-header">
+        <span class="edu-institution">{{institution}}</span>
+        <span class="edu-dates">{{start_date}} - {{end_date}}</span>
+      </div>
+      <div class="edu-degree-row">
+        <span class="edu-degree">{{degree}}</span>
+        {{#score}}<span class="edu-score">{{score_label}}: {{score}}</span>{{/score}}
+      </div>
+      {{#coursework}}<p class="edu-coursework"><strong>Relevant Coursework:</strong> {{coursework}}</p>{{/coursework}}
+    </div>
+    {{/education}}
+  </section>
+  {{/has_education}}
+
+  <!-- ══════════════════════════════════════════
+       PROJECT WORK
+       {{#projects}}
+         {{project_name}} ({{year}}): {{description}}
+         {{technologies}}
+       {{/projects}}
+  ══════════════════════════════════════════ -->
+  {{#has_projects}}
+  <section aria-label="Project Work">
+    <h2 class="section-title">Project Work</h2>
+    <ul class="project-list">
+      {{#projects}}
+      <li>
+        <span class="project-title">{{project_name}}{{#year}} ({{year}}){{/year}}:</span>
+        {{description}}
+        {{#technologies}} <em>{{technologies}}</em>{{/technologies}}
+      </li>
+      {{/projects}}
+    </ul>
+  </section>
+  {{/has_projects}}
+
+  <!-- ══════════════════════════════════════════
+       AWARDS & CERTIFICATIONS
+       {{#certifications}}
+         {{cert_title}}
+       {{/certifications}}
+  ══════════════════════════════════════════ -->
+  {{#has_certs}}
+  <section aria-label="Awards and Certifications">
+    <h2 class="section-title">Awards and Certificates</h2>
+    <ul class="cert-list">
+      {{#certifications}}
+      <li>
+        <strong>{{cert_title}}</strong>{{#issuer}}: {{issuer}}{{/issuer}}{{#cert_description}} – {{cert_description}}{{/cert_description}}
+      </li>
+      {{/certifications}}
+    </ul>
+  </section>
+  {{/has_certs}}
+
+  <!-- ══════════════════════════════════════════
+       CUSTOM SECTIONS (optional)
+       {{#custom_sections}}
+         {{section_title}} : {{section_content}}
+       {{/custom_sections}}
+  ══════════════════════════════════════════ -->
+  {{#custom_sections}}
+  <section aria-label="{{section_title}}">
+    <h2 class="section-title">{{section_title}}</h2>
+    <div class="custom-content">{{section_content}}</div>
+  </section>
+  {{/custom_sections}}
+
+</div>
+</body>
+</html>
