@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import Mustache from 'mustache';
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
 
 const templatePath = path.join(process.cwd(), 'templates', 'resume-template.html');
 const template2Path = path.join(process.cwd(), 'templates', 'resume-template2.html');
@@ -11,45 +10,20 @@ async function getBrowser() {
   const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
 
   if (isProduction) {
-    // Production (Railway Linux container): prefer system chromium set via env var
-    const envPath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    if (envPath) {
-      return await puppeteer.launch({
-        executablePath: envPath,
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-gpu',
-          '--disable-dev-shm-usage',
-          '--no-zygote',
-        ],
-      });
-    }
-
-    // Fallback to @sparticuz/chromium
-    try {
-      const execPath = await chromium.executablePath();
-      return await puppeteer.launch({
-        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--no-zygote'],
-        defaultViewport: chromium.defaultViewport,
-        executablePath: execPath,
-        headless: chromium.headless,
-      });
-    } catch (err) {
-      console.error('[resume] @sparticuz/chromium failed, trying system chromium:', err.message);
-      const systemPaths = ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'];
-      const { existsSync } = await import('node:fs');
-      const found = systemPaths.find((p) => existsSync(p));
-      if (found) {
-        return await puppeteer.launch({
-          executablePath: found,
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--no-zygote'],
-        });
-      }
-      throw err;
-    }
+    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+    console.log('[resume] production: launching chromium at:', execPath);
+    return await puppeteer.launch({
+      executablePath: execPath,
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+      ],
+    });
   }
 
   // Local development: try common browser paths
