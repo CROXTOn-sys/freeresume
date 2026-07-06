@@ -16,6 +16,7 @@ FROM node:20-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     chromium \
+    dbus \
     fonts-liberation \
     fonts-noto-color-emoji \
     libasound2 \

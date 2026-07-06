@@ -17,7 +17,7 @@ async function getBrowser() {
       return await puppeteer.launch({
         executablePath: envPath,
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-software-rasterizer', '--single-process'],
       });
     }
 
@@ -25,7 +25,7 @@ async function getBrowser() {
     try {
       const execPath = await chromium.executablePath();
       return await puppeteer.launch({
-        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--single-process'],
         defaultViewport: chromium.defaultViewport,
         executablePath: execPath,
         headless: chromium.headless,
@@ -39,7 +39,7 @@ async function getBrowser() {
         return await puppeteer.launch({
           executablePath: found,
           headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--single-process'],
         });
       }
       throw err;
