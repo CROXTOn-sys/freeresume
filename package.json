@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^131.0.1",
     "docx": "^9.7.1",
     "mammoth": "^1.12.0",
     "mustache": "^4.2.0",

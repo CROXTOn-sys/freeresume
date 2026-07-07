@@ -10,11 +10,11 @@ async function getBrowser() {
   const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
 
   if (isProduction) {
-    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
-    console.log('[resume] production: launching chromium at:', execPath);
+    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chrome-for-testing';
+    console.log('[resume] production: launching chrome at:', execPath);
     return await puppeteer.launch({
       executablePath: execPath,
-      headless: 'new',
+      headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
