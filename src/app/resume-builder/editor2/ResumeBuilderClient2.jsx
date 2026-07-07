@@ -507,14 +507,12 @@ export default function ResumeBuilderClient2() {
         </div>
       </div>
 
-      {/* Success animation */}
-      {showSuccess && (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center pointer-events-none">
-          <div className="flex flex-col items-center animate-[successPop_0.4s_ease-out]">
-            <div className="flex h-[80px] w-[80px] items-center justify-center rounded-full bg-[#10b981] shadow-[0_12px_40px_rgba(16,185,129,0.4)]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <p className="mt-[12px] text-[14px] font-bold text-black bg-white/90 px-[16px] py-[6px] rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.1)]">Downloaded!</p>
+      {/* Loading overlay */}
+      {downloading && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center">
+            <img src="/images/loading-star.jpg" alt="" className="h-[60px] w-[60px] animate-spin" />
+            <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">Loading...</p>
           </div>
         </div>
       )}
