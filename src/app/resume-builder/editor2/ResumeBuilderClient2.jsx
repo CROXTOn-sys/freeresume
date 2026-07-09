@@ -56,7 +56,6 @@ export default function ResumeBuilderClient2() {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-  const [enhancing, setEnhancing] = useState({});
   const downloadMenuRef = useRef(null);
   const stepRailRef = useRef(null);
 
@@ -190,20 +189,70 @@ export default function ResumeBuilderClient2() {
     finally { setDownloading(false); }
   };
 
-  const enhanceText = async ({ section, text, context, onSuccess, keyId }) => {
-    const currentText = String(text || '').trim();
-    if (!currentText) return;
-    const key = keyId || `${section}:${context || 'default'}`;
-    setEnhancing((prev) => ({ ...prev, [key]: true }));
+  const handleEnhanceAll = () => {
+    // Check if enhanceable fields have content
+    const hasBullets = data.experience.some((e) => e.bullets.some((b) => b.trim()));
+    const hasProjectDesc = data.projects.some((p) => p.description?.trim());
+    const hasCertDesc = data.certifications.some((c) => c.description?.trim());
+    const hasCoursework = data.education.some((e) => e.coursework?.trim());
+
+    if (!hasBullets && !hasProjectDesc && !hasCertDesc && !hasCoursework) {
+      setConfirmModal({ message: 'Please fill in the required fields first (experience bullets, project descriptions, certification descriptions, coursework) before enhancing.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      return;
+    }
+
+    setConfirmModal({
+      message: 'This will enhance the following sections with AI: Experience bullets, Project descriptions, Certification descriptions, and Coursework.',
+      onConfirm: () => { setConfirmModal(null); runEnhanceAll(); },
+      confirmText: 'Proceed',
+      confirmColor: 'bg-[#10b981]',
+    });
+  };
+
+  const runEnhanceAll = async () => {
+    setDownloading(true);
     try {
-      const res = await fetch('/api/ai-enhance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ section, text: currentText, context }) });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.error || 'Enhancement failed');
-      const enhanced = String(payload?.text || '').trim();
-      if (enhanced) onSuccess(enhanced);
-      else throw new Error('No enhanced text returned');
-    } catch (err) { console.error('AI enhancement error:', err); window.alert('AI enhancement is temporarily unavailable. Please try again.'); }
-    finally { setEnhancing((prev) => { const next = { ...prev }; delete next[key]; return next; }); }
+      const payload = {
+        experience: data.experience.map((e) => ({ bullets: e.bullets.filter(Boolean) })),
+        projects: data.projects.map((p) => ({ description: p.description || '' })),
+        certifications: data.certifications.map((c) => ({ description: c.description || '' })),
+        education: data.education.map((e) => ({ coursework: e.coursework || '' })),
+      };
+      const res = await fetch('/api/ai-enhance-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Enhancement failed');
+      const enhanced = result.enhanced;
+      if (!enhanced) throw new Error('No enhanced data returned');
+      setData((prev) => {
+        const next = { ...prev };
+        if (Array.isArray(enhanced.experience)) {
+          next.experience = prev.experience.map((exp, i) => {
+            const e = enhanced.experience.find((x) => x.index === i);
+            return e && Array.isArray(e.bullets) ? { ...exp, bullets: e.bullets } : exp;
+          });
+        }
+        if (Array.isArray(enhanced.projects)) {
+          next.projects = prev.projects.map((proj, i) => {
+            const p = enhanced.projects.find((x) => x.index === i);
+            return p && p.description ? { ...proj, description: p.description } : proj;
+          });
+        }
+        if (Array.isArray(enhanced.certifications)) {
+          next.certifications = prev.certifications.map((cert, i) => {
+            const c = enhanced.certifications.find((x) => x.index === i);
+            return c && c.description ? { ...cert, description: c.description } : cert;
+          });
+        }
+        if (Array.isArray(enhanced.education)) {
+          next.education = prev.education.map((edu, i) => {
+            const e = enhanced.education.find((x) => x.index === i);
+            return e && e.coursework ? { ...edu, coursework: e.coursework } : edu;
+          });
+        }
+        return next;
+      });
+    } catch (err) { console.error(err); window.alert('AI enhancement is temporarily unavailable. Please try again.'); }
+    finally { setDownloading(false); }
   };
 
   const hasEmptyFields = () => {
@@ -282,12 +331,7 @@ export default function ResumeBuilderClient2() {
               <span className="text-[12px] font-semibold text-black">Bullet Points</span>
               {exp.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
-                  <div className="relative flex-1">
-                    <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder="Achievement or responsibility" className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] px-[14px] pr-[42px] text-[14px] outline-none focus:border-[color:var(--purple)]" />
-                    <button type="button" onClick={() => enhanceText({ section: 'experience_bullet', text: b, context: `Experience bullet for ${exp.company || 'company'} - ${exp.role || 'role'}`, keyId: `exp:${ei}:${bi}`, onSuccess: (value) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => value) })) })) })} disabled={Boolean(enhancing[`exp:${ei}:${bi}`])} className="absolute bottom-[12px] right-[10px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50" aria-label="Enhance with AI" title="Enhance with AI">
-                      {enhancing[`exp:${ei}:${bi}`] ? <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" /> : <img src="/images/AI%20enhancement.png" alt="" className="h-[20px] w-[20px] object-contain" />}
-                    </button>
-                  </div>
+                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder="Achievement or responsibility" className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]" />
                   <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) }))} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
@@ -321,12 +365,7 @@ export default function ResumeBuilderClient2() {
                 <Input label="Score Label" value={edu.scoreLabel} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, scoreLabel: v })) }))} placeholder="CGPA" />
                 <Input label="Score" value={edu.score} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, score: v })) }))} placeholder="7.96/10" />
               </div>
-              <div className="relative">
-                <TextArea label="Relevant Coursework" value={edu.coursework} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: v })) }))} placeholder="Data Structures, Algorithms, Machine Learning..." rows={2} />
-                <button type="button" onClick={() => enhanceText({ section: 'coursework', text: edu.coursework, context: `Relevant coursework for ${edu.degree || 'degree'} at ${edu.institution || 'institution'}`, keyId: `edu:${ei}:cw`, onSuccess: (value) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: value })) })) })} disabled={Boolean(enhancing[`edu:${ei}:cw`])} className="absolute bottom-[10px] right-[10px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50" aria-label="Enhance with AI" title="Enhance with AI">
-                  {enhancing[`edu:${ei}:cw`] ? <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" /> : <img src="/images/AI%20enhancement.png" alt="" className="h-[20px] w-[20px] object-contain" />}
-                </button>
-              </div>
+              <TextArea label="Relevant Coursework" value={edu.coursework} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: v })) }))} placeholder="Data Structures, Algorithms, Machine Learning..." rows={2} />
             </div>
           </div>
         ))}
@@ -347,12 +386,7 @@ export default function ResumeBuilderClient2() {
                 <Input label="Project Name" value={proj.name} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, name: v })) }))} placeholder="Word Lookup Dictionary" error={showErrors && !proj.name.trim()} />
                 <Input label="Year" value={proj.year} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, year: v })) }))} placeholder="2015" />
               </div>
-              <div className="relative">
-                <TextArea label="Description" value={proj.description} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: v })) }))} placeholder="Developed a desktop software for online lookup..." rows={3} />
-                <button type="button" onClick={() => enhanceText({ section: 'project_description', text: proj.description, context: `Project description for ${proj.name || 'project'} using ${proj.technologies || 'technologies'}`, keyId: `proj:${pi}:desc`, onSuccess: (value) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: value })) })) })} disabled={Boolean(enhancing[`proj:${pi}:desc`])} className="absolute bottom-[10px] right-[10px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50" aria-label="Enhance with AI" title="Enhance with AI">
-                  {enhancing[`proj:${pi}:desc`] ? <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" /> : <img src="/images/AI%20enhancement.png" alt="" className="h-[20px] w-[20px] object-contain" />}
-                </button>
-              </div>
+              <TextArea label="Description" value={proj.description} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: v })) }))} placeholder="Developed a desktop software for online lookup..." rows={3} />
               <Input label="Technologies" value={proj.technologies} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, technologies: v })) }))} placeholder="Python, BeautifulSoup, C++" />
             </div>
           </div>
@@ -372,12 +406,7 @@ export default function ResumeBuilderClient2() {
             <div className="grid gap-[10px]">
               <Input label="Title" value={cert.title} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, title: v })) }))} placeholder="Mentor at Scaler Academy" error={showErrors && !cert.title.trim()} />
               <Input label="Issuer" value={cert.issuer} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Scaler" />
-              <div className="relative">
-                <TextArea label="Description (optional)" value={cert.description} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Helping students get better at problem solving..." rows={2} />
-                <button type="button" onClick={() => enhanceText({ section: 'cert_description', text: cert.description, context: `Award/certification description for ${cert.title || 'certification'}`, keyId: `cert:${ci}:desc`, onSuccess: (value) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: value })) })) })} disabled={Boolean(enhancing[`cert:${ci}:desc`])} className="absolute bottom-[10px] right-[10px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50" aria-label="Enhance with AI" title="Enhance with AI">
-                  {enhancing[`cert:${ci}:desc`] ? <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" /> : <img src="/images/AI%20enhancement.png" alt="" className="h-[20px] w-[20px] object-contain" />}
-                </button>
-              </div>
+              <TextArea label="Description (optional)" value={cert.description} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Helping students get better at problem solving..." rows={2} />
             </div>
           </div>
         ))}
@@ -452,6 +481,7 @@ export default function ResumeBuilderClient2() {
             <button type="button" onClick={() => setStep((p) => Math.max(p - 1, 0))} disabled={step === 0} className="rounded-[14px] border border-[color:#e5e7eb] bg-white px-[16px] py-[12px] text-[14px] font-bold text-black disabled:opacity-50">Previous</button>
             <button type="button" onClick={handleNext} className="rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[18px] py-[12px] text-[14px] font-bold text-white">Next</button>
           </div>
+          <p className="mt-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
         </div>
 
         {/* Preview panel */}
@@ -469,6 +499,8 @@ export default function ResumeBuilderClient2() {
               </div>
             </div>
             <div className="mt-[8px] hidden shrink-0 md:block">
+              <p className="mb-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
+              <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="mb-[8px] w-full rounded-full border border-[color:#d8d2ff] bg-white py-[10px] text-[13px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
               <div className="relative" ref={downloadMenuRef}>
                 <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[10px] text-[13px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
                 {showDownloadMenu && (
@@ -490,7 +522,7 @@ export default function ResumeBuilderClient2() {
       {/* Mobile bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:#eceef2] bg-white px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(17,24,39,0.08)] md:hidden">
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
-          <button type="button" onClick={() => router.push('/#templates-section')} className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)]">Templates</button>
+          <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
           <div className="relative flex-[1.35]" ref={downloadMenuRef}>
             <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
             {showDownloadMenu && (
@@ -525,8 +557,8 @@ export default function ResumeBuilderClient2() {
             <h3 className="text-[16px] font-bold text-black">Are you sure?</h3>
             <p className="mt-[6px] text-[13px] text-[#666]">{confirmModal.message}</p>
             <div className="mt-[20px] flex gap-[10px]">
-              <button type="button" onClick={() => setConfirmModal(null)} className="flex-1 rounded-[12px] border border-[color:#e5e7eb] bg-white py-[10px] text-[13px] font-semibold text-black">Cancel</button>
-              <button type="button" onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }} className="flex-1 rounded-[12px] bg-red-500 py-[10px] text-[13px] font-semibold text-white">Delete</button>
+              {!confirmModal.singleButton && <button type="button" onClick={() => setConfirmModal(null)} className="flex-1 rounded-[12px] border border-[color:#e5e7eb] bg-white py-[10px] text-[13px] font-semibold text-black">Cancel</button>}
+              <button type="button" onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }} className={`flex-1 rounded-[12px] py-[10px] text-[13px] font-semibold text-white ${confirmModal.confirmColor || 'bg-red-500'}`}>{confirmModal.confirmText || 'Delete'}</button>
             </div>
           </div>
         </div>
