@@ -26,18 +26,19 @@ export default function BugReport() {
     if (!type || !description.trim()) return;
     setSubmitting(true);
     try {
-      // Send to N8N webhook (configure URL in env)
-      const webhookUrl = process.env.NEXT_PUBLIC_BUG_REPORT_WEBHOOK || '';
-      if (webhookUrl) {
-        const formData = new FormData();
-        formData.append('type', type);
-        formData.append('description', description);
-        formData.append('steps', steps);
-        formData.append('url', window.location.href);
-        formData.append('userAgent', navigator.userAgent);
-        files.forEach((f, i) => formData.append(`file_${i}`, f));
-        await fetch(webhookUrl, { method: 'POST', body: formData });
-      }
+      const payload = {
+        type,
+        description,
+        steps,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+      };
+      await fetch('https://vmi3296646.contaboserver.net/webhook/resumelab', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       setSubmitted(true);
       setTimeout(() => { setOpen(false); reset(); }, 1500);
     } catch (err) {
