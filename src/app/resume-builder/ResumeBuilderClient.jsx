@@ -206,7 +206,7 @@ export default function ResumeBuilderClient() {
   const [step, setStep] = useState(0);
   const [mobileView, setMobileView] = useState('form');
   const [data, setData] = useState(initialData);
-  const [enhancing, setEnhancing] = useState({});
+
   const [isImported, setIsImported] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState(0);
   const [downloading, setDownloading] = useState(false);
@@ -398,31 +398,7 @@ export default function ResumeBuilderClient() {
       </div>
     </Card>,
     <Card key="summary" title="Summary" description="Write a short professional summary.">
-      <div className="relative">
-        <TextArea value={data.summary} onChange={(v) => setData((p) => ({ ...p, summary: v }))} placeholder="Tell a recruiter who you are, what you do, and what you are good at." error={showErrors && !data.summary.trim()} />
-        <button
-          type="button"
-          onClick={() =>
-          enhanceText({
-              section: 'summary',
-              text: data.summary,
-              context: 'resume summary',
-              keyId: 'summary',
-              onSuccess: (value) => setData((p) => ({ ...p, summary: value })),
-            })
-          }
-          disabled={Boolean(enhancing.summary)}
-          className="absolute bottom-[10px] right-[10px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
-          aria-label="Enhance summary with AI"
-          title="Enhance with AI"
-        >
-          {enhancing.summary ? (
-            <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
-          ) : (
-            <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
-          )}
-        </button>
-      </div>
+      <TextArea value={data.summary} onChange={(v) => setData((p) => ({ ...p, summary: v }))} placeholder="Tell a recruiter who you are, what you do, and what you are good at." error={showErrors && !data.summary.trim()} />
     </Card>,
     <Card key="skills" title="Skills" description="Create categories and list the skills inside each category.">
       <div className="grid gap-[12px]">
@@ -582,51 +558,20 @@ export default function ResumeBuilderClient() {
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Experience Summary</span>
               {exp.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
-                  <div className="relative flex-1">
-                    <input
-                      value={b}
-                      onChange={(e) =>
-                        setData((p) => ({
-                          ...p,
-                          experience: updateItem(p.experience, ei, (item) => ({
-                            ...item,
-                            bullets: updateItem(item.bullets, bi, () => e.target.value),
-                          })),
-                        }))
-                      }
-                      placeholder="Add bullet point"
-                      className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] px-[14px] pr-[42px] text-[14px] outline-none focus:border-[color:var(--purple)]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        enhanceText({
-                          section: 'experience_bullet',
-                          text: b,
-                          context: `Experience bullet for ${exp.companyName || 'company'} - ${exp.role || 'role'}`,
-                          keyId: `experience:${ei}:${bi}`,
-                          onSuccess: (value) =>
-                            setData((p) => ({
-                              ...p,
-                              experience: updateItem(p.experience, ei, (item) => ({
-                                ...item,
-                                bullets: updateItem(item.bullets, bi, () => value),
-                              })),
-                            })),
-                        })
-                      }
-                      disabled={Boolean(enhancing[`experience:${ei}:${bi}`])}
-                      className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
-                      aria-label="Enhance experience bullet"
-                      title="Enhance with AI"
-                    >
-                      {enhancing[`experience:${ei}:${bi}`] ? (
-                        <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
-                      ) : (
-                        <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
-                      )}
-                    </button>
-                  </div>
+                  <input
+                    value={b}
+                    onChange={(e) =>
+                      setData((p) => ({
+                        ...p,
+                        experience: updateItem(p.experience, ei, (item) => ({
+                          ...item,
+                          bullets: updateItem(item.bullets, bi, () => e.target.value),
+                        })),
+                      }))
+                    }
+                    placeholder="Add bullet point"
+                    className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
+                  />
                   <button
                     type="button"
                     onClick={() =>
@@ -709,51 +654,20 @@ export default function ResumeBuilderClient() {
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Project Summary</span>
               {p.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
-                  <div className="relative flex-1">
-                    <input
-                      value={b}
-                      onChange={(e) =>
-                        setData((d) => ({
-                          ...d,
-                          projects: updateItem(d.projects, pi, (item) => ({
-                            ...item,
-                            bullets: updateItem(item.bullets, bi, () => e.target.value),
-                          })),
-                        }))
-                      }
-                      placeholder="Add project bullet point"
-                      className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] px-[14px] pr-[42px] text-[14px] outline-none focus:border-[color:var(--purple)]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        enhanceText({
-                          section: 'project_bullet',
-                          text: b,
-                          context: `Project bullet for ${p.projectName || 'project'} using ${p.technologiesUsed || 'unknown technologies'}`,
-                          keyId: `project:${pi}:${bi}`,
-                          onSuccess: (value) =>
-                            setData((d) => ({
-                              ...d,
-                              projects: updateItem(d.projects, pi, (item) => ({
-                                ...item,
-                                bullets: updateItem(item.bullets, bi, () => value),
-                              })),
-                            })),
-                        })
-                      }
-                      disabled={Boolean(enhancing[`project:${pi}:${bi}`])}
-                      className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
-                      aria-label="Enhance project bullet"
-                      title="Enhance with AI"
-                    >
-                      {enhancing[`project:${pi}:${bi}`] ? (
-                        <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
-                      ) : (
-                        <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
-                      )}
-                    </button>
-                  </div>
+                  <input
+                    value={b}
+                    onChange={(e) =>
+                      setData((d) => ({
+                        ...d,
+                        projects: updateItem(d.projects, pi, (item) => ({
+                          ...item,
+                          bullets: updateItem(item.bullets, bi, () => e.target.value),
+                        })),
+                      }))
+                    }
+                    placeholder="Add project bullet point"
+                    className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
+                  />
                   <button
                     type="button"
                     onClick={() =>
@@ -880,41 +794,8 @@ export default function ResumeBuilderClient() {
             </button>
             <div className="grid gap-[12px]">
               <Input label="Certification Name" value={c.certificationName} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, certificationName: v })) }))} placeholder="Certification name" error={showErrors && !c.certificationName.trim()} />
-              <div className="relative">
-                <Input label="Issuer" value={c.issuer} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Issuer" />
-              </div>
-              <div className="relative">
-                <Input label="Description (optional)" value={c.description || ''} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Completed 8 practical case studies..." />
-                <button
-                  type="button"
-                  onClick={() =>
-                    enhanceText({
-                      section: 'cert_description',
-                      text: c.description,
-                      context: `Certification description for ${c.certificationName || 'certification'}`,
-                      keyId: `cert_desc:${ci}`,
-                      onSuccess: (value) =>
-                        setData((d) => ({
-                          ...d,
-                          certifications: updateItem(d.certifications, ci, (item) => ({
-                            ...item,
-                            description: value,
-                          })),
-                        })),
-                    })
-                  }
-                  disabled={Boolean(enhancing[`cert_desc:${ci}`])}
-                  className="absolute bottom-[8px] right-[8px] flex h-[20px] w-[20px] items-center justify-center bg-transparent p-0 disabled:opacity-50"
-                  aria-label="Enhance description"
-                  title="Enhance with AI"
-                >
-                  {enhancing[`cert_desc:${ci}`] ? (
-                    <span className="h-[12px] w-[12px] animate-spin rounded-full border-[1.5px] border-[color:#6C63FF] border-t-transparent" />
-                  ) : (
-                    <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain" />
-                  )}
-                </button>
-              </div>
+              <Input label="Issuer" value={c.issuer} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Issuer" />
+              <Input label="Description (optional)" value={c.description || ''} onChange={(v) => setData((d) => ({ ...d, certifications: updateItem(d.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Completed 8 practical case studies..." />
             </div>
           </div>
         ))}
@@ -983,37 +864,62 @@ export default function ResumeBuilderClient() {
 
   const activeTip = slideTips[step] || slideTips[0];
 
-  const enhanceText = async ({ section, text, context, onSuccess, keyId }) => {
-    const currentText = String(text || '').trim();
-    if (!currentText) return;
+  const handleEnhanceAll = () => {
+    const hasSummary = data.summary?.trim();
+    const hasBullets = data.experience.some((e) => e.bullets.some((b) => b.trim()));
+    const hasProjectBullets = data.projects.some((p) => p.bullets.some((b) => b.trim()));
 
-    const key = keyId || `${section}:${context || 'default'}`;
-    setEnhancing((prev) => ({ ...prev, [key]: true }));
+    if (!hasSummary && !hasBullets && !hasProjectBullets) {
+      setConfirmModal({ message: 'Please fill in the required fields first (summary, experience bullets, project bullets) before enhancing.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      return;
+    }
 
+    setConfirmModal({
+      message: 'This will enhance the following sections with AI: Summary, Experience bullets, and Project bullets.',
+      onConfirm: () => { setConfirmModal(null); runEnhanceAll(); },
+      confirmText: 'Proceed',
+      confirmColor: 'bg-[#10b981]',
+    });
+  };
+
+  const runEnhanceAll = async () => {
+    if (downloading) return;
+    setDownloading(true);
     try {
-      const res = await fetch('/api/ai-enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section, text: currentText, context }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const message = payload?.details ? `${payload?.error || 'Enhancement failed'}: ${payload.details}` : payload?.error || 'Enhancement failed';
-        throw new Error(message);
-      }
-      const enhanced = String(payload?.text || '').trim();
-      if (enhanced) onSuccess(enhanced);
-      else throw new Error('No enhanced text returned');
-    } catch (err) {
-      console.error('AI enhancement error:', err);
-      window.alert('AI enhancement is temporarily unavailable. Please try again in a moment.');
-    } finally {
-      setEnhancing((prev) => {
+      const payload = {
+        experience: data.experience.map((e) => ({ bullets: e.bullets.filter(Boolean) })),
+        projects: data.projects.map((p) => ({ description: p.bullets.filter(Boolean).join('. ') })),
+        certifications: [],
+        education: [],
+      };
+      // Also add summary as a special field
+      const res = await fetch('/api/ai-enhance-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Enhancement failed');
+      const enhanced = result.enhanced;
+      if (!enhanced) throw new Error('No enhanced data returned');
+      setData((prev) => {
         const next = { ...prev };
-        delete next[key];
+        if (Array.isArray(enhanced.experience)) {
+          next.experience = prev.experience.map((exp, i) => {
+            const e = enhanced.experience.find((x) => x.index === i);
+            return e && Array.isArray(e.bullets) ? { ...exp, bullets: e.bullets } : exp;
+          });
+        }
+        if (Array.isArray(enhanced.projects)) {
+          next.projects = prev.projects.map((proj, i) => {
+            const p = enhanced.projects.find((x) => x.index === i);
+            if (p && p.description) {
+              const newBullets = p.description.split('. ').filter(Boolean);
+              return newBullets.length ? { ...proj, bullets: newBullets } : proj;
+            }
+            return proj;
+          });
+        }
         return next;
       });
-    }
+    } catch (err) { console.error(err); window.alert('AI enhancement is temporarily unavailable. Please try again.'); }
+    finally { setDownloading(false); }
   };
 
   const handleDownload = async () => {
@@ -1282,20 +1188,16 @@ export default function ResumeBuilderClient() {
                 </div>
               </div>
             </div>
-            <div className="mt-[8px] flex items-start gap-[8px] rounded-[12px] bg-[rgba(108,99,255,0.06)] px-[12px] py-[10px]">
-              <img src="/images/AI%20enhancement.png" alt="" aria-hidden="true" className="mt-[1px] h-[16px] w-[16px] shrink-0 object-contain" />
-              <p className="text-[11px] leading-[1.4] text-[#555]">
-                Tap <strong className="text-[color:var(--purple)]">✦</strong> on any field to enhance your text with AI — make every bullet sound professional and recruiter-ready.
-              </p>
-            </div>
+            <p className="mb-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
             <div className="mt-auto hidden shrink-0 rounded-[18px] border border-[color:#eceef2] bg-white p-[10px] shadow-[0_8px_18px_rgba(17,24,39,0.06)] md:block">
               <div className="flex items-center justify-between gap-[10px]">
                 <button
                   type="button"
-                  onClick={() => router.push('/#templates-section')}
-                  className="rounded-full border border-[color:#d8d2ff] bg-white px-[14px] py-[8px] text-[12px] font-semibold text-[color:var(--purple)]"
+                  onClick={handleEnhanceAll}
+                  disabled={downloading}
+                  className="rounded-full border border-[color:#d8d2ff] bg-white px-[14px] py-[8px] text-[12px] font-semibold text-[color:var(--purple)] disabled:opacity-70"
                 >
-                  Templates
+                  Enhance All
                 </button>
                 <div className="relative" ref={downloadMenuRef}>
                   <button
@@ -1326,10 +1228,10 @@ export default function ResumeBuilderClient() {
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
           <button
             type="button"
-            onClick={() => router.push('/#templates-section')}
+            onClick={handleEnhanceAll}
             className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)]"
           >
-            Templates
+            Enhance All
           </button>
           <div className="relative flex-[1.35]" ref={downloadMenuRef}>
             <button
@@ -1381,6 +1283,7 @@ export default function ResumeBuilderClient() {
             <h3 className="text-[16px] font-bold text-black">Are you sure?</h3>
             <p className="mt-[6px] text-[13px] leading-[1.4] text-[#666]">{confirmModal.message}</p>
             <div className="mt-[20px] flex gap-[10px]">
+              {!confirmModal.singleButton && (
               <button
                 type="button"
                 onClick={() => setConfirmModal(null)}
@@ -1388,13 +1291,11 @@ export default function ResumeBuilderClient() {
               >
                 Cancel
               </button>
+              )}
               <button
                 type="button"
                 onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }}
-                className="flex-1 rounded-[12px] bg-red-500 py-[10px] text-[13px] font-semibold text-white"
-              >
-                Delete
-              </button>
+                className={`flex-1 rounded-[12px] py-[10px] text-[13px] font-semibold text-white ${confirmModal.confirmColor || 'bg-red-500'}`}>{confirmModal.confirmText || 'Delete'}</button>
             </div>
           </div>
         </div>
