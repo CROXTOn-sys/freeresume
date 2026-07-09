@@ -274,7 +274,7 @@ export default function ResumeBuilderClient2() {
   const handleDownloadWithValidation = (downloadFn) => {
     if (hasEmptyFields()) {
       setShowErrors(true);
-      setConfirmModal({ message: 'Some fields are empty. Please fill all required details before downloading.', onConfirm: () => { setConfirmModal(null); } });
+      setConfirmModal({ message: 'Some fields are empty. Please fill all required details before downloading.', onConfirm: () => { setConfirmModal(null); }, singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
       return;
     }
     setShowErrors(false);

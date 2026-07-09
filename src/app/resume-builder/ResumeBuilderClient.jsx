@@ -1001,6 +1001,9 @@ export default function ResumeBuilderClient() {
       setConfirmModal({
         message: 'Some fields are empty. Please fill all details or delete unused entries before downloading.',
         onConfirm: () => { setConfirmModal(null); },
+        singleButton: true,
+        confirmText: 'OK',
+        confirmColor: 'bg-[#6C63FF]',
       });
       return;
     }
