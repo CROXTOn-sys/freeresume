@@ -27,7 +27,7 @@ export default function AuthCallback() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)]">
       <div className="flex flex-col items-center">
-        <img src="/images/loading-star.jpg" alt="" className="h-[60px] w-[60px] animate-spin" />
+        <img src="/images/loading-star.png" alt="" className="h-[60px] w-[60px] animate-spin" />
         <p className="mt-[16px] text-[15px] font-semibold text-black">Signing you in...</p>
       </div>
     </main>

@@ -50,7 +50,7 @@ export default function SignUpPage() {
             </div>
             <h2 className="text-[20px] font-bold text-black">Check your email</h2>
             <p className="mt-[8px] text-[14px] text-[#666]">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
-            <button onClick={() => router.push('/')} className="mt-[20px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[12px] text-[14px] font-semibold text-white">Back to Home</button>
+            <button onClick={() => { let dest = '/'; try { const saved = window.sessionStorage.getItem('ResumeLab-return-to'); if (saved) dest = saved; } catch {} router.push(dest); }} className="mt-[20px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[12px] text-[14px] font-semibold text-white">Continue</button>
           </div>
         </div>
       </main>

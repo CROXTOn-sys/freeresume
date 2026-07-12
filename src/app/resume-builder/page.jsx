@@ -108,7 +108,7 @@ function BuilderChoice() {
             />
             <ChoiceCard
               title={importing ? 'Importing...' : 'Upload resume'}
-              description="PDF, DOCX, or image (.png, .jpeg, .jpg)"
+              description="PDF, DOCX . Max file size: 10 MB"
               active
             >
               <div className="flex justify-center text-[30px] text-[#666]">☁</div>
@@ -125,11 +125,11 @@ function BuilderChoice() {
               ✦
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-black">Create with AI Assistance</h2>
-              <p className="mt-[4px] text-[12px] text-[#666]">Speak or type - we&apos;ll build your resume</p>
+              <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
+              <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
             </div>
             <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">
-              New
+              Free
             </span>
           </div>
         </div>

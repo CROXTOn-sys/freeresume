@@ -233,7 +233,7 @@ export default function ResumeBuilderClient() {
     if (pendingAction) { try { window.sessionStorage.setItem('ResumeLab-pending-action', pendingAction); } catch {} }
     const returnPath = window.location.pathname + window.location.search;
     try { window.sessionStorage.setItem('ResumeLab-return-to', returnPath); } catch {}
-    setConfirmModal({ message: 'Sign in to download or enhance your resume.', onConfirm: () => { setConfirmModal(null); router.push(`/auth/login?returnTo=${encodeURIComponent(returnPath)}`); }, confirmText: 'Sign In', confirmColor: 'bg-[#6C63FF]' });
+    setConfirmModal({ message: 'Sign in to download your resume.', onConfirm: () => { setConfirmModal(null); router.push(`/auth/login?returnTo=${encodeURIComponent(returnPath)}`); }, confirmText: 'Sign In', confirmColor: 'bg-[#6C63FF]' });
     return false;
   };
 
@@ -371,8 +371,11 @@ export default function ResumeBuilderClient() {
     const handleClickOutside = (e) => {
       if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target)) setShowDownloadMenu(false);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // Use setTimeout to avoid the opening click immediately closing the menu
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
   }, [showDownloadMenu]);
 
   const previewData = useMemo(
@@ -1108,7 +1111,7 @@ export default function ResumeBuilderClient() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                           Preview Resume
                         </button>
-                        <button type="button" onClick={() => { setShowMoreMenu(false); setShowDownloadMenu(true); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                        <button type="button" onClick={() => { setShowMoreMenu(false); setTimeout(() => setShowDownloadMenu(true), 50); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                           Export Resume
                         </button>
@@ -1206,28 +1209,28 @@ export default function ResumeBuilderClient() {
 
         <div className={`${mobileView === 'form' ? 'hidden lg:block' : 'block'} lg:sticky lg:top-[16px] lg:h-[calc(100vh-32px)]`}>
           <div className="flex h-full flex-col rounded-[22px] border border-[color:rgba(229,231,235,0.95)] bg-white p-[12px] shadow-[0_10px_26px_rgba(17,24,39,0.06)] md:p-[14px]">
-            <div className="mb-[12px] grid grid-cols-[1fr_auto] items-center gap-[8px]">
+            <div className="mb-[12px] flex items-center justify-center relative">
               <div className="text-center text-[18px] font-bold tracking-[-0.02em] text-black">
                 PREVIEW
               </div>
               <button
                 type="button"
                 onClick={() => setMobileView('form')}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[18px] font-semibold leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
+                className="absolute right-0 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[18px] font-semibold leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
                 aria-label="Return to edit"
               >
                 ×
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden rounded-[16px] bg-[#f4f4f6] p-[0px]">
-              <div className="flex h-full flex-col rounded-[18px] bg-white shadow-[0_8px_18px_rgba(17,24,39,0.06)]">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-[4px] border border-black bg-[#f4f4f6] p-[0px]">
+              <div className="flex h-full flex-col bg-white">
                 <div className="min-h-0 flex-1 overflow-auto">
                 <Template1Preview data={previewData} previewMode />
                 </div>
               </div>
             </div>
-            <p className="mb-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
-            <div className="mt-auto hidden shrink-0 rounded-[18px] border border-[color:#eceef2] bg-white p-[10px] shadow-[0_8px_18px_rgba(17,24,39,0.06)] md:block">
+            <p className="mt-[12px] mb-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
+            <div className="mt-auto hidden shrink-0 rounded-[18px] border border-[color:#eceef2] bg-white p-[10px] shadow-[0_8px_18px_rgba(17,24,39,0.06)] md:block overflow-visible">
               <div className="flex items-center justify-between gap-[10px]">
                 <button
                   type="button"
@@ -1247,7 +1250,7 @@ export default function ResumeBuilderClient() {
                     {downloading ? 'Generating...' : 'Download'}
                   </button>
                   {showDownloadMenu && (
-                    <div className="absolute bottom-full right-0 mb-[6px] w-[180px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
+                    <div className="absolute bottom-full right-0 z-[100] mb-[6px] w-[180px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
                       <button type="button" onClick={() => { setShowDownloadMenu(false); handleDownloadWithValidation(handleDownload); }} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
                         <span className="text-[15px]">📄</span> Download as .pdf
                       </button>
@@ -1300,7 +1303,7 @@ export default function ResumeBuilderClient() {
       {downloading && (
         <div className="fixed inset-0 z-[400] flex items-center justify-center bg-white">
           <div className="flex flex-col items-center">
-            <img src="/images/loading-star.jpg" alt="" className="h-[60px] w-[60px] animate-spin" />
+            <img src="/images/loading-star.png" alt="" className="h-[60px] w-[60px] animate-spin" />
             <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">{loadingText}</p>
           </div>
         </div>
