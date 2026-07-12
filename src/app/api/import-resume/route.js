@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server';
 import mammoth from 'mammoth';
+import { rateLimit } from '../../../lib/rate-limit.js';
 
 const MODEL_FALLBACKS = [
   'google/gemma-3-12b-it:free',
@@ -780,6 +781,9 @@ function heuristicImport(text) {
 }
 
 export async function POST(request) {
+  const { success } = rateLimit(request, { limit: 5, windowMs: 60000 });
+  if (!success) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -787,6 +791,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No resume file provided' }, { status: 400 });
     }
     const buffer = Buffer.from(await file.arrayBuffer());
+    // File size limit: 10MB
+    if (buffer.length > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 10MB.' }, { status: 413 });
+    }
     const mimeType = file.type || '';
     const isPdf = mimeType === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
     const isDocx = mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name?.toLowerCase().endsWith('.docx');

@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import Mustache from 'mustache';
 import puppeteer from 'puppeteer-core';
+import { rateLimit } from '../../../lib/rate-limit';
+import { acquireBrowserSlot } from '../../../lib/browser-pool';
 
 const templatePath = path.join(process.cwd(), 'templates', 'resume-template.html');
 const template2Path = path.join(process.cwd(), 'templates', 'resume-template2.html');
@@ -153,6 +155,10 @@ async function renderResumeHtml(data, templateId) {
   return template && template.trim() ? Mustache.render(template, normalized) : buildFallbackHtml(normalized);
 }
 
+function escHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function buildFallbackHtml(data) {
   const normalized = normalizeData(data);
   return `
@@ -171,23 +177,18 @@ function buildFallbackHtml(data) {
           .section{margin-top:10px}
           .section h2{font-size:10pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-bottom:1.4px solid #000;padding-bottom:2px;margin:0 0 6px}
           .summary{font-size:10pt;line-height:1.45}
-          .entry{margin-bottom:8px}
-          .row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-          .bold{font-weight:700}
-          .italic{font-style:italic}
-          ul{margin:0;padding-left:14px}
         </style>
       </head>
       <body>
         <div class="page">
           <div class="header">
-            <div class="name">${normalized.name}</div>
-            <div class="title">${normalized.job_title}</div>
-            <div class="contact">${normalized.phone} | ${normalized.email} | ${normalized.linkedin}</div>
+            <div class="name">${escHtml(normalized.name)}</div>
+            <div class="title">${escHtml(normalized.job_title)}</div>
+            <div class="contact">${escHtml(normalized.phone)} | ${escHtml(normalized.email)} | ${escHtml(normalized.linkedin)}</div>
           </div>
           <div class="section">
             <h2>Summary</h2>
-            <div class="summary">${normalized.summary}</div>
+            <div class="summary">${escHtml(normalized.summary)}</div>
           </div>
         </div>
       </body>
@@ -354,13 +355,25 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  // Rate limit: 5 requests per minute per IP
+  const { success } = rateLimit(request, { limit: 5, windowMs: 60000 });
+  if (!success) return new Response('Too many requests. Please wait.', { status: 429 });
+
+  let release;
   try {
     const data = await request.json();
+
+    // Body size check (reject if serialized data is too large)
+    const bodySize = JSON.stringify(data).length;
+    if (bodySize > 1024 * 1024) return new Response('Request too large', { status: 413 });
+
     const templateId = data._templateId || '1';
     console.log('[resume POST] templateId:', templateId, 'has projects:', data.projects?.length, 'has certs:', data.certifications?.length);
     const html = await renderResumeHtml(data, templateId);
     console.log('[resume POST] html length:', html.length, 'has Project Work:', html.includes('Project Work'));
 
+    // Acquire browser slot (max 3 concurrent)
+    release = await acquireBrowserSlot();
     const browser = await getBrowser();
 
     const page = await browser.newPage();
@@ -391,5 +404,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Resume API error:', error);
     return new Response('PDF generation failed', { status: 500 });
+  } finally {
+    if (release) release();
   }
 }
