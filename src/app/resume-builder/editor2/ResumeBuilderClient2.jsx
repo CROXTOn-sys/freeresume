@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template2Preview from '../../../components/template-previews/Template2Preview';
+import { supabase } from '../../../lib/supabase';
 
 const steps = ['Personal Info', 'Skills', 'Work Experience', 'Education', 'Projects', 'Certifications'];
 const makeId = () => Date.now() + Math.random();
@@ -50,7 +51,9 @@ export default function ResumeBuilderClient2() {
   const [step, setStep] = useState(0);
   const [mobileView, setMobileView] = useState('form');
   const [data, setData] = useState(initialData);
+  const [user, setUser] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Loading...');
   const [confirmModal, setConfirmModal] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
@@ -58,6 +61,34 @@ export default function ResumeBuilderClient2() {
   const [showErrors, setShowErrors] = useState(false);
   const downloadMenuRef = useRef(null);
   const stepRailRef = useRef(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => setUser(session?.user || null));
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  const requireAuth = (pendingAction) => {
+    if (user) return true;
+    if (pendingAction) { try { window.sessionStorage.setItem('ResumeLab-pending-action', pendingAction); } catch {} }
+    const returnPath = window.location.pathname + window.location.search;
+    try { window.sessionStorage.setItem('ResumeLab-return-to', returnPath); } catch {}
+    setConfirmModal({ message: 'Sign in to download or enhance your resume.', onConfirm: () => { setConfirmModal(null); router.push(`/auth/login?returnTo=${encodeURIComponent(returnPath)}`); }, confirmText: 'Sign In', confirmColor: 'bg-[#6C63FF]' });
+    return false;
+  };
+
+  // Auto-trigger pending action after login
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const pending = window.sessionStorage.getItem('ResumeLab-pending-action');
+      if (!pending) return;
+      window.sessionStorage.removeItem('ResumeLab-pending-action');
+      if (pending === 'pdf') setTimeout(() => handleDownload(), 500);
+      else if (pending === 'docx') setTimeout(() => handleDownloadDocx(), 500);
+      else if (pending === 'enhance') setTimeout(() => runEnhanceAll(), 500);
+    } catch {}
+  }, [user]);
 
   useEffect(() => {
     try {
@@ -159,16 +190,17 @@ export default function ResumeBuilderClient2() {
 
   const handleDownload = async () => {
     if (downloading) return;
+    setLoadingText('Downloading...');
     setDownloading(true);
     setShowDownloadMenu(false);
     try {
       const res = await fetch('/api/resume', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(previewData) });
+      if (res.status === 429) { setDownloading(false); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
       if (!res.ok) throw new Error('PDF generation failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'resume.pdf'; a.click();
       URL.revokeObjectURL(url);
-      setShowSuccess(true); setTimeout(() => setShowSuccess(false), 1200);
     } catch (err) { console.error(err); window.alert('PDF generation failed. Please try again.'); }
     finally { setDownloading(false); }
   };
@@ -179,6 +211,7 @@ export default function ResumeBuilderClient2() {
     setShowDownloadMenu(false);
     try {
       const res = await fetch('/api/resume-docx', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(previewData) });
+      if (res.status === 429) { setDownloading(false); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
       if (!res.ok) throw new Error('DOCX generation failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -210,6 +243,7 @@ export default function ResumeBuilderClient2() {
   };
 
   const runEnhanceAll = async () => {
+    setLoadingText('Enhancing...');
     setDownloading(true);
     try {
       const payload = {
@@ -219,6 +253,7 @@ export default function ResumeBuilderClient2() {
         education: data.education.map((e) => ({ coursework: e.coursework || '' })),
       };
       const res = await fetch('/api/ai-enhance-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.status === 429) { setDownloading(false); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
       const result = await res.json();
       if (!res.ok) throw new Error(result?.error || 'Enhancement failed');
       const enhanced = result.enhanced;
@@ -271,7 +306,8 @@ export default function ResumeBuilderClient2() {
     setStep((p) => Math.min(p + 1, steps.length - 1));
   };
 
-  const handleDownloadWithValidation = (downloadFn) => {
+  const handleDownloadWithValidation = (downloadFn, actionType) => {
+    if (!requireAuth(actionType || 'pdf')) return;
     if (hasEmptyFields()) {
       setShowErrors(true);
       setConfirmModal({ message: 'Some fields are empty. Please fill all required details before downloading.', onConfirm: () => { setConfirmModal(null); }, singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
@@ -505,10 +541,10 @@ export default function ResumeBuilderClient2() {
                 <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[10px] text-[13px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
                 {showDownloadMenu && (
                   <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownload)} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownload, 'pdf')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
                       <span className="text-[15px]">📄</span> Download as .pdf
                     </button>
-                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx)} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx, 'docx')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
                       <span className="text-[15px]">📝</span> Download as .docx
                     </button>
                   </div>
@@ -527,10 +563,10 @@ export default function ResumeBuilderClient2() {
             <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
             {showDownloadMenu && (
               <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-                <button type="button" onClick={() => handleDownloadWithValidation(handleDownload)} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                <button type="button" onClick={() => handleDownloadWithValidation(handleDownload, 'pdf')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
                   <span className="text-[15px]">📄</span> .pdf
                 </button>
-                <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx)} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx, 'docx')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
                   <span className="text-[15px]">📝</span> .docx
                 </button>
               </div>
@@ -544,7 +580,7 @@ export default function ResumeBuilderClient2() {
         <div className="fixed inset-0 z-[400] flex items-center justify-center bg-white">
           <div className="flex flex-col items-center">
             <img src="/images/loading-star.jpg" alt="" className="h-[60px] w-[60px] animate-spin" />
-            <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">Loading...</p>
+            <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">{loadingText}</p>
           </div>
         </div>
       )}

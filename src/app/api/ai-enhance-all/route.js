@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rateLimit } from '../../../lib/rate-limit.js';
 
 const MODEL_FALLBACKS = [
   'google/gemma-3-12b-it:free',
@@ -7,6 +8,9 @@ const MODEL_FALLBACKS = [
 ];
 
 export async function POST(request) {
+  const { success } = rateLimit(request, { limit: 3, windowMs: 60000 });
+  if (!success) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'Missing API key' }, { status: 500 });
 

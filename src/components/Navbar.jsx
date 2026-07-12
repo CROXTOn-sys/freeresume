@@ -1,10 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ThemeToggle from './ThemeToggle';
+import { supabase } from '../lib/supabase';
 
 export default function Navbar({ theme, onToggleTheme }) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setMenuOpen(false);
+  };
 
   const scrollTo = (id) => {
     setMenuOpen(false);
@@ -28,15 +46,21 @@ export default function Navbar({ theme, onToggleTheme }) {
         <div className="flex items-center gap-[10px]">
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
-          <a
-            href="#"
-            className="flex items-center gap-[6px] rounded-[22px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[16px] py-[8px] text-[13.5px] font-semibold text-white no-underline shadow-[0_10px_20px_rgba(95,84,240,0.2)]"
-          >
-            <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] fill-white">
-              <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-            </svg>
-            Sign Up
-          </a>
+          {user ? (
+            <span className="flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]">
+              {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+            </span>
+          ) : (
+            <a
+              href="/auth/signup"
+              className="flex items-center gap-[6px] rounded-[22px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[16px] py-[8px] text-[13.5px] font-semibold text-white no-underline shadow-[0_10px_20px_rgba(95,84,240,0.2)]"
+            >
+              <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] fill-white">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+              </svg>
+              Sign Up
+            </a>
+          )}
 
           <button
             type="button"
@@ -113,10 +137,11 @@ export default function Navbar({ theme, onToggleTheme }) {
               </p>
               <button
                 type="button"
+                onClick={() => { setMenuOpen(false); user ? handleSignOut() : router.push('/auth/login'); }}
                 className="flex w-full items-center justify-center gap-[8px] rounded-[12px] border border-[color:#d8d2ff] bg-[rgba(108,99,255,0.04)] px-[16px] py-[10px] text-[13px] font-semibold text-[color:var(--purple)]"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                Sign in
+                {user ? 'Sign Out' : 'Sign In'}
               </button>
             </div>
           </div>

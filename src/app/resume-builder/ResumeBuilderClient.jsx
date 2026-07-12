@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template1Preview from '../../components/template-previews/Template1Preview';
+import { supabase } from '../../lib/supabase';
 
 const steps = ['Personal Information', 'Summary', 'Skills', 'Experience', 'Projects', 'Certifications', 'Education'];
 const makeId = () => Date.now() + Math.random();
@@ -208,8 +209,10 @@ export default function ResumeBuilderClient() {
   const [data, setData] = useState(initialData);
 
   const [isImported, setIsImported] = useState(false);
+  const [user, setUser] = useState(null);
   const [activeSkillCategory, setActiveSkillCategory] = useState(0);
   const [downloading, setDownloading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Loading...');
   const [confirmModal, setConfirmModal] = useState(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -218,6 +221,34 @@ export default function ResumeBuilderClient() {
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
   const downloadMenuRef = useRef(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => setUser(session?.user || null));
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  const requireAuth = (pendingAction) => {
+    if (user) return true;
+    if (pendingAction) { try { window.sessionStorage.setItem('ResumeLab-pending-action', pendingAction); } catch {} }
+    const returnPath = window.location.pathname + window.location.search;
+    try { window.sessionStorage.setItem('ResumeLab-return-to', returnPath); } catch {}
+    setConfirmModal({ message: 'Sign in to download or enhance your resume.', onConfirm: () => { setConfirmModal(null); router.push(`/auth/login?returnTo=${encodeURIComponent(returnPath)}`); }, confirmText: 'Sign In', confirmColor: 'bg-[#6C63FF]' });
+    return false;
+  };
+
+  // Auto-trigger pending action after login
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const pending = window.sessionStorage.getItem('ResumeLab-pending-action');
+      if (!pending) return;
+      window.sessionStorage.removeItem('ResumeLab-pending-action');
+      if (pending === 'pdf') setTimeout(() => handleDownload(), 500);
+      else if (pending === 'docx') setTimeout(() => handleDownloadDocx(), 500);
+      else if (pending === 'enhance') setTimeout(() => runEnhanceAll(), 500);
+    } catch {}
+  }, [user]);
 
   useEffect(() => {
     stepButtonRefs.current[step]?.scrollIntoView({
@@ -884,6 +915,7 @@ export default function ResumeBuilderClient() {
 
   const runEnhanceAll = async () => {
     if (downloading) return;
+    setLoadingText('Enhancing...');
     setDownloading(true);
     try {
       const payload = {
@@ -894,6 +926,7 @@ export default function ResumeBuilderClient() {
       };
       // Also add summary as a special field
       const res = await fetch('/api/ai-enhance-all', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.status === 429) { setDownloading(false); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
       const result = await res.json();
       if (!res.ok) throw new Error(result?.error || 'Enhancement failed');
       const enhanced = result.enhanced;
@@ -924,6 +957,7 @@ export default function ResumeBuilderClient() {
 
   const handleDownload = async () => {
     if (downloading) return;
+    setLoadingText('Downloading...');
     setDownloading(true);
     setShowDownloadMenu(false);
     try {
@@ -932,6 +966,7 @@ export default function ResumeBuilderClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(previewData),
       });
+      if (res.status === 429) { setDownloading(false); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
       if (!res.ok) throw new Error('PDF generation failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -940,8 +975,6 @@ export default function ResumeBuilderClient() {
       a.download = 'resume.pdf';
       a.click();
       URL.revokeObjectURL(url);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 1200);
     } catch (err) {
       console.error('Download error:', err);
       window.alert('PDF generation failed. Please try again.');
@@ -952,6 +985,7 @@ export default function ResumeBuilderClient() {
 
   const handleDownloadDocx = async () => {
     if (downloading) return;
+    setLoadingText('Downloading...');
     setDownloading(true);
     setShowDownloadMenu(false);
     try {
@@ -960,6 +994,7 @@ export default function ResumeBuilderClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(previewData),
       });
+      if (res.status === 429) { setDownloading(false); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
       if (!res.ok) throw new Error('DOCX generation failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -968,8 +1003,6 @@ export default function ResumeBuilderClient() {
       a.download = 'resume.docx';
       a.click();
       URL.revokeObjectURL(url);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 1200);
     } catch (err) {
       console.error('Download error:', err);
       window.alert('DOCX generation failed. Please try again.');
@@ -996,6 +1029,8 @@ export default function ResumeBuilderClient() {
   };
 
   const handleDownloadWithValidation = (downloadFn) => {
+    const actionType = downloadFn === handleDownloadDocx ? 'docx' : 'pdf';
+    if (!requireAuth(actionType)) return;
     if (hasEmptyFields()) {
       setShowErrors(true);
       setConfirmModal({
@@ -1266,7 +1301,7 @@ export default function ResumeBuilderClient() {
         <div className="fixed inset-0 z-[400] flex items-center justify-center bg-white">
           <div className="flex flex-col items-center">
             <img src="/images/loading-star.jpg" alt="" className="h-[60px] w-[60px] animate-spin" />
-            <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">Loading...</p>
+            <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">{loadingText}</p>
           </div>
         </div>
       )}
