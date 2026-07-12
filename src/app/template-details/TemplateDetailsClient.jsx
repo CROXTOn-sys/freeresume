@@ -262,7 +262,7 @@ export default function TemplateDetailsClient() {
                     <div className="mt-[10px] text-center">
                       <h2 className="text-[15px] font-bold text-black">{importing ? 'Importing...' : 'Upload resume'}</h2>
                       <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">
-                        PDF, DOCX, or image (.png, .jpeg, .jpg)
+                        PDF, DOCX . Max file size: 10 MB
                       </p>
                     </div>
                   </div>
@@ -281,11 +281,11 @@ export default function TemplateDetailsClient() {
                       ✦
                     </div>
                     <div>
-                      <h2 className="text-[15px] font-bold text-black">Create with AI Assistance</h2>
-                      <p className="mt-[4px] text-[12px] text-[#666]">Speak or type - we&apos;ll build your resume</p>
+                      <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
+                      <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
                     </div>
                     <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">
-                      New
+                      Free
                     </span>
                   </div>
                 </div>

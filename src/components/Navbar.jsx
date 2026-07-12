@@ -35,11 +35,7 @@ export default function Navbar({ theme, onToggleTheme }) {
     <>
       <nav className="fixed left-0 right-0 top-0 z-[100] mx-auto flex w-full max-w-[480px] items-center justify-between border-b border-[color:var(--border-soft)] bg-[var(--nav-bg)] px-[18px] py-[14px] shadow-[var(--nav-shadow)] backdrop-blur-[18px]">
         <a href="#" className="flex items-center gap-[8px] text-[17px] font-bold text-[var(--text-dark)] no-underline">
-          <div className="flex h-[32px] w-[32px] items-center justify-center rounded-[10px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] shadow-[0_8px_18px_rgba(95,84,240,0.25)]">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px] fill-white">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z" />
-            </svg>
-          </div>
+          <img src="/images/logo.png" alt="ResumeLab" className="h-[32px] w-[32px] rounded-[10px]" />
           ResumeLab
         </a>
 
@@ -115,11 +111,11 @@ export default function Navbar({ theme, onToggleTheme }) {
               </button>
               <button
                 type="button"
-                onClick={() => scrollTo('talk-to-us-section')}
+                onClick={() => { setMenuOpen(false); router.push('/about'); }}
                 className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                Talk to us
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                About
               </button>
               <button
                 type="button"

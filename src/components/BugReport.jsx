@@ -59,7 +59,7 @@ export default function BugReport() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-[90px] right-[16px] z-[95] flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] shadow-[0_6px_20px_rgba(108,99,255,0.35)]"
+        className="fixed bottom-[24px] right-[16px] z-[95] flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] shadow-[0_6px_20px_rgba(108,99,255,0.35)]"
         aria-label="Report a bug"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

@@ -8,7 +8,6 @@ import Hero from '../components/Hero';
 import TemplatesSection from '../components/TemplatesSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FaqSection from '../components/FaqSection';
-import StickyCta from '../components/StickyCta';
 import BugReport from '../components/BugReport';
 
 const themeVars = {
@@ -197,7 +196,7 @@ export default function Page() {
   return (
     <main
       style={themeVars[theme]}
-      className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,var(--overlay-1),transparent_26%),radial-gradient(circle_at_top_right,var(--overlay-2),transparent_22%),linear-gradient(180deg,var(--page-bg-start)_0%,var(--page-bg-mid)_42%,var(--page-bg-end)_100%)] pb-[96px] pt-[68px] text-[var(--text-dark)] transition-colors duration-200"
+      className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,var(--overlay-1),transparent_26%),radial-gradient(circle_at_top_right,var(--overlay-2),transparent_22%),linear-gradient(180deg,var(--page-bg-start)_0%,var(--page-bg-mid)_42%,var(--page-bg-end)_100%)] pb-0 pt-[68px] text-[var(--text-dark)] transition-colors duration-200"
     >
       <input
         ref={uploadInputRef}
@@ -214,7 +213,6 @@ export default function Page() {
         <TestimonialsSection />
         <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
       </div>
-      <StickyCta onCreateResume={promptTemplateSelection} />
       <BugReport />
 
       {showTemplatePrompt ? (
@@ -263,7 +261,7 @@ export default function Page() {
                           {importing ? 'Importing...' : 'Upload resume'}
                         </h2>
                         <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">
-                          PDF, DOCX, or image (.png, .jpeg, .jpg)
+                          PDF, DOCX . Max file size: 10 MB
                         </p>
                       </div>
                     </div>
@@ -283,11 +281,11 @@ export default function Page() {
                       ✦
                     </div>
                     <div>
-                      <h2 className="text-[15px] font-bold text-black">Create with AI Assistance</h2>
-                      <p className="mt-[4px] text-[12px] text-[#666]">Speak or type - we&apos;ll build your resume</p>
+                      <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
+                      <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
                     </div>
                     <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">
-                      New
+                      Free
                     </span>
                   </div>
                 </div>

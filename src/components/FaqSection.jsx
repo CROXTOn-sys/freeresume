@@ -30,7 +30,7 @@ const faqs = [
 
 export default function FaqSection({ openIndex, onToggle }) {
   return (
-    <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[28px] pt-[32px] shadow-[var(--shadow-sm)]">
+    <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-0 pt-[32px] shadow-[var(--shadow-sm)]">
       <h2 className="mb-[22px] text-center text-[23px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">
         Still in Doubt?
       </h2>
@@ -47,12 +47,6 @@ export default function FaqSection({ openIndex, onToggle }) {
         ))}
       </div>
 
-      <a
-        href="#"
-        className="mt-[24px] block w-full rounded-[50px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[24px] py-[15px] text-center text-[15px] font-bold text-white no-underline shadow-[0_14px_28px_rgba(95,84,240,0.2)]"
-      >
-        Talk to Us
-      </a>
     </section>
   );
 }
