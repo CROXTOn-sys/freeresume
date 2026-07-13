@@ -209,6 +209,7 @@ export default function Page() {
       <div className="mx-auto w-full max-w-[480px]">
         <Navbar theme={theme} onToggleTheme={onToggleTheme} />
         <Hero onCreateResume={promptTemplateSelection} />
+        <p className="mt-[6px] mx-[4px] rounded-[12px] border border-[#e5e7eb] bg-white px-[16px] py-[8px] text-center text-[12px] text-[#888] shadow-[0_4px_12px_rgba(17,24,39,0.04)]">Your first resume download is free. Upgrade to a plan for unlimited downloads.</p>
         <TemplatesSection highlight={highlightTemplates} />
         <TestimonialsSection />
         <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
