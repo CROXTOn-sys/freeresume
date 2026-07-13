@@ -43,7 +43,7 @@ export default function TemplatesSection({ highlight = false }) {
   return (
     <section
       id="templates-section"
-      className={`mt-[12px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[22px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 ${
+      className={`mt-[6px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[22px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 ${
         highlight ? 'ring-4 ring-[rgba(95,84,240,0.22)] ring-offset-2 ring-offset-transparent' : ''
       }`}
     >
