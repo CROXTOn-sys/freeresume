@@ -10,6 +10,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -72,6 +73,7 @@ function LoginForm() {
         <form onSubmit={handleLogin} className="grid gap-[14px]">
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required className="h-[44px] w-full rounded-[12px] border border-[#e5e7eb] bg-white px-[14px] text-[14px] text-black outline-none focus:border-[#6C63FF]" />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required className="h-[44px] w-full rounded-[12px] border border-[#e5e7eb] bg-white px-[14px] text-[14px] text-black outline-none focus:border-[#6C63FF]" />
+          <label className="flex items-center gap-[8px] text-[13px] text-[#666]"><input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-[16px] w-[16px] rounded accent-[#6C63FF]" /> Remember me</label>
           {error && <p className="text-[12px] text-red-500">{error}</p>}
           <button type="submit" disabled={loading} className="w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[12px] text-[14px] font-semibold text-white disabled:opacity-70">{loading ? 'Signing in...' : 'Sign In'}</button>
         </form>
