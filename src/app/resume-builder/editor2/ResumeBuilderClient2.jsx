@@ -17,18 +17,18 @@ const initialData = {
   certifications: [{ id: makeId(), title: '', issuer: '', description: '' }],
 };
 
-const Input = ({ label, value, onChange, placeholder, error = false }) => (
+const Input = ({ label, value, onChange, placeholder, error = false, maxLength }) => (
   <label className="block">
     <span className="mb-[6px] block text-[12px] font-semibold text-black">{label}</span>
-    <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+    <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} maxLength={maxLength}
       className={`h-[44px] w-full rounded-[12px] border bg-white px-[14px] text-[14px] text-black outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
   </label>
 );
 
-const TextArea = ({ label, value, onChange, placeholder, rows = 3 }) => (
+const TextArea = ({ label, value, onChange, placeholder, rows = 3, maxLength }) => (
   <label className="block">
     <span className="mb-[6px] block text-[12px] font-semibold text-black">{label}</span>
-    <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows}
+    <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} maxLength={maxLength}
       className="w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] py-[10px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]" />
   </label>
 );
@@ -84,8 +84,8 @@ export default function ResumeBuilderClient2() {
       const pending = window.sessionStorage.getItem('ResumeLab-pending-action');
       if (!pending) return;
       window.sessionStorage.removeItem('ResumeLab-pending-action');
-      if (pending === 'pdf') setTimeout(() => handleDownload(), 500);
-      else if (pending === 'docx') setTimeout(() => handleDownloadDocx(), 500);
+      if (pending === 'pdf') setTimeout(() => handleDownloadWithValidation(handleDownload, 'pdf'), 500);
+      else if (pending === 'docx') setTimeout(() => handleDownloadWithValidation(handleDownloadDocx, 'docx'), 500);
       else if (pending === 'enhance') setTimeout(() => runEnhanceAll(), 500);
     } catch {}
   }, [user]);
@@ -232,8 +232,14 @@ export default function ResumeBuilderClient2() {
     const hasCertDesc = data.certifications.some((c) => c.description?.trim());
     const hasCoursework = data.education.some((e) => e.coursework?.trim());
 
-    if (!hasBullets && !hasProjectDesc && !hasCertDesc && !hasCoursework) {
-      setConfirmModal({ message: 'Please fill in the required fields first (experience bullets, project descriptions, certification descriptions, coursework) before enhancing.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+    const missing = [];
+    if (!hasBullets) missing.push('Experience bullets');
+    if (!hasProjectDesc) missing.push('Project descriptions');
+    if (!hasCertDesc) missing.push('Certification descriptions');
+    if (!hasCoursework) missing.push('Coursework');
+
+    if (missing.length > 0) {
+      setConfirmModal({ message: `Please fill in the following fields before enhancing: ${missing.join(', ')}.`, onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
       return;
     }
 
@@ -323,11 +329,11 @@ export default function ResumeBuilderClient2() {
   const sections = [    // Personal Info
     <Card key="personal" title="Personal Information" description="Your name and contact details.">
       <div className="grid gap-[12px]">
-        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Ashish Pratap Singh" error={showErrors && !data.personal.fullName.trim()} />
-        <Input label="Email" value={data.personal.email} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, email: v } }))} placeholder="your@email.com" error={showErrors && !data.personal.email.trim()} />
-        <Input label="Phone" value={data.personal.phone} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phone: v } }))} placeholder="+91 XXXXXXXXXX" />
-        <Input label="GitHub" value={data.personal.github} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, github: v } }))} placeholder="github.com/username" />
-        <Input label="LinkedIn" value={data.personal.linkedin} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedin: v } }))} placeholder="linkedin.com/in/username" />
+        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Ashish Pratap Singh" error={showErrors && !data.personal.fullName.trim()} maxLength={60} />
+        <Input label="Email" value={data.personal.email} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, email: v } }))} placeholder="your@email.com" error={showErrors && !data.personal.email.trim()} maxLength={80} />
+        <Input label="Phone" value={data.personal.phone} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phone: v } }))} placeholder="+91 XXXXXXXXXX" maxLength={20} />
+        <Input label="GitHub" value={data.personal.github} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, github: v } }))} placeholder="github.com/username" maxLength={120} />
+        <Input label="LinkedIn" value={data.personal.linkedin} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedin: v } }))} placeholder="linkedin.com/in/username" maxLength={120} />
       </div>
     </Card>,
 
@@ -340,8 +346,8 @@ export default function ResumeBuilderClient2() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
-              <Input label={`Category ${gi + 1}`} value={g.category} onChange={(v) => setData((p) => ({ ...p, skills: updateItem(p.skills, gi, (item) => ({ ...item, category: v })) }))} placeholder="Languages" error={showErrors && !g.category.trim()} />
-              <Input label="Skills (comma separated)" value={g.items.join(', ')} onChange={(v) => setData((p) => ({ ...p, skills: updateItem(p.skills, gi, (item) => ({ ...item, items: v.split(',').map((s) => s.trim()) })) }))} placeholder="Java, Python, JavaScript, TypeScript" />
+              <Input label={`Category ${gi + 1}`} value={g.category} onChange={(v) => setData((p) => ({ ...p, skills: updateItem(p.skills, gi, (item) => ({ ...item, category: v })) }))} placeholder="Languages" error={showErrors && !g.category.trim()} maxLength={50} />
+              <Input label="Skills (comma separated)" value={g.items.join(', ')} onChange={(v) => setData((p) => ({ ...p, skills: updateItem(p.skills, gi, (item) => ({ ...item, items: v.split(',').map((s) => s.trim()) })) }))} placeholder="Java, Python, JavaScript, TypeScript" maxLength={300} />
             </div>
           </div>
         ))}
@@ -359,25 +365,25 @@ export default function ResumeBuilderClient2() {
             </button>
             <div className="grid gap-[10px]">
               <div className="grid grid-cols-2 gap-[10px]">
-                <Input label="Company" value={exp.company} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, company: v })) }))} placeholder="Adobe" error={showErrors && !exp.company.trim()} />
-                <Input label="Location" value={exp.location} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, location: v })) }))} placeholder="Bangalore" />
+                <Input label="Company" value={exp.company} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, company: v })) }))} placeholder="Adobe" error={showErrors && !exp.company.trim()} maxLength={80} />
+                <Input label="Location" value={exp.location} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, location: v })) }))} placeholder="Bangalore" maxLength={60} />
               </div>
-              <Input label="Role" value={exp.role} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, role: v })) }))} placeholder="Computer Scientist" error={showErrors && !exp.role.trim()} />
+              <Input label="Role" value={exp.role} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, role: v })) }))} placeholder="Computer Scientist" error={showErrors && !exp.role.trim()} maxLength={80} />
               <div className="grid grid-cols-2 gap-[10px]">
-                <Input label="Start Date" value={exp.startDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Mar 2021" />
-                <Input label="End Date" value={exp.endDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Present" />
+                <Input label="Start Date" value={exp.startDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Mar 2021" maxLength={20} />
+                <Input label="End Date" value={exp.endDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Present" maxLength={20} />
               </div>
               <span className="text-[12px] font-semibold text-black">Bullet Points</span>
               {exp.bullets.map((b, bi) => (
                 <div key={bi} className="flex gap-[8px]">
-                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder="Achievement or responsibility" className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]" />
+                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder="Achievement or responsibility" maxLength={300} className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]" />
                   <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) }))} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </div>
               ))}
               <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: addItem(item.bullets, '') })) }))} className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-dashed border-[color:#cfc8ff] bg-[rgba(108,99,255,0.04)] text-[color:var(--purple)]" aria-label="Add bullet"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-              <Input label="Tools / Technologies Used" value={exp.toolsUsed} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="AWS, EC2, S3, Kafka, Docker" />
+              <Input label="Tools / Technologies Used" value={exp.toolsUsed} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="AWS, EC2, S3, Kafka, Docker" maxLength={150} />
             </div>
           </div>
         ))}
@@ -394,17 +400,17 @@ export default function ResumeBuilderClient2() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
-              <Input label="Institution" value={edu.institution} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, institution: v })) }))} placeholder="BITS Hyderabad" error={showErrors && !edu.institution.trim()} />
-              <Input label="Degree" value={edu.degree} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, degree: v })) }))} placeholder="B.E. in Computer Science" error={showErrors && !edu.degree.trim()} />
+              <Input label="Institution" value={edu.institution} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, institution: v })) }))} placeholder="BITS Hyderabad" error={showErrors && !edu.institution.trim()} maxLength={100} />
+              <Input label="Degree" value={edu.degree} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, degree: v })) }))} placeholder="B.E. in Computer Science" error={showErrors && !edu.degree.trim()} maxLength={100} />
               <div className="grid grid-cols-2 gap-[10px]">
-                <Input label="Start Date" value={edu.startDate} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Aug 2013" />
-                <Input label="End Date" value={edu.endDate} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Jun 2017" />
+                <Input label="Start Date" value={edu.startDate} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Aug 2013" maxLength={20} />
+                <Input label="End Date" value={edu.endDate} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Jun 2017" maxLength={20} />
               </div>
               <div className="grid grid-cols-2 gap-[10px]">
-                <Input label="Score Label" value={edu.scoreLabel} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, scoreLabel: v })) }))} placeholder="CGPA" />
-                <Input label="Score" value={edu.score} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, score: v })) }))} placeholder="7.96/10" />
+                <Input label="Score Label" value={edu.scoreLabel} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, scoreLabel: v })) }))} placeholder="CGPA" maxLength={20} />
+                <Input label="Score" value={edu.score} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, score: v })) }))} placeholder="7.96/10" maxLength={20} />
               </div>
-              <TextArea label="Relevant Coursework" value={edu.coursework} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: v })) }))} placeholder="Data Structures, Algorithms, Machine Learning..." rows={2} />
+              <TextArea label="Relevant Coursework" value={edu.coursework} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: v })) }))} placeholder="Data Structures, Algorithms, Machine Learning..." rows={2} maxLength={300} />
             </div>
           </div>
         ))}
@@ -422,11 +428,11 @@ export default function ResumeBuilderClient2() {
             </button>
             <div className="grid gap-[10px]">
               <div className="grid grid-cols-[1fr_auto] gap-[10px]">
-                <Input label="Project Name" value={proj.name} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, name: v })) }))} placeholder="Word Lookup Dictionary" error={showErrors && !proj.name.trim()} />
-                <Input label="Year" value={proj.year} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, year: v })) }))} placeholder="2015" />
+                <Input label="Project Name" value={proj.name} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, name: v })) }))} placeholder="Word Lookup Dictionary" error={showErrors && !proj.name.trim()} maxLength={100} />
+                <Input label="Year" value={proj.year} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, year: v })) }))} placeholder="2015" maxLength={20} />
               </div>
-              <TextArea label="Description" value={proj.description} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: v })) }))} placeholder="Developed a desktop software for online lookup..." rows={3} />
-              <Input label="Technologies" value={proj.technologies} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, technologies: v })) }))} placeholder="Python, BeautifulSoup, C++" />
+              <TextArea label="Description" value={proj.description} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: v })) }))} placeholder="Developed a desktop software for online lookup..." rows={3} maxLength={300} />
+              <Input label="Technologies" value={proj.technologies} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, technologies: v })) }))} placeholder="Python, BeautifulSoup, C++" maxLength={150} />
             </div>
           </div>
         ))}
@@ -443,9 +449,9 @@ export default function ResumeBuilderClient2() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
-              <Input label="Title" value={cert.title} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, title: v })) }))} placeholder="Mentor at Scaler Academy" error={showErrors && !cert.title.trim()} />
-              <Input label="Issuer" value={cert.issuer} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Scaler" />
-              <TextArea label="Description (optional)" value={cert.description} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Helping students get better at problem solving..." rows={2} />
+              <Input label="Title" value={cert.title} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, title: v })) }))} placeholder="Mentor at Scaler Academy" error={showErrors && !cert.title.trim()} maxLength={120} />
+              <Input label="Issuer" value={cert.issuer} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Scaler" maxLength={80} />
+              <TextArea label="Description (optional)" value={cert.description} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Helping students get better at problem solving..." rows={2} maxLength={300} />
             </div>
           </div>
         ))}
