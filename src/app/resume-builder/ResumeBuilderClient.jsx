@@ -99,6 +99,20 @@ const addItem = (list, item) => [...list, item];
 const updateItem = (list, index, updater) => list.map((item, i) => (i === index ? updater(item) : item));
 const removeItem = (list, index) => list.filter((_, i) => i !== index);
 
+// Format validation helpers
+const isValidName = (v) => !v.trim() || /^[a-zA-Z\s.\-']+$/.test(v.trim());
+const isValidPhone = (v) => !v.trim() || /^[0-9+\-\s()]+$/.test(v.trim());
+const isValidEmail = (v) => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+const isValidLinkedIn = (v) => !v.trim() || /linkedin\.com/i.test(v.trim());
+const hasFormatErrors = (personal) => {
+  if (personal.fullName.trim() && !isValidName(personal.fullName)) return true;
+  if (personal.professionalTitle.trim() && !isValidName(personal.professionalTitle)) return true;
+  if (personal.phoneNumber.trim() && !isValidPhone(personal.phoneNumber)) return true;
+  if (personal.emailAddress.trim() && !isValidEmail(personal.emailAddress)) return true;
+  if (personal.linkedInUrl.trim() && !isValidLinkedIn(personal.linkedInUrl)) return true;
+  return false;
+};
+
 function parseImportedRawText(rawText = '') {
   const empty = initialData;
   const text = String(rawText || '').trim();
@@ -200,6 +214,50 @@ function parseImportedRawText(rawText = '') {
     certifications: certifications.length ? certifications : empty.certifications,
     education: education.length ? education : empty.education,
   };
+}
+
+// Post-import cleanup: extract contact info from summary and move to personal fields
+function cleanupImportedData(data) {
+  if (!data || !data.summary) return data;
+  let summary = data.summary;
+  const personal = { ...(data.personal || {}) };
+
+  // Extract email from summary
+  const emailMatch = summary.match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i);
+  if (emailMatch && !personal.emailAddress) {
+    personal.emailAddress = emailMatch[0];
+    summary = summary.replace(emailMatch[0], '');
+  }
+
+  // Extract phone from summary
+  const phoneMatch = summary.match(/(\+?\d[\d\s()\-]{7,}\d)/);
+  if (phoneMatch && !personal.phoneNumber) {
+    personal.phoneNumber = phoneMatch[0].trim();
+    summary = summary.replace(phoneMatch[0], '');
+  }
+
+  // Extract LinkedIn URL from summary
+  const linkedInMatch = summary.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s,|)]+/i);
+  if (linkedInMatch && !personal.linkedInUrl) {
+    personal.linkedInUrl = linkedInMatch[0];
+    summary = summary.replace(linkedInMatch[0], '');
+  }
+
+  // Extract GitHub URL from summary
+  const githubMatch = summary.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[^\s,|)]+/i);
+  if (githubMatch) {
+    summary = summary.replace(githubMatch[0], '');
+  }
+
+  // Clean up leftover separators and whitespace
+  summary = summary
+    .replace(/[|●✦★]\s*/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^\s*[,|;\-]\s*/, '')
+    .replace(/\s*[,|;\-]\s*$/, '')
+    .trim();
+
+  return { ...data, personal, summary };
 }
 
 export default function ResumeBuilderClient() {
@@ -305,26 +363,27 @@ export default function ResumeBuilderClient() {
             return false;
           });
           const source = hasStructuredContent ? importedData : fallbackParsed;
+          const cleaned = cleanupImportedData(source);
           const pickText = (incoming, currentValue) => (typeof incoming === 'string' && incoming.trim() ? incoming : currentValue);
           const pickArray = (incoming, currentValue) => (Array.isArray(incoming) && incoming.length ? incoming : currentValue);
           setData((current) => ({
             ...current,
-            ...source,
+            ...cleaned,
             personal: {
               ...current.personal,
-              ...(source.personal || {}),
-              fullName: pickText(source.personal?.fullName, current.personal.fullName),
-              professionalTitle: pickText(source.personal?.professionalTitle, current.personal.professionalTitle),
-              phoneNumber: pickText(source.personal?.phoneNumber, current.personal.phoneNumber),
-              emailAddress: pickText(source.personal?.emailAddress, current.personal.emailAddress),
-              linkedInUrl: pickText(source.personal?.linkedInUrl, current.personal.linkedInUrl),
+              ...(cleaned.personal || {}),
+              fullName: pickText(cleaned.personal?.fullName, current.personal.fullName),
+              professionalTitle: pickText(cleaned.personal?.professionalTitle, current.personal.professionalTitle),
+              phoneNumber: pickText(cleaned.personal?.phoneNumber, current.personal.phoneNumber),
+              emailAddress: pickText(cleaned.personal?.emailAddress, current.personal.emailAddress),
+              linkedInUrl: pickText(cleaned.personal?.linkedInUrl, current.personal.linkedInUrl),
             },
-            summary: pickText(source.summary, current.summary),
-            skills: pickArray(source.skills, current.skills),
-            experience: pickArray(source.experience, current.experience),
-            projects: pickArray(source.projects, current.projects),
-            certifications: pickArray(source.certifications, current.certifications),
-            education: pickArray(source.education, current.education),
+            summary: pickText(cleaned.summary, current.summary),
+            skills: pickArray(cleaned.skills, current.skills),
+            experience: pickArray(cleaned.experience, current.experience),
+            projects: pickArray(cleaned.projects, current.projects),
+            certifications: pickArray(cleaned.certifications, current.certifications),
+            education: pickArray(cleaned.education, current.education),
           }));
         }
         window.sessionStorage.removeItem('ResumeLab-imported-resume');
@@ -426,11 +485,11 @@ export default function ResumeBuilderClient() {
   const sections = [
     <Card key="personal" title="Personal Information" description="These details fill the resume header immediately.">
       <div className="grid gap-[12px]">
-        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Enter full name" error={showErrors && !data.personal.fullName.trim()} maxLength={60} />
-        <Input label="Professional Title" value={data.personal.professionalTitle} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, professionalTitle: v } }))} placeholder="Enter professional title" error={showErrors && !data.personal.professionalTitle.trim()} maxLength={80} />
-        <Input label="Phone Number" value={data.personal.phoneNumber} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phoneNumber: v } }))} placeholder="Enter phone number" maxLength={20} />
-        <Input label="Email Address" value={data.personal.emailAddress} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, emailAddress: v } }))} placeholder="Enter email address" error={showErrors && !data.personal.emailAddress.trim()} maxLength={80} />
-        <Input label="LinkedIn URL" value={data.personal.linkedInUrl} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedInUrl: v } }))} placeholder="https://linkedin.com/in/your-profile" maxLength={120} />
+        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Enter full name" error={(showErrors && !data.personal.fullName.trim()) || (data.personal.fullName.trim() && !isValidName(data.personal.fullName))} maxLength={60} />
+        <Input label="Professional Title" value={data.personal.professionalTitle} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, professionalTitle: v } }))} placeholder="Enter professional title" error={(showErrors && !data.personal.professionalTitle.trim()) || (data.personal.professionalTitle.trim() && !isValidName(data.personal.professionalTitle))} maxLength={80} />
+        <Input label="Phone Number" value={data.personal.phoneNumber} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phoneNumber: v } }))} placeholder="Enter phone number" error={data.personal.phoneNumber.trim() && !isValidPhone(data.personal.phoneNumber)} maxLength={20} />
+        <Input label="Email Address" value={data.personal.emailAddress} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, emailAddress: v } }))} placeholder="Enter email address" error={(showErrors && !data.personal.emailAddress.trim()) || (data.personal.emailAddress.trim() && !isValidEmail(data.personal.emailAddress))} maxLength={80} />
+        <Input label="LinkedIn URL" value={data.personal.linkedInUrl} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedInUrl: v } }))} placeholder="https://linkedin.com/in/your-profile" error={data.personal.linkedInUrl.trim() && !isValidLinkedIn(data.personal.linkedInUrl)} maxLength={120} />
       </div>
     </Card>,
     <Card key="summary" title="Summary" description="Write a short professional summary.">
@@ -903,6 +962,10 @@ export default function ResumeBuilderClient() {
   const activeTip = slideTips[step] || slideTips[0];
 
   const handleEnhanceAll = () => {
+    if (hasFormatErrors(data.personal)) {
+      setConfirmModal({ message: 'Please fix the highlighted fields before proceeding.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      return;
+    }
     const hasSummary = data.summary?.trim();
     const hasBullets = data.experience.some((e) => e.bullets.some((b) => b.trim()));
     const hasProjectBullets = data.projects.some((p) => p.bullets.some((b) => b.trim()));
@@ -1043,6 +1106,10 @@ export default function ResumeBuilderClient() {
   const handleDownloadWithValidation = (downloadFn) => {
     const actionType = downloadFn === handleDownloadDocx ? 'docx' : 'pdf';
     if (!requireAuth(actionType)) return;
+    if (hasFormatErrors(data.personal)) {
+      setConfirmModal({ message: 'Please fix the highlighted fields before proceeding.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      return;
+    }
     if (hasEmptyFields()) {
       setShowErrors(true);
       setConfirmModal({
@@ -1231,14 +1298,27 @@ export default function ResumeBuilderClient() {
                 ×
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden rounded-[4px] border border-black bg-[#f4f4f6] p-[0px]">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[4px] border border-black bg-[#f4f4f6] p-[0px]">
               <div className="flex h-full flex-col bg-white">
                 <div className="min-h-0 flex-1 overflow-auto">
                 <Template1Preview data={previewData} previewMode />
                 </div>
               </div>
+              {/* Watermark overlay */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
+                <div className="flex flex-col gap-[60px] -rotate-[30deg] opacity-[0.07]">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex gap-[40px]">
+                      {[...Array(3)].map((_, j) => (
+                        <span key={j} className="whitespace-nowrap text-[28px] font-black tracking-wider text-black">ResumeLab</span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <p className="mt-[12px] mb-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
+            <p className="mt-[8px] text-center text-[10px] text-[#aaa]">Download to remove watermark</p>
+            <p className="mt-[4px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
             <div className="mt-auto hidden shrink-0 rounded-[18px] border border-[color:#eceef2] bg-white p-[10px] shadow-[0_8px_18px_rgba(17,24,39,0.06)] md:block overflow-visible">
               <div className="flex items-center justify-between gap-[10px]">
                 <button
@@ -1274,6 +1354,11 @@ export default function ResumeBuilderClient() {
           </div>
         </div>
       </div>
+      {mobileView === 'preview' && (
+      <div className="fixed bottom-[72px] left-0 right-0 z-[55] px-[12px] md:hidden">
+        <div className="mx-auto max-w-[480px] rounded-[14px] border border-[#e5e7eb] bg-white px-[14px] py-[10px] text-center text-[12px] text-[#666] shadow-[0_4px_12px_rgba(17,24,39,0.04)]">Check each section in Edit mode — imported data may need manual adjustments.</div>
+      </div>
+      )}
       <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:#eceef2] bg-white px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(17,24,39,0.08)] md:hidden">
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
           <button

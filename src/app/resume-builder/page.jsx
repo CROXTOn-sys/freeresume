@@ -114,9 +114,14 @@ function BuilderChoice() {
               <div className="flex justify-center text-[30px] text-[#666]">☁</div>
             </ChoiceCard>
           </div>
-          <ChoiceCard title="Import LinkedIn" description="Auto-fill from profile">
-            <div className="flex justify-center text-[34px] font-bold text-[#0a66c2]">in</div>
-          </ChoiceCard>
+          <div className="relative opacity-60">
+            <div className="absolute top-[10px] right-[10px] z-[1]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <ChoiceCard title="Import LinkedIn" description="Coming soon">
+              <div className="flex justify-center text-[34px] font-bold text-[#0a66c2]">in</div>
+            </ChoiceCard>
+          </div>
         </div>
 
         <div className="mt-[14px] rounded-[16px] border border-[color:#d9d9e3] bg-white p-[16px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">

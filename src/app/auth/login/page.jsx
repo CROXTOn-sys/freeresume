@@ -15,16 +15,12 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const getReturnTo = () => {
-    // Priority: URL query param > sessionStorage > fallback to /
     const fromUrl = searchParams.get('returnTo');
-    console.log('[LoginPage] returnTo from URL:', fromUrl);
-    if (fromUrl) return fromUrl;
+    if (fromUrl && fromUrl.startsWith('/') && !fromUrl.includes('://')) return fromUrl;
     try {
       const saved = window.sessionStorage.getItem('ResumeLab-return-to');
-      console.log('[LoginPage] returnTo from sessionStorage:', saved);
-      if (saved) return saved;
+      if (saved && saved.startsWith('/') && !saved.includes('://')) return saved;
     } catch {}
-    console.log('[LoginPage] no returnTo found, defaulting to /');
     return '/';
   };
 

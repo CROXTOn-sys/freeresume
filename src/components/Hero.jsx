@@ -40,7 +40,7 @@ export default function Hero({ onCreateResume }) {
       </h1>
 
       <p className="mb-[8px] text-[14px] leading-[1.5] text-[var(--text-mid)]">
-        80+ ATS-friendly templates trusted by recruiters
+        ATS-friendly templates trusted by recruiters
       </p>
 
       <p className="mb-[18px] text-[14.5px] font-semibold text-[var(--text-dark)]">
