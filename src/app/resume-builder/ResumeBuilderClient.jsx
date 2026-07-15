@@ -1050,6 +1050,13 @@ export default function ResumeBuilderClient() {
       a.download = 'resume.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      // Save resume to Supabase
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: templateId, resume_data: previewData }) });
+        }
+      } catch {}
     } catch (err) {
       console.error('Download error:', err);
       window.alert('PDF generation failed. Please try again.');
@@ -1078,6 +1085,13 @@ export default function ResumeBuilderClient() {
       a.download = 'resume.docx';
       a.click();
       URL.revokeObjectURL(url);
+      // Save resume to Supabase
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: templateId, resume_data: previewData }) });
+        }
+      } catch {}
     } catch (err) {
       console.error('Download error:', err);
       window.alert('DOCX generation failed. Please try again.');

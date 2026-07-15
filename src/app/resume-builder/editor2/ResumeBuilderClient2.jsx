@@ -239,6 +239,7 @@ export default function ResumeBuilderClient2() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'resume.pdf'; a.click();
       URL.revokeObjectURL(url);
+      try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: '2', resume_data: previewData }) }); } } catch {}
     } catch (err) { console.error(err); window.alert('PDF generation failed. Please try again.'); }
     finally { setDownloading(false); }
   };
@@ -256,6 +257,7 @@ export default function ResumeBuilderClient2() {
       const a = document.createElement('a'); a.href = url; a.download = 'resume.docx'; a.click();
       URL.revokeObjectURL(url);
       setShowSuccess(true); setTimeout(() => setShowSuccess(false), 1200);
+      try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: '2', resume_data: previewData }) }); } } catch {}
     } catch (err) { console.error(err); window.alert('DOCX generation failed. Please try again.'); }
     finally { setDownloading(false); }
   };
