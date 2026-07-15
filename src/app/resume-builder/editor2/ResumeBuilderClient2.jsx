@@ -45,6 +45,40 @@ const addItem = (list, item) => [...list, item];
 const updateItem = (list, index, updater) => list.map((item, i) => (i === index ? updater(item) : item));
 const removeItem = (list, index) => list.filter((_, i) => i !== index);
 
+// Format validation helpers
+const isValidName = (v) => !v.trim() || /^[a-zA-Z\s.\-']+$/.test(v.trim());
+const isValidPhone = (v) => !v.trim() || /^[0-9+\-\s()]+$/.test(v.trim());
+const isValidEmail = (v) => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+const isValidLinkedIn = (v) => !v.trim() || /linkedin\.com/i.test(v.trim());
+const hasFormatErrors2 = (personal) => {
+  if (personal.fullName.trim() && !isValidName(personal.fullName)) return true;
+  if (personal.phone.trim() && !isValidPhone(personal.phone)) return true;
+  if (personal.email.trim() && !isValidEmail(personal.email)) return true;
+  if (personal.linkedin.trim() && !isValidLinkedIn(personal.linkedin)) return true;
+  return false;
+};
+
+// Post-import cleanup: extract contact info from summary-like fields
+function cleanupImportedSrc(src) {
+  if (!src) return src;
+  // Template 2 doesn't have a summary field, but the personal fields might have junk
+  // Clean email/phone/linkedin if they ended up with extra content
+  const personal = { ...(src.personal || {}) };
+  // If emailAddress has extra text, extract just the email
+  const rawEmail = personal.emailAddress || personal.email || '';
+  const emailMatch = rawEmail.match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i);
+  if (emailMatch) { personal.emailAddress = emailMatch[0]; personal.email = emailMatch[0]; }
+  // If phone has letters, extract just numbers
+  const rawPhone = personal.phoneNumber || personal.phone || '';
+  const phoneMatch = rawPhone.match(/(\+?\d[\d\s()\-]{7,}\d)/);
+  if (phoneMatch) { personal.phoneNumber = phoneMatch[0].trim(); personal.phone = phoneMatch[0].trim(); }
+  // If linkedin has extra text, extract just the URL
+  const rawLinkedin = personal.linkedInUrl || personal.linkedin || '';
+  const linkedInMatch = rawLinkedin.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s,|)]+/i);
+  if (linkedInMatch) { personal.linkedInUrl = linkedInMatch[0]; personal.linkedin = linkedInMatch[0]; }
+  return { ...src, personal };
+}
+
 export default function ResumeBuilderClient2() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -112,7 +146,8 @@ export default function ResumeBuilderClient2() {
           console.log('[editor2] certifications raw:', JSON.stringify(src.certifications?.slice(0, 2)));
           const hasContent = src.personal || src.experience || src.skills || src.projects || src.certifications;
           if (hasContent) {
-            const p = src.personal || {};
+            const cleaned = cleanupImportedSrc(src);
+            const p = cleaned.personal || {};
             const mappedProjects = Array.isArray(src.projects) && src.projects.length
               ? src.projects.map((pr) => {
                   const bullets = Array.isArray(pr.bullets) ? pr.bullets.filter(Boolean) : [];
@@ -226,6 +261,10 @@ export default function ResumeBuilderClient2() {
   };
 
   const handleEnhanceAll = () => {
+    if (hasFormatErrors2(data.personal)) {
+      setConfirmModal({ message: 'Please fix the highlighted fields before proceeding.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      return;
+    }
     // Check if enhanceable fields have content
     const hasBullets = data.experience.some((e) => e.bullets.some((b) => b.trim()));
     const hasProjectDesc = data.projects.some((p) => p.description?.trim());
@@ -301,7 +340,7 @@ export default function ResumeBuilderClient2() {
 
   const hasEmptyFields = () => {
     const p = data.personal;
-    if (!p.fullName.trim() || !p.email.trim()) return true;
+    if (!p.fullName.trim() || !p.email.trim() || !p.phone.trim() || !p.github.trim() || !p.linkedin.trim()) return true;
     if (data.skills.some((s) => !s.category.trim())) return true;
     if (data.experience.some((e) => !e.company.trim() || !e.role.trim())) return true;
     if (data.education.some((e) => !e.institution.trim() || !e.degree.trim())) return true;
@@ -317,6 +356,10 @@ export default function ResumeBuilderClient2() {
 
   const handleDownloadWithValidation = (downloadFn, actionType) => {
     if (!requireAuth(actionType || 'pdf')) return;
+    if (hasFormatErrors2(data.personal)) {
+      setConfirmModal({ message: 'Please fix the highlighted fields before proceeding.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      return;
+    }
     if (hasEmptyFields()) {
       setShowErrors(true);
       setConfirmModal({ message: 'Some fields are empty. Please fill all required details before downloading.', onConfirm: () => { setConfirmModal(null); }, singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
@@ -329,11 +372,11 @@ export default function ResumeBuilderClient2() {
   const sections = [    // Personal Info
     <Card key="personal" title="Personal Information" description="Your name and contact details.">
       <div className="grid gap-[12px]">
-        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Ashish Pratap Singh" error={showErrors && !data.personal.fullName.trim()} maxLength={60} />
-        <Input label="Email" value={data.personal.email} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, email: v } }))} placeholder="your@email.com" error={showErrors && !data.personal.email.trim()} maxLength={80} />
-        <Input label="Phone" value={data.personal.phone} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phone: v } }))} placeholder="+91 XXXXXXXXXX" maxLength={20} />
+        <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Ashish Pratap Singh" error={(showErrors && !data.personal.fullName.trim()) || (data.personal.fullName.trim() && !isValidName(data.personal.fullName))} maxLength={60} />
+        <Input label="Email" value={data.personal.email} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, email: v } }))} placeholder="your@email.com" error={(showErrors && !data.personal.email.trim()) || (data.personal.email.trim() && !isValidEmail(data.personal.email))} maxLength={80} />
+        <Input label="Phone" value={data.personal.phone} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phone: v } }))} placeholder="+91 XXXXXXXXXX" error={data.personal.phone.trim() && !isValidPhone(data.personal.phone)} maxLength={20} />
         <Input label="GitHub" value={data.personal.github} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, github: v } }))} placeholder="github.com/username" maxLength={120} />
-        <Input label="LinkedIn" value={data.personal.linkedin} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedin: v } }))} placeholder="linkedin.com/in/username" maxLength={120} />
+        <Input label="LinkedIn" value={data.personal.linkedin} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedin: v } }))} placeholder="linkedin.com/in/username" error={data.personal.linkedin.trim() && !isValidLinkedIn(data.personal.linkedin)} maxLength={120} />
       </div>
     </Card>,
 
@@ -526,7 +569,22 @@ export default function ResumeBuilderClient2() {
             <button type="button" onClick={() => setStep((p) => Math.max(p - 1, 0))} disabled={step === 0} className="rounded-[14px] border border-[color:#e5e7eb] bg-white px-[16px] py-[12px] text-[14px] font-bold text-black disabled:opacity-50">Previous</button>
             <button type="button" onClick={handleNext} className="rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[18px] py-[12px] text-[14px] font-bold text-white">Next</button>
           </div>
-          <p className="mt-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
+          <div className="mt-[8px] rounded-[16px] border border-[color:#b7d9ef] bg-[linear-gradient(180deg,#eef8ff_0%,#dcefff_100%)] px-[14px] py-[12px] shadow-[0_8px_18px_rgba(17,24,39,0.04)]">
+            <div className="flex items-start gap-[10px]">
+              <div className="mt-[1px] flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[10px] bg-white text-[14px] font-black text-[#3aa0d8] shadow-[0_6px_14px_rgba(17,24,39,0.05)]">i</div>
+              <div>
+                <div className="text-[11px] font-black tracking-[0.08em] text-[#2291c8]">PRO TIP</div>
+                <p className="mt-[4px] text-[12px] leading-[1.45] text-[#46606f]">
+                  {step === 0 && 'Keep your name and contact details consistent across your resume, LinkedIn, and portfolio.'}
+                  {step === 1 && 'Group skills by category and use keywords from job descriptions to pass ATS filters.'}
+                  {step === 2 && 'Start each bullet with a strong action verb and include measurable results.'}
+                  {step === 3 && 'List your most recent education first and include relevant coursework if applicable.'}
+                  {step === 4 && 'Mention the problem, tools used, and outcome for each project.'}
+                  {step === 5 && 'Include the exact credential name and issuer for maximum ATS clarity.'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Preview panel */}
@@ -536,15 +594,29 @@ export default function ResumeBuilderClient2() {
               <span className="text-[18px] font-bold text-black">PREVIEW</span>
               <button type="button" onClick={() => setMobileView('form')} className="absolute right-0 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[18px] text-black lg:hidden">×</button>
             </div>
-            <div className="min-h-0 flex-1 overflow-hidden rounded-[4px] border border-black bg-[#f4f4f6]">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[4px] border border-black bg-[#f4f4f6]">
               <div className="flex h-full flex-col bg-white">
                 <div className="min-h-0 flex-1 overflow-auto">
                   <Template2Preview data={previewData} previewMode />
                 </div>
               </div>
+              {/* Watermark overlay */}
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
+                <div className="flex flex-col gap-[60px] -rotate-[30deg] opacity-[0.07]">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex gap-[40px]">
+                      {[...Array(3)].map((_, j) => (
+                        <span key={j} className="whitespace-nowrap text-[28px] font-black tracking-wider text-black">ResumeLab</span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="mt-[12px] hidden shrink-0 md:block">
-              <p className="mb-[8px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
+            <p className="mt-[8px] text-center text-[10px] text-[#aaa]">Download to remove watermark</p>
+            <p className="mt-[4px] text-center text-[11px] text-[#888] md:hidden">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
+            <div className="mt-[4px] hidden shrink-0 md:block">
+              <p className="mb-[4px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
               <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="mb-[8px] w-full rounded-full border border-[color:#d8d2ff] bg-white py-[10px] text-[13px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
               <div className="relative" ref={downloadMenuRef}>
                 <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[10px] text-[13px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
@@ -563,6 +635,11 @@ export default function ResumeBuilderClient2() {
           </div>
         </div>
       </div>
+      {mobileView === 'preview' && (
+      <div className="fixed bottom-[72px] left-0 right-0 z-[55] px-[12px] md:hidden">
+        <div className="mx-auto max-w-[480px] rounded-[14px] border border-[#e5e7eb] bg-white px-[14px] py-[10px] text-center text-[12px] text-[#666] shadow-[0_4px_12px_rgba(17,24,39,0.04)]">Check each section in Edit mode — imported data may need manual adjustments.</div>
+      </div>
+      )}
 
       {/* Mobile bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:#eceef2] bg-white px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(17,24,39,0.08)] md:hidden">

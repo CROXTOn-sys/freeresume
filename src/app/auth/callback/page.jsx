@@ -15,7 +15,8 @@ export default function AuthCallback() {
         let returnTo = '/';
         try {
           const saved = window.sessionStorage.getItem('ResumeLab-return-to');
-          if (saved) { returnTo = saved; window.sessionStorage.removeItem('ResumeLab-return-to'); }
+          if (saved && saved.startsWith('/') && !saved.includes('://')) { returnTo = saved; }
+          window.sessionStorage.removeItem('ResumeLab-return-to');
         } catch {}
         listener?.subscription?.unsubscribe();
         router.push(returnTo);

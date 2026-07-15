@@ -9,6 +9,7 @@ import {
   TabStopType,
   LineRuleType,
 } from 'docx';
+import { rateLimit } from '../../../lib/rate-limit.js';
 
 function normalizeData(data = {}) {
   const personal = data.personal || {};
@@ -413,8 +414,15 @@ function buildDocxTemplate2(data) {
 // API HANDLER
 // ═══════════════════════════════════════════════════════════
 export async function POST(request) {
+  const { success } = rateLimit(request, { limit: 5, windowMs: 60000 });
+  if (!success) return new Response('Too many requests. Please wait.', { status: 429 });
+
   try {
     const data = await request.json();
+
+    const bodySize = JSON.stringify(data).length;
+    if (bodySize > 1024 * 1024) return new Response('Request too large', { status: 413 });
+
     const templateId = data._templateId || '1';
     const doc = templateId === '2' ? buildDocxTemplate2(data) : buildDocxTemplate1(data);
     const buffer = await Packer.toBuffer(doc);

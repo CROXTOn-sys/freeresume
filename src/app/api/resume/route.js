@@ -13,7 +13,6 @@ async function getBrowser() {
 
   if (isProduction) {
     const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chrome-for-testing';
-    console.log('[resume] production: launching chrome at:', execPath);
     return await puppeteer.launch({
       executablePath: execPath,
       headless: true,
@@ -131,9 +130,7 @@ function normalizeData(data = {}) {
 async function loadTemplateHtml(templateId) {
   try {
     const filePath = templateId === '2' ? template2Path : templatePath;
-    console.log('[resume] loading template:', { templateId, filePath });
     const content = await readFile(filePath, 'utf8');
-    console.log('[resume] template loaded, length:', content.length);
     return content;
   } catch (err) {
     console.error('[resume] failed to load template:', err.message);
@@ -368,9 +365,7 @@ export async function POST(request) {
     if (bodySize > 1024 * 1024) return new Response('Request too large', { status: 413 });
 
     const templateId = data._templateId || '1';
-    console.log('[resume POST] templateId:', templateId, 'has projects:', data.projects?.length, 'has certs:', data.certifications?.length);
     const html = await renderResumeHtml(data, templateId);
-    console.log('[resume POST] html length:', html.length, 'has Project Work:', html.includes('Project Work'));
 
     // Acquire browser slot (max 3 concurrent)
     release = await acquireBrowserSlot();
