@@ -8,6 +8,7 @@ import Hero from '../components/Hero';
 import TemplatesSection from '../components/TemplatesSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FaqSection from '../components/FaqSection';
+import ReviewUs from '../components/ReviewUs';
 import BugReport from '../components/BugReport';
 
 const themeVars = {
@@ -213,6 +214,7 @@ export default function Page() {
         <TemplatesSection highlight={highlightTemplates} />
         <TestimonialsSection />
         <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
+        <ReviewUs />
       </div>
       <BugReport />
 

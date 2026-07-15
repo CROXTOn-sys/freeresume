@@ -24,7 +24,7 @@ const templates = [
   {
     badge: 'New',
     title: 'Henna',
-    users: '1.9K users',
+    users: '----',
     variant: 'henna',
     templateId: 3,
     thumbClass: 'bg-[linear-gradient(135deg,#fff0f0_0%,#ffe0e0_100%)]',
@@ -32,7 +32,7 @@ const templates = [
   {
     badge: 'Modern',
     title: 'Nova',
-    users: '1.1K users',
+    users: '----',
     variant: 'nova',
     templateId: 4,
     thumbClass: 'bg-[linear-gradient(135deg,#f0fff4_0%,#d4f5e2_100%)]',
