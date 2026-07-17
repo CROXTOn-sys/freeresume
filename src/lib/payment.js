@@ -2,7 +2,6 @@ import { supabase } from './supabase';
 
 /**
  * Check if user can download for free or needs to pay
- * Returns { canDownload, isPaid, downloadCount }
  */
 export async function checkDownloadAccess() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -11,13 +10,12 @@ export async function checkDownloadAccess() {
   const res = await fetch('/api/check-download', {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
-  if (!res.ok) return { canDownload: true, isPaid: false, downloadCount: 0 }; // Fallback: allow
+  if (!res.ok) return { canDownload: true, isPaid: false, downloadCount: 0 };
   return await res.json();
 }
 
 /**
- * Initiate Razorpay payment flow
- * Returns a promise that resolves when payment is complete
+ * Initiate Cashfree payment flow
  */
 export function initiatePayment() {
   return new Promise(async (resolve, reject) => {
@@ -33,16 +31,16 @@ export function initiatePayment() {
       const orderData = await orderRes.json();
 
       if (orderData.alreadyPaid) { resolve({ alreadyPaid: true }); return; }
-      if (!orderData.orderId) { reject(new Error('Failed to create order')); return; }
+      if (!orderData.paymentSessionId) { reject(new Error('Failed to create order')); return; }
 
-      // Load Razorpay script if not loaded
-      if (!window.Razorpay) {
+      // Load Cashfree SDK
+      if (!window.Cashfree) {
         const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => openCheckout(orderData, session.access_token, resolve, reject);
+        script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+        script.onload = () => openCashfreeCheckout(orderData, session.access_token, resolve, reject);
         document.head.appendChild(script);
       } else {
-        openCheckout(orderData, session.access_token, resolve, reject);
+        openCashfreeCheckout(orderData, session.access_token, resolve, reject);
       }
     } catch (err) {
       reject(err);
@@ -50,16 +48,23 @@ export function initiatePayment() {
   });
 }
 
-function openCheckout(orderData, accessToken, resolve, reject) {
-  const options = {
-    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-    amount: orderData.amount,
-    currency: orderData.currency,
-    name: 'ResumeLab',
-    description: 'Unlimited Resume Downloads',
-    order_id: orderData.orderId,
-    handler: async function (response) {
-      // Verify payment on server
+function openCashfreeCheckout(orderData, accessToken, resolve, reject) {
+  const cashfree = window.Cashfree({ mode: 'production' });
+
+  cashfree.checkout({
+    paymentSessionId: orderData.paymentSessionId,
+    redirectTarget: '_modal',
+  }).then(async (result) => {
+    if (result.error) {
+      reject(new Error(result.error.message || 'Payment failed'));
+      return;
+    }
+    if (result.redirect) {
+      // Payment is being processed
+      return;
+    }
+    if (result.paymentDetails) {
+      // Verify on server
       try {
         const verifyRes = await fetch('/api/verify-payment', {
           method: 'POST',
@@ -67,14 +72,10 @@ function openCheckout(orderData, accessToken, resolve, reject) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          }),
+          body: JSON.stringify({ orderId: orderData.orderId }),
         });
-        const result = await verifyRes.json();
-        if (result.success) {
+        const verifyResult = await verifyRes.json();
+        if (verifyResult.success) {
           resolve({ paid: true });
         } else {
           reject(new Error('Payment verification failed'));
@@ -82,17 +83,12 @@ function openCheckout(orderData, accessToken, resolve, reject) {
       } catch (err) {
         reject(err);
       }
-    },
-    modal: {
-      ondismiss: function () {
-        reject(new Error('Payment cancelled'));
-      },
-    },
-    theme: {
-      color: '#6C63FF',
-    },
-  };
-
-  const rzp = new window.Razorpay(options);
-  rzp.open();
+    }
+  }).catch((err) => {
+    if (err.message?.includes('cancelled') || err.message?.includes('closed')) {
+      reject(new Error('Payment cancelled'));
+    } else {
+      reject(err);
+    }
+  });
 }
