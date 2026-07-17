@@ -18,7 +18,6 @@
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^6.0.227",
     "puppeteer-core": "^25.3.0",
-    "razorpay": "^2.9.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "unpdf": "^1.6.2"

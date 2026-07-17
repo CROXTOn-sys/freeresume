@@ -1145,7 +1145,7 @@ export default function ResumeBuilderClient() {
       if (!access.canDownload && !access.isPaid) {
         // Need to pay
         setConfirmModal({
-          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
+          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹2.',
           onConfirm: async () => {
             setConfirmModal(null);
             try {
@@ -1159,7 +1159,7 @@ export default function ResumeBuilderClient() {
               }
             }
           },
-          confirmText: 'Pay ₹19',
+          confirmText: 'Pay ₹2',
           confirmColor: 'bg-[#10b981]',
         });
         return;
