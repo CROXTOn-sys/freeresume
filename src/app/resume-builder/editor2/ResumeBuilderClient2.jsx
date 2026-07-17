@@ -204,9 +204,9 @@ export default function ResumeBuilderClient2() {
   useEffect(() => {
     if (!showDownloadMenu) return;
     const handleClickOutside = (e) => {
-      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target)) setShowDownloadMenu(false);
+      const isInsideMenu = e.target.closest('[data-download-menu]');
+      if (!isInsideMenu) setShowDownloadMenu(false);
     };
-    // Use setTimeout to avoid the opening click immediately closing the menu
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
     }, 0);
@@ -648,7 +648,7 @@ export default function ResumeBuilderClient2() {
             <div className="mt-[4px] hidden shrink-0 md:block">
               <p className="mb-[4px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
               <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="mb-[8px] w-full rounded-full border border-[color:#d8d2ff] bg-white py-[10px] text-[13px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
-              <div className="relative" ref={downloadMenuRef}>
+              <div className="relative" ref={downloadMenuRef} data-download-menu>
                 <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[10px] text-[13px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
                 {showDownloadMenu && (
                   <div className="absolute bottom-full left-0 right-0 z-[100] mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
@@ -675,7 +675,7 @@ export default function ResumeBuilderClient2() {
       <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:#eceef2] bg-white px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(17,24,39,0.08)] md:hidden">
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
           <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
-          <div className="relative flex-[1.35]">
+          <div className="relative flex-[1.35]" data-download-menu>
             <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
             {showDownloadMenu && (
               <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">

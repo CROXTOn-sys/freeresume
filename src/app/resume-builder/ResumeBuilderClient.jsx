@@ -431,9 +431,10 @@ export default function ResumeBuilderClient() {
   useEffect(() => {
     if (!showDownloadMenu) return;
     const handleClickOutside = (e) => {
-      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target)) setShowDownloadMenu(false);
+      // Check if click is inside any download menu area (desktop or mobile)
+      const isInsideMenu = e.target.closest('[data-download-menu]');
+      if (!isInsideMenu) setShowDownloadMenu(false);
     };
-    // Use setTimeout to avoid the opening click immediately closing the menu
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
     }, 0);
@@ -1372,7 +1373,7 @@ export default function ResumeBuilderClient() {
                 >
                   Enhance All
                 </button>
-                <div className="relative" ref={downloadMenuRef}>
+                <div className="relative" ref={downloadMenuRef} data-download-menu>
                   <button
                     type="button"
                     onClick={() => setShowDownloadMenu((v) => !v)}
@@ -1411,7 +1412,7 @@ export default function ResumeBuilderClient() {
           >
             Enhance All
           </button>
-          <div className="relative flex-[1.35]">
+          <div className="relative flex-[1.35]" data-download-menu>
             <button
               type="button"
               onClick={() => setShowDownloadMenu((v) => !v)}
