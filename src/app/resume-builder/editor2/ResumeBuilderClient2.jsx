@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template2Preview from '../../../components/template-previews/Template2Preview';
 import { supabase } from '../../../lib/supabase';
+import { checkDownloadAccess, initiatePayment } from '../../../lib/payment';
 
 const steps = ['Personal Info', 'Skills', 'Work Experience', 'Education', 'Projects', 'Certifications'];
 const makeId = () => Date.now() + Math.random();
@@ -356,7 +357,7 @@ export default function ResumeBuilderClient2() {
     setStep((p) => Math.min(p + 1, steps.length - 1));
   };
 
-  const handleDownloadWithValidation = (downloadFn, actionType) => {
+  const handleDownloadWithValidation = async (downloadFn, actionType) => {
     if (!requireAuth(actionType || 'pdf')) return;
     if (hasFormatErrors2(data.personal)) {
       setConfirmModal({ message: 'Please fix the highlighted fields before proceeding.', onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
@@ -368,6 +369,33 @@ export default function ResumeBuilderClient2() {
       return;
     }
     setShowErrors(false);
+
+    // Check payment status
+    try {
+      const access = await checkDownloadAccess();
+      if (!access.canDownload && !access.isPaid) {
+        setConfirmModal({
+          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
+          onConfirm: async () => {
+            setConfirmModal(null);
+            try {
+              const result = await initiatePayment();
+              if (result.paid || result.alreadyPaid) {
+                downloadFn();
+              }
+            } catch (err) {
+              if (err.message !== 'Payment cancelled') {
+                window.alert('Payment failed. Please try again.');
+              }
+            }
+          },
+          confirmText: 'Pay ₹19',
+          confirmColor: 'bg-[#10b981]',
+        });
+        return;
+      }
+    } catch {}
+
     downloadFn();
   };
 
@@ -647,7 +675,7 @@ export default function ResumeBuilderClient2() {
       <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:#eceef2] bg-white px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(17,24,39,0.08)] md:hidden">
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
           <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
-          <div className="relative flex-[1.35]" ref={downloadMenuRef}>
+          <div className="relative flex-[1.35]">
             <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
             {showDownloadMenu && (
               <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">

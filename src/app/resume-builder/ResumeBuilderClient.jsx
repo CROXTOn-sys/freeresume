@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template1Preview from '../../components/template-previews/Template1Preview';
 import { supabase } from '../../lib/supabase';
+import { checkDownloadAccess, initiatePayment } from '../../lib/payment';
 
 const steps = ['Personal Information', 'Summary', 'Skills', 'Experience', 'Projects', 'Certifications', 'Education'];
 const makeId = () => Date.now() + Math.random();
@@ -1117,7 +1118,7 @@ export default function ResumeBuilderClient() {
     setStep((p) => Math.min(p + 1, steps.length - 1));
   };
 
-  const handleDownloadWithValidation = (downloadFn) => {
+  const handleDownloadWithValidation = async (downloadFn) => {
     const actionType = downloadFn === handleDownloadDocx ? 'docx' : 'pdf';
     if (!requireAuth(actionType)) return;
     if (hasFormatErrors(data.personal)) {
@@ -1136,6 +1137,34 @@ export default function ResumeBuilderClient() {
       return;
     }
     setShowErrors(false);
+
+    // Check payment status
+    try {
+      const access = await checkDownloadAccess();
+      if (!access.canDownload && !access.isPaid) {
+        // Need to pay
+        setConfirmModal({
+          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
+          onConfirm: async () => {
+            setConfirmModal(null);
+            try {
+              const result = await initiatePayment();
+              if (result.paid || result.alreadyPaid) {
+                (downloadFn || handleDownload)();
+              }
+            } catch (err) {
+              if (err.message !== 'Payment cancelled') {
+                window.alert('Payment failed. Please try again.');
+              }
+            }
+          },
+          confirmText: 'Pay ₹19',
+          confirmColor: 'bg-[#10b981]',
+        });
+        return;
+      }
+    } catch {}
+
     (downloadFn || handleDownload)();
   };
 
@@ -1382,7 +1411,7 @@ export default function ResumeBuilderClient() {
           >
             Enhance All
           </button>
-          <div className="relative flex-[1.35]" ref={downloadMenuRef}>
+          <div className="relative flex-[1.35]">
             <button
               type="button"
               onClick={() => setShowDownloadMenu((v) => !v)}
