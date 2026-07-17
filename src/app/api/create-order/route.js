@@ -48,7 +48,7 @@ export async function POST(request) {
           customer_phone: '9999999999',
         },
         order_meta: {
-          return_url: `${request.headers.get('origin') || 'http://localhost:3000'}/api/verify-payment?order_id=${orderId}`,
+          return_url: `https://resumelab.duckdns.org/api/verify-payment?order_id=${orderId}`,
         },
       }),
     });
