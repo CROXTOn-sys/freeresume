@@ -103,6 +103,44 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
       }
     }
 
+    // Last fallback: OpenAI GPT-4o-mini
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (openaiKey) {
+      try {
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openaiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+            max_tokens: 2000,
+          }),
+        });
+
+        if (openaiRes.ok) {
+          const openaiPayload = await openaiRes.json();
+          const openaiContent = openaiPayload?.choices?.[0]?.message?.content?.trim() || '';
+          let jsonStr = openaiContent;
+          const jsonMatch = openaiContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (jsonMatch) jsonStr = jsonMatch[1].trim();
+          try {
+            const result = JSON.parse(jsonStr);
+            return NextResponse.json({ enhanced: result, modelUsed: 'gpt-4o-mini' });
+          } catch {
+            lastError = 'OpenAI returned invalid JSON';
+          }
+        } else {
+          lastError = await openaiRes.text();
+        }
+      } catch (err) {
+        lastError = err.message || 'OpenAI request failed';
+      }
+    }
+
     return NextResponse.json({ error: 'Enhancement failed', details: lastError }, { status: 500 });
   } catch (error) {
     console.error('[ai-enhance-all] error:', error);
