@@ -215,8 +215,19 @@ export default function Page() {
         <TestimonialsSection />
         <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
         <ReviewUs />
+        <div className="mt-[16px] flex items-center justify-center gap-[12px] pb-[8px] text-[11px] text-[#999]">
+          <a href="/privacy" className="hover:text-[#6C63FF] transition-colors">Privacy Policy</a>
+          <span>|</span>
+          <a href="/terms" className="hover:text-[#6C63FF] transition-colors">Terms of Service</a>
+          <span>|</span>
+          <a href="/refund" className="hover:text-[#6C63FF] transition-colors">Refund Policy</a>
+        </div>
       </div>
       <BugReport />
+      {/* My Resumes shortcut button */}
+      <button type="button" onClick={() => router.push('/my-resumes')} className="fixed bottom-[80px] right-[16px] z-[95] flex h-[46px] w-[46px] items-center justify-center rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.15)]" aria-label="My Resumes">
+        <img src="/images/download.png" alt="My Resumes" className="h-[46px] w-[46px] rounded-full" />
+      </button>
 
       {showTemplatePrompt ? (
         <div className="fixed inset-0 z-[120] flex items-start justify-center bg-[rgba(17,24,39,0.18)] px-[12px] pt-[96px] backdrop-blur-[2px]">
