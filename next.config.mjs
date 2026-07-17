@@ -23,7 +23,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com",
-              "connect-src 'self' https://*.supabase.co https://openrouter.ai https://accounts.google.com https://*.contaboserver.net https://api.razorpay.com https://lumberjack.razorpay.com",
+              "connect-src 'self' https://*.supabase.co https://openrouter.ai https://api.openai.com https://accounts.google.com https://*.contaboserver.net https://api.razorpay.com https://lumberjack.razorpay.com",
               "frame-src https://accounts.google.com https://*.supabase.co https://api.razorpay.com https://checkout.razorpay.com",
               "form-action 'self'",
               "base-uri 'self'",
