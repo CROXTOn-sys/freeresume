@@ -343,7 +343,7 @@ export default function ResumeBuilderClient2() {
 
   const hasEmptyFields = () => {
     const p = data.personal;
-    if (!p.fullName.trim() || !p.email.trim() || !p.phone.trim() || !p.github.trim() || !p.linkedin.trim()) return true;
+    if (!p.fullName.trim() || !p.email.trim() || !p.phone.trim()) return true;
     if (data.skills.some((s) => !s.category.trim())) return true;
     if (data.experience.some((e) => !e.company.trim() || !e.role.trim())) return true;
     if (data.education.some((e) => !e.institution.trim() || !e.degree.trim())) return true;
