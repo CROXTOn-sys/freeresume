@@ -282,7 +282,10 @@ export default function ResumeBuilderClient2() {
     if (!hasCoursework) missing.push('Coursework');
 
     if (missing.length > 0) {
-      setConfirmModal({ message: `Please fill in the following fields before enhancing: ${missing.join(', ')}.`, onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      setShowErrors(true);
+      const enhanceStep = !hasBullets ? 2 : !hasProjectDesc ? 4 : !hasCertDesc ? 5 : 3;
+      const sectionName = steps[enhanceStep];
+      setConfirmModal({ message: `Please fill in the following fields before enhancing: ${missing.join(', ')}.`, onConfirm: () => { setConfirmModal(null); setStep(enhanceStep); }, singleButton: true, confirmText: `Go to ${sectionName}`, confirmColor: 'bg-[#6C63FF]' });
       return;
     }
 
@@ -434,7 +437,7 @@ export default function ResumeBuilderClient2() {
       <div className="grid gap-[12px]">
         <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Ashish Pratap Singh" error={(showErrors && !data.personal.fullName.trim()) || (data.personal.fullName.trim() && !isValidName(data.personal.fullName))} maxLength={60} />
         <Input label="Email" value={data.personal.email} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, email: v } }))} placeholder="your@email.com" error={(showErrors && !data.personal.email.trim()) || (data.personal.email.trim() && !isValidEmail(data.personal.email))} maxLength={80} />
-        <Input label="Phone" value={data.personal.phone} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phone: v } }))} placeholder="+91 XXXXXXXXXX" error={data.personal.phone.trim() && !isValidPhone(data.personal.phone)} maxLength={20} />
+        <Input label="Phone" value={data.personal.phone} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, phone: v } }))} placeholder="+91 XXXXXXXXXX" error={(showErrors && !data.personal.phone.trim()) || (data.personal.phone.trim() && !isValidPhone(data.personal.phone))} maxLength={20} />
         <Input label="GitHub" value={data.personal.github} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, github: v } }))} placeholder="github.com/username" maxLength={120} />
         <Input label="LinkedIn" value={data.personal.linkedin} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, linkedin: v } }))} placeholder="linkedin.com/in/username" error={data.personal.linkedin.trim() && !isValidLinkedIn(data.personal.linkedin)} maxLength={120} />
       </div>
@@ -534,7 +537,7 @@ export default function ResumeBuilderClient2() {
                 <Input label="Score Label" value={edu.scoreLabel} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, scoreLabel: v })) }))} placeholder="CGPA" maxLength={20} />
                 <Input label="Score" value={edu.score} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, score: v })) }))} placeholder="7.96/10" maxLength={20} />
               </div>
-              <TextArea label="Relevant Coursework" value={edu.coursework} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: v })) }))} placeholder="Data Structures, Algorithms, Machine Learning..." rows={2} maxLength={300} />
+              <TextArea label="Relevant Coursework" value={edu.coursework} onChange={(v) => setData((p) => ({ ...p, education: updateItem(p.education, ei, (item) => ({ ...item, coursework: v })) }))} placeholder="Data Structures, Algorithms, Machine Learning..." rows={2} maxLength={300} error={showErrors && !edu.coursework.trim()} />
             </div>
           </div>
         ))}
@@ -594,7 +597,7 @@ export default function ResumeBuilderClient2() {
             <div className="grid gap-[10px]">
               <Input label="Title" value={cert.title} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, title: v })) }))} placeholder="Mentor at Scaler Academy" error={showErrors && !cert.title.trim()} maxLength={120} />
               <Input label="Issuer" value={cert.issuer} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, issuer: v })) }))} placeholder="Scaler" maxLength={80} />
-              <TextArea label="Description (optional)" value={cert.description} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Helping students get better at problem solving..." rows={2} maxLength={300} />
+              <TextArea label="Description (optional)" value={cert.description} onChange={(v) => setData((p) => ({ ...p, certifications: updateItem(p.certifications, ci, (item) => ({ ...item, description: v })) }))} placeholder="Helping students get better at problem solving..." rows={2} maxLength={300} error={showErrors && !cert.description.trim()} />
             </div>
           </div>
         ))}
