@@ -83,6 +83,14 @@ export default function AboutPage() {
               <span className="mt-[2px] text-[#6C63FF]">●</span>
               <span>If you uploaded a resume, review and expand any lines that were imported too short</span>
             </li>
+            <li className="flex gap-[10px]">
+              <span className="mt-[2px] text-[#6C63FF]">●</span>
+              <span>Stuck on a bullet point? Tap &quot;✦ Suggest&quot; next to any empty field — AI will generate a relevant line based on your role or project title</span>
+            </li>
+            <li className="flex gap-[10px]">
+              <span className="mt-[2px] text-[#6C63FF]">●</span>
+              <span>Red dots on section tabs show which sections still need attention before downloading</span>
+            </li>
           </ul>
         </div>
 
@@ -100,7 +108,7 @@ export default function AboutPage() {
           <ul className="mt-[14px] flex flex-col gap-[10px] text-[14px] leading-[1.6] text-[#444]">
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
-              <span>AI enhancement is available for all users</span>
+              <span>AI enhancement and AI suggestions are available for all users</span>
             </li>
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
@@ -108,7 +116,11 @@ export default function AboutPage() {
             </li>
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
-              <span>Your data stays in your browser — we don&apos;t store your resume on our servers</span>
+              <span>First download is free — unlimited downloads for ₹19</span>
+            </li>
+            <li className="flex gap-[10px]">
+              <span className="mt-[2px] text-[#6C63FF]">●</span>
+              <span>Your previously downloaded resumes are saved in &quot;My Resumes&quot; for re-download anytime</span>
             </li>
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
