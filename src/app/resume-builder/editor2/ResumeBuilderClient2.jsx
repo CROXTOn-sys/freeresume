@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template2Preview from '../../../components/template-previews/Template2Preview';
 import { supabase } from '../../../lib/supabase';
@@ -94,6 +94,7 @@ export default function ResumeBuilderClient2() {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [suggesting, setSuggesting] = useState(null);
   const downloadMenuRef = useRef(null);
   const stepRailRef = useRef(null);
 
@@ -357,6 +358,17 @@ export default function ResumeBuilderClient2() {
     setStep((p) => Math.min(p + 1, steps.length - 1));
   };
 
+  const findFirstEmptyStep = () => {
+    const p = data.personal;
+    if (!p.fullName.trim() || !p.email.trim() || !p.phone.trim()) return 0;
+    if (data.skills.some((s) => !s.category.trim())) return 1;
+    if (data.experience.some((e) => !e.company.trim() || !e.role.trim())) return 2;
+    if (data.education.some((e) => !e.institution.trim() || !e.degree.trim())) return 3;
+    if (data.projects.some((pr) => !pr.name.trim())) return 4;
+    if (data.certifications.some((c) => !c.title.trim())) return 5;
+    return -1;
+  };
+
   const handleDownloadWithValidation = async (downloadFn, actionType) => {
     if (!requireAuth(actionType || 'pdf')) return;
     if (hasFormatErrors2(data.personal)) {
@@ -365,7 +377,9 @@ export default function ResumeBuilderClient2() {
     }
     if (hasEmptyFields()) {
       setShowErrors(true);
-      setConfirmModal({ message: 'Some fields are empty. Please fill all required details before downloading.', onConfirm: () => { setConfirmModal(null); }, singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      const emptyStep = findFirstEmptyStep();
+      const sectionName = emptyStep !== -1 ? steps[emptyStep] : '';
+      setConfirmModal({ message: `Please fill all fields in "${sectionName}" before downloading, or delete unused entries.`, onConfirm: () => { setConfirmModal(null); if (emptyStep !== -1) setStep(emptyStep); }, singleButton: true, confirmText: `Go to ${sectionName}`, confirmColor: 'bg-[#6C63FF]' });
       return;
     }
     setShowErrors(false);
@@ -401,6 +415,18 @@ export default function ResumeBuilderClient2() {
     } catch {}
 
     downloadFn();
+  };
+
+  const stepHasErrors = (index) => {
+    if (!showErrors) return false;
+    const p = data.personal;
+    if (index === 0) return !p.fullName.trim() || !p.email.trim() || !p.phone.trim();
+    if (index === 1) return data.skills.some((s) => !s.category.trim());
+    if (index === 2) return data.experience.some((e) => !e.company.trim() || !e.role.trim());
+    if (index === 3) return data.education.some((e) => !e.institution.trim() || !e.degree.trim());
+    if (index === 4) return data.projects.some((pr) => !pr.name.trim());
+    if (index === 5) return data.certifications.some((c) => !c.title.trim());
+    return false;
   };
 
   const sections = [    // Personal Info
@@ -452,12 +478,33 @@ export default function ResumeBuilderClient2() {
               </div>
               <span className="text-[12px] font-semibold text-black">Bullet Points</span>
               {exp.bullets.map((b, bi) => (
-                <div key={bi} className="flex gap-[8px]">
-                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder="Achievement or responsibility" maxLength={300} className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]" />
+                <Fragment key={bi}>
+                <div className="flex gap-[8px]">
+                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder={suggesting === `exp-${ei}-${bi}` ? '✦ Generating suggestion...' : 'Achievement or responsibility'} maxLength={300} className={`h-[44px] flex-1 rounded-[12px] border px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)] ${suggesting === `exp-${ei}-${bi}` ? 'animate-pulse border-[color:var(--purple)] bg-[rgba(108,99,255,0.03)]' : showErrors && !b.trim() ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
                   <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) }))} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </div>
+                {!b.trim() && (exp.company.trim() || exp.role.trim()) && (
+                  <button
+                    type="button"
+                    disabled={suggesting === `exp-${ei}-${bi}`}
+                    onClick={async () => {
+                      setSuggesting(`exp-${ei}-${bi}`);
+                      try {
+                        const res = await fetch('/api/ai-suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context: `${exp.role} at ${exp.company}`, fieldType: 'experience_bullet' }) });
+                        const result = await res.json();
+                        if (result.suggestion) {
+                          setData((p) => ({ ...p, experience: p.experience.map((e, i) => i === ei ? { ...e, bullets: e.bullets.map((bullet, j) => j === bi ? result.suggestion : bullet) } : e) }));
+                        }
+                      } catch {} finally { setSuggesting(null); }
+                    }}
+                    className="mt-[4px] text-[11px] font-semibold text-[color:var(--purple)] hover:underline"
+                  >
+                    {suggesting === `exp-${ei}-${bi}` ? '...' : '✦ Suggest'}
+                  </button>
+                )}
+                </Fragment>
               ))}
               <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: addItem(item.bullets, '') })) }))} className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-dashed border-[color:#cfc8ff] bg-[rgba(108,99,255,0.04)] text-[color:var(--purple)]" aria-label="Add bullet"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
               <Input label="Tools / Technologies Used" value={exp.toolsUsed} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="AWS, EC2, S3, Kafka, Docker" maxLength={150} />
@@ -593,7 +640,7 @@ export default function ResumeBuilderClient2() {
           {/* Step tabs */}
           <div ref={stepRailRef} className="flex gap-[8px] overflow-x-auto pb-[4px] [scrollbar-width:none]">
             {steps.map((label, index) => (
-              <button key={label} type="button" onClick={() => setStep(index)} className={`whitespace-nowrap rounded-full px-[14px] py-[8px] text-[12px] font-bold ${step === index ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-white text-black shadow-[0_6px_16px_rgba(17,24,39,0.06)]'}`}>{label}</button>
+              <button key={label} type="button" onClick={() => setStep(index)} className={`whitespace-nowrap rounded-full px-[14px] py-[8px] text-[12px] font-bold ${step === index ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-white text-black shadow-[0_6px_16px_rgba(17,24,39,0.06)]'}`}>{label}{stepHasErrors(index) && <span className="ml-[4px] inline-block h-[6px] w-[6px] rounded-full bg-red-500" />}</button>
             ))}
           </div>
 

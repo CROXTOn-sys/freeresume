@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template1Preview from '../../components/template-previews/Template1Preview';
 import { supabase } from '../../lib/supabase';
@@ -279,6 +279,7 @@ export default function ResumeBuilderClient() {
   const [showErrors, setShowErrors] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [suggesting, setSuggesting] = useState(null); // tracks which field is being suggested: 'exp-0-1' format
   const stepRailRef = useRef(null);
   const stepButtonRefs = useRef([]);
   const downloadMenuRef = useRef(null);
@@ -484,6 +485,19 @@ export default function ResumeBuilderClient() {
     [data]
   );
 
+  const stepHasErrors = (index) => {
+    if (!showErrors) return false;
+    const p = data.personal;
+    if (index === 0) return !p.fullName.trim() || !p.professionalTitle.trim() || !p.emailAddress.trim();
+    if (index === 1) return !data.summary.trim();
+    if (index === 2) return data.skills.some((s) => !s.category.trim() || s.items.some((i) => !i.trim()));
+    if (index === 3) return data.experience.some((e) => !e.companyName.trim() || !e.role.trim() || e.bullets.some((b) => !b.trim()));
+    if (index === 4) return data.projects.some((pr) => !pr.projectName.trim() || pr.bullets.some((b) => !b.trim()));
+    if (index === 5) return data.certifications.some((c) => !c.certificationName.trim());
+    if (index === 6) return data.education.some((ed) => !ed.degree.trim() || !ed.institution.trim());
+    return false;
+  };
+
   const sections = [
     <Card key="personal" title="Personal Information" description="These details fill the resume header immediately.">
       <div className="grid gap-[12px]">
@@ -654,7 +668,8 @@ export default function ResumeBuilderClient() {
               <Input label="Tools Used" value={exp.toolsUsed || ''} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="Excel, SQL, Power BI" maxLength={150} />
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Experience Summary</span>
               {exp.bullets.map((b, bi) => (
-                <div key={bi} className="flex gap-[8px]">
+                <React.Fragment key={bi}>
+                <div className="flex gap-[8px]">
                   <input
                     value={b}
                     onChange={(e) =>
@@ -666,9 +681,9 @@ export default function ResumeBuilderClient() {
                         })),
                       }))
                     }
-                    placeholder="Add bullet point"
+                    placeholder={suggesting === `exp-${ei}-${bi}` ? '✦ Generating suggestion...' : 'Add bullet point'}
                     maxLength={300}
-                    className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
+                    className={`h-[44px] flex-1 rounded-[12px] border px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)] ${suggesting === `exp-${ei}-${bi}` ? 'animate-pulse border-[color:var(--purple)] bg-[rgba(108,99,255,0.03)]' : showErrors && !b.trim() ? 'border-red-400' : 'border-[color:#e5e7eb]'}`}
                   />
                   <button
                     type="button"
@@ -687,6 +702,26 @@ export default function ResumeBuilderClient() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
+                {!b.trim() && (exp.companyName.trim() || exp.role.trim()) && (
+                  <button
+                    type="button"
+                    disabled={suggesting === `exp-${ei}-${bi}`}
+                    onClick={async () => {
+                      setSuggesting(`exp-${ei}-${bi}`);
+                      try {
+                        const res = await fetch('/api/ai-suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context: `${exp.role} at ${exp.companyName}`, fieldType: 'experience_bullet' }) });
+                        const result = await res.json();
+                        if (result.suggestion) {
+                          setData((p) => ({ ...p, experience: p.experience.map((e, i) => i === ei ? { ...e, bullets: e.bullets.map((bullet, j) => j === bi ? result.suggestion : bullet) } : e) }));
+                        }
+                      } catch {} finally { setSuggesting(null); }
+                    }}
+                    className="mt-[4px] text-[11px] font-semibold text-[color:var(--purple)] hover:underline"
+                  >
+                    {suggesting === `exp-${ei}-${bi}` ? '...' : '✦ Suggest'}
+                  </button>
+                )}
+                </React.Fragment>
               ))}
               <button
                 type="button"
@@ -751,7 +786,8 @@ export default function ResumeBuilderClient() {
               </div>
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Project Summary</span>
               {p.bullets.map((b, bi) => (
-                <div key={bi} className="flex gap-[8px]">
+                <React.Fragment key={bi}>
+                <div className="flex gap-[8px]">
                   <input
                     value={b}
                     onChange={(e) =>
@@ -763,9 +799,9 @@ export default function ResumeBuilderClient() {
                         })),
                       }))
                     }
-                    placeholder="Add project bullet point"
+                    placeholder={suggesting === `proj-${pi}-${bi}` ? '✦ Generating suggestion...' : 'Add project bullet point'}
                     maxLength={300}
-                    className="h-[44px] flex-1 rounded-[12px] border border-[color:#e5e7eb] px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)]"
+                    className={`h-[44px] flex-1 rounded-[12px] border px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)] ${suggesting === `proj-${pi}-${bi}` ? 'animate-pulse border-[color:var(--purple)] bg-[rgba(108,99,255,0.03)]' : showErrors && !b.trim() ? 'border-red-400' : 'border-[color:#e5e7eb]'}`}
                   />
                   <button
                     type="button"
@@ -784,6 +820,26 @@ export default function ResumeBuilderClient() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                   </button>
                 </div>
+                {!b.trim() && p.projectName.trim() && (
+                  <button
+                    type="button"
+                    disabled={suggesting === `proj-${pi}-${bi}`}
+                    onClick={async () => {
+                      setSuggesting(`proj-${pi}-${bi}`);
+                      try {
+                        const res = await fetch('/api/ai-suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context: p.projectName, fieldType: 'project_bullet' }) });
+                        const result = await res.json();
+                        if (result.suggestion) {
+                          setData((d) => ({ ...d, projects: d.projects.map((proj, i) => i === pi ? { ...proj, bullets: proj.bullets.map((bullet, j) => j === bi ? result.suggestion : bullet) } : proj) }));
+                        }
+                      } catch {} finally { setSuggesting(null); }
+                    }}
+                    className="mt-[4px] text-[11px] font-semibold text-[color:var(--purple)] hover:underline"
+                  >
+                    {suggesting === `proj-${pi}-${bi}` ? '...' : '✦ Suggest'}
+                  </button>
+                )}
+                </React.Fragment>
               ))}
               <button
                 type="button"
@@ -1121,6 +1177,18 @@ export default function ResumeBuilderClient() {
     setStep((p) => Math.min(p + 1, steps.length - 1));
   };
 
+  const findFirstEmptyStep = () => {
+    const p = data.personal;
+    if (!p.fullName.trim() || !p.professionalTitle.trim() || !p.emailAddress.trim()) return 0;
+    if (!data.summary.trim()) return 1;
+    if (data.skills.some((s) => !s.category.trim() || s.items.some((i) => !i.trim()))) return 2;
+    if (data.experience.some((e) => !e.companyName.trim() || !e.role.trim() || e.bullets.some((b) => !b.trim()))) return 3;
+    if (data.projects.some((pr) => !pr.projectName.trim() || pr.bullets.some((b) => !b.trim()))) return 4;
+    if (data.certifications.some((c) => !c.certificationName.trim())) return 5;
+    if (data.education.some((ed) => !ed.degree.trim() || !ed.institution.trim())) return 6;
+    return -1;
+  };
+
   const handleDownloadWithValidation = async (downloadFn) => {
     const actionType = downloadFn === handleDownloadDocx ? 'docx' : 'pdf';
     if (!requireAuth(actionType)) return;
@@ -1130,11 +1198,16 @@ export default function ResumeBuilderClient() {
     }
     if (hasEmptyFields()) {
       setShowErrors(true);
+      const emptyStep = findFirstEmptyStep();
+      const sectionName = emptyStep !== -1 ? steps[emptyStep] : '';
       setConfirmModal({
-        message: 'Some fields are empty. Please fill all details or delete unused entries before downloading.',
-        onConfirm: () => { setConfirmModal(null); },
+        message: `Please fill all fields in "${sectionName}" before downloading, or delete unused entries.`,
+        onConfirm: () => {
+          setConfirmModal(null);
+          if (emptyStep !== -1) setStep(emptyStep);
+        },
         singleButton: true,
-        confirmText: 'OK',
+        confirmText: `Go to ${sectionName}`,
         confirmColor: 'bg-[#6C63FF]',
       });
       return;
@@ -1292,6 +1365,7 @@ export default function ResumeBuilderClient() {
                 }`}
               >
                 {label}
+                {stepHasErrors(index) && <span className="ml-[4px] inline-block h-[6px] w-[6px] rounded-full bg-red-500" />}
               </button>
             ))}
           </div>
