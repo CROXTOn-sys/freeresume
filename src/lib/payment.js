@@ -36,6 +36,11 @@ export async function checkDownloadAccess() {
   return result;
 }
 
+/** Prefetch download access in background (call on editor mount) */
+export function prefetchDownloadAccess() {
+  checkDownloadAccess().catch(() => {});
+}
+
 /** Invalidate cache after a successful download or payment */
 export function invalidateDownloadCache() {
   cachedAccess = null;

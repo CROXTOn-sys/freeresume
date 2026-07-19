@@ -35,27 +35,36 @@ export async function POST(request) {
 
     let lastError = '';
     for (const model of MODEL_FALLBACKS) {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://resumelab.duckdns.org',
-          'X-OpenRouter-Title': 'ResumeLab',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          max_tokens: 150,
-        }),
-      });
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout per model
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'HTTP-Referer': 'https://resumelab.duckdns.org',
+            'X-OpenRouter-Title': 'ResumeLab',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.7,
+            max_tokens: 150,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
 
-      if (!response.ok) { lastError = await response.text(); continue; }
-      const payload = await response.json();
-      const text = payload?.choices?.[0]?.message?.content?.trim() || '';
-      if (text) return NextResponse.json({ suggestion: text, modelUsed: model });
-      lastError = 'Empty response';
+        if (!response.ok) { lastError = await response.text(); continue; }
+        const payload = await response.json();
+        const text = payload?.choices?.[0]?.message?.content?.trim() || '';
+        if (text) return NextResponse.json({ suggestion: text, modelUsed: model });
+        lastError = 'Empty response';
+      } catch (err) {
+        lastError = err.name === 'AbortError' ? `${model} timed out` : err.message;
+        continue;
+      }
     }
 
     // OpenAI fallback

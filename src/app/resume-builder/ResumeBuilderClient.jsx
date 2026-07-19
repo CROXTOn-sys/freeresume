@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template1Preview from '../../components/template-previews/Template1Preview';
 import { supabase } from '../../lib/supabase';
-import { checkDownloadAccess, initiatePayment, invalidateDownloadCache } from '../../lib/payment';
+import { checkDownloadAccess, initiatePayment, invalidateDownloadCache, prefetchDownloadAccess } from '../../lib/payment';
 
 const steps = ['Personal Information', 'Summary', 'Skills', 'Experience', 'Projects', 'Certifications', 'Education'];
 const makeId = () => Date.now() + Math.random();
@@ -285,8 +285,8 @@ export default function ResumeBuilderClient() {
   const downloadMenuRef = useRef(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
-    const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => setUser(session?.user || null));
+    supabase.auth.getUser().then(({ data }) => { setUser(data?.user || null); if (data?.user) prefetchDownloadAccess(); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => { setUser(session?.user || null); if (session?.user) prefetchDownloadAccess(); });
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
