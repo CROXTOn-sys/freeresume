@@ -68,37 +68,46 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
 
     let lastError = '';
     for (const model of MODEL_FALLBACKS) {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-          'HTTP-Referer': 'http://localhost:3006',
-          'X-OpenRouter-Title': 'resume.com',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
-          top_p: 0.95,
-          max_tokens: 2000,
-        }),
-      });
-
-      if (!response.ok) { lastError = await response.text(); continue; }
-      const payload = await response.json();
-      const content = payload?.choices?.[0]?.message?.content?.trim() || '';
-
-      // Extract JSON from response (handle markdown code blocks)
-      let jsonStr = content;
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) jsonStr = jsonMatch[1].trim();
-
       try {
-        const result = JSON.parse(jsonStr);
-        return NextResponse.json({ enhanced: result, modelUsed: model });
-      } catch {
-        lastError = 'Invalid JSON response';
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout per model
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'HTTP-Referer': 'https://resumelab.duckdns.org',
+            'X-OpenRouter-Title': 'ResumeLab',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.3,
+            top_p: 0.95,
+            max_tokens: 2000,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!response.ok) { lastError = await response.text(); continue; }
+        const payload = await response.json();
+        const content = payload?.choices?.[0]?.message?.content?.trim() || '';
+
+        // Extract JSON from response (handle markdown code blocks)
+        let jsonStr = content;
+        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (jsonMatch) jsonStr = jsonMatch[1].trim();
+
+        try {
+          const result = JSON.parse(jsonStr);
+          return NextResponse.json({ enhanced: result, modelUsed: model });
+        } catch {
+          lastError = 'Invalid JSON response';
+          continue;
+        }
+      } catch (err) {
+        lastError = err.name === 'AbortError' ? `${model} timed out` : err.message;
         continue;
       }
     }
@@ -107,6 +116,8 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
     const openaiKey = process.env.OPENAI_API_KEY;
     if (openaiKey) {
       try {
+        const openaiController = new AbortController();
+        const openaiTimeout = setTimeout(() => openaiController.abort(), 5000); // 5s for OpenAI
         const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -119,7 +130,9 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
             temperature: 0.3,
             max_tokens: 2000,
           }),
+          signal: openaiController.signal,
         });
+        clearTimeout(openaiTimeout);
 
         if (openaiRes.ok) {
           const openaiPayload = await openaiRes.json();

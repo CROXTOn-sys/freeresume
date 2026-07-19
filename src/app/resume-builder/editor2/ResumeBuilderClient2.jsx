@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template2Preview from '../../../components/template-previews/Template2Preview';
 import { supabase } from '../../../lib/supabase';
-import { checkDownloadAccess, initiatePayment, invalidateDownloadCache } from '../../../lib/payment';
+import { checkDownloadAccess, initiatePayment, invalidateDownloadCache, prefetchDownloadAccess } from '../../../lib/payment';
 
 const steps = ['Personal Info', 'Skills', 'Work Experience', 'Education', 'Projects', 'Certifications'];
 const makeId = () => Date.now() + Math.random();
@@ -26,11 +26,11 @@ const Input = ({ label, value, onChange, placeholder, error = false, maxLength }
   </label>
 );
 
-const TextArea = ({ label, value, onChange, placeholder, rows = 3, maxLength }) => (
+const TextArea = ({ label, value, onChange, placeholder, rows = 3, maxLength, error = false }) => (
   <label className="block">
     <span className="mb-[6px] block text-[12px] font-semibold text-black">{label}</span>
     <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} maxLength={maxLength}
-      className="w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] py-[10px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]" />
+      className={`w-full rounded-[12px] border bg-white px-[14px] py-[10px] text-[14px] text-black outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
   </label>
 );
 
@@ -99,8 +99,8 @@ export default function ResumeBuilderClient2() {
   const stepRailRef = useRef(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
-    const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => setUser(session?.user || null));
+    supabase.auth.getUser().then(({ data }) => { setUser(data?.user || null); if (data?.user) prefetchDownloadAccess(); });
+    const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => { setUser(session?.user || null); if (session?.user) prefetchDownloadAccess(); });
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
@@ -346,9 +346,9 @@ export default function ResumeBuilderClient2() {
     const p = data.personal;
     if (!p.fullName.trim() || !p.email.trim() || !p.phone.trim()) return true;
     if (data.skills.some((s) => !s.category.trim())) return true;
-    if (data.experience.some((e) => !e.company.trim() || !e.role.trim())) return true;
+    if (data.experience.some((e) => !e.company.trim() || !e.role.trim() || e.bullets.some((b) => !b.trim()))) return true;
     if (data.education.some((e) => !e.institution.trim() || !e.degree.trim())) return true;
-    if (data.projects.some((pr) => !pr.name.trim())) return true;
+    if (data.projects.some((pr) => !pr.name.trim() || !pr.description.trim())) return true;
     if (data.certifications.some((c) => !c.title.trim())) return true;
     return false;
   };
@@ -362,9 +362,9 @@ export default function ResumeBuilderClient2() {
     const p = data.personal;
     if (!p.fullName.trim() || !p.email.trim() || !p.phone.trim()) return 0;
     if (data.skills.some((s) => !s.category.trim())) return 1;
-    if (data.experience.some((e) => !e.company.trim() || !e.role.trim())) return 2;
+    if (data.experience.some((e) => !e.company.trim() || !e.role.trim() || e.bullets.some((b) => !b.trim()))) return 2;
     if (data.education.some((e) => !e.institution.trim() || !e.degree.trim())) return 3;
-    if (data.projects.some((pr) => !pr.name.trim())) return 4;
+    if (data.projects.some((pr) => !pr.name.trim() || !pr.description.trim())) return 4;
     if (data.certifications.some((c) => !c.title.trim())) return 5;
     return -1;
   };
@@ -422,9 +422,9 @@ export default function ResumeBuilderClient2() {
     const p = data.personal;
     if (index === 0) return !p.fullName.trim() || !p.email.trim() || !p.phone.trim();
     if (index === 1) return data.skills.some((s) => !s.category.trim());
-    if (index === 2) return data.experience.some((e) => !e.company.trim() || !e.role.trim());
+    if (index === 2) return data.experience.some((e) => !e.company.trim() || !e.role.trim() || e.bullets.some((b) => !b.trim()));
     if (index === 3) return data.education.some((e) => !e.institution.trim() || !e.degree.trim());
-    if (index === 4) return data.projects.some((pr) => !pr.name.trim());
+    if (index === 4) return data.projects.some((pr) => !pr.name.trim() || !pr.description.trim());
     if (index === 5) return data.certifications.some((c) => !c.title.trim());
     return false;
   };
@@ -555,7 +555,26 @@ export default function ResumeBuilderClient2() {
                 <Input label="Project Name" value={proj.name} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, name: v })) }))} placeholder="Word Lookup Dictionary" error={showErrors && !proj.name.trim()} maxLength={100} />
                 <Input label="Year" value={proj.year} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, year: v })) }))} placeholder="2015" maxLength={20} />
               </div>
-              <TextArea label="Description" value={proj.description} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: v })) }))} placeholder="Developed a desktop software for online lookup..." rows={3} maxLength={300} />
+              <TextArea label="Description" value={proj.description} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, description: v })) }))} placeholder={suggesting === `projdesc-${pi}` ? '✦ Generating suggestion...' : 'Developed a desktop software for online lookup...'} rows={3} maxLength={300} error={showErrors && !proj.description.trim()} />
+              {!proj.description.trim() && proj.name.trim() && (
+                <button
+                  type="button"
+                  disabled={suggesting === `projdesc-${pi}`}
+                  onClick={async () => {
+                    setSuggesting(`projdesc-${pi}`);
+                    try {
+                      const res = await fetch('/api/ai-suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context: proj.name, fieldType: 'project_description' }) });
+                      const result = await res.json();
+                      if (result.suggestion) {
+                        setData((p) => ({ ...p, projects: p.projects.map((pr, i) => i === pi ? { ...pr, description: result.suggestion } : pr) }));
+                      }
+                    } catch {} finally { setSuggesting(null); }
+                  }}
+                  className="mt-[-8px] text-[11px] font-semibold text-[color:var(--purple)] hover:underline"
+                >
+                  {suggesting === `projdesc-${pi}` ? '...' : '✦ Suggest'}
+                </button>
+              )}
               <Input label="Technologies" value={proj.technologies} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, technologies: v })) }))} placeholder="Python, BeautifulSoup, C++" maxLength={150} />
             </div>
           </div>
