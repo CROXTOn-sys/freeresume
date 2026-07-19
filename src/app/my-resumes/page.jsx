@@ -37,17 +37,8 @@ export default function MyResumesPage() {
     }
   };
 
-  const openResume = async (resume) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`/api/saved-resumes/${resume.id}`, {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-      const result = await res.json();
-      if (result.resume) setSelectedResume(result.resume);
-    } catch (err) {
-      console.error('Failed to load resume:', err);
-    }
+  const openResume = (resume) => {
+    setSelectedResume(resume);
   };
 
   const handleDownload = async (format = 'pdf') => {
