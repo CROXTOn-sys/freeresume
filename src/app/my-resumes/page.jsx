@@ -101,10 +101,18 @@ export default function MyResumesPage() {
               {downloading ? 'Downloading...' : 'Download PDF'}
             </button>
             <button type="button" onClick={() => handleDownload('docx')} disabled={downloading} className="flex-1 rounded-full border border-[#6C63FF] py-[12px] text-[14px] font-semibold text-[#6C63FF] disabled:opacity-70">
-              Download DOCX
+              {downloading ? 'Downloading...' : 'Download DOCX'}
             </button>
           </div>
         </div>
+        {downloading && (
+          <div className="fixed inset-0 z-[400] flex items-center justify-center bg-white">
+            <div className="flex flex-col items-center">
+              <img src="/images/loading-star.png" alt="" className="h-[60px] w-[60px] animate-spin" />
+              <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">Downloading...</p>
+            </div>
+          </div>
+        )}
       </main>
     );
   }

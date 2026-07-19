@@ -1150,12 +1150,16 @@ export default function ResumeBuilderClient() {
           message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
           onConfirm: async () => {
             setConfirmModal(null);
+            setLoadingText('Processing...');
+            setDownloading(true);
             try {
               const result = await initiatePayment();
+              setDownloading(false);
               if (result.paid || result.alreadyPaid) {
                 (downloadFn || handleDownload)();
               }
             } catch (err) {
+              setDownloading(false);
               if (err.message !== 'Payment cancelled') {
                 window.alert('Payment failed. Please try again.');
               }
