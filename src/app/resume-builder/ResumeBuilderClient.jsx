@@ -1034,7 +1034,10 @@ export default function ResumeBuilderClient() {
     if (!hasProjectBullets) missing.push('Project bullets');
 
     if (missing.length > 0) {
-      setConfirmModal({ message: `Please fill in the following fields before enhancing: ${missing.join(', ')}.`, onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' });
+      setShowErrors(true);
+      const enhanceStep = !hasSummary ? 1 : !hasBullets ? 3 : 4;
+      const sectionName = steps[enhanceStep];
+      setConfirmModal({ message: `Please fill in the following fields before enhancing: ${missing.join(', ')}.`, onConfirm: () => { setConfirmModal(null); setStep(enhanceStep); }, singleButton: true, confirmText: `Go to ${sectionName}`, confirmColor: 'bg-[#6C63FF]' });
       return;
     }
 
