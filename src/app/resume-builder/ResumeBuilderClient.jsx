@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template1Preview from '../../components/template-previews/Template1Preview';
 import { supabase } from '../../lib/supabase';
-import { checkDownloadAccess, initiatePayment } from '../../lib/payment';
+import { checkDownloadAccess, initiatePayment, invalidateDownloadCache } from '../../lib/payment';
 
 const steps = ['Personal Information', 'Summary', 'Skills', 'Experience', 'Projects', 'Certifications', 'Education'];
 const makeId = () => Date.now() + Math.random();
@@ -1058,6 +1058,7 @@ export default function ResumeBuilderClient() {
         if (session?.access_token) {
           fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: templateId, resume_data: previewData }) });
         }
+        invalidateDownloadCache();
       } catch {}
     } catch (err) {
       console.error('Download error:', err);
@@ -1093,6 +1094,7 @@ export default function ResumeBuilderClient() {
         if (session?.access_token) {
           fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: templateId, resume_data: previewData }) });
         }
+        invalidateDownloadCache();
       } catch {}
     } catch (err) {
       console.error('Download error:', err);
@@ -1145,7 +1147,7 @@ export default function ResumeBuilderClient() {
       if (!access.canDownload && !access.isPaid) {
         // Need to pay
         setConfirmModal({
-          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹2.',
+          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
           onConfirm: async () => {
             setConfirmModal(null);
             try {
@@ -1159,7 +1161,7 @@ export default function ResumeBuilderClient() {
               }
             }
           },
-          confirmText: 'Pay ₹2',
+          confirmText: 'Pay ₹19',
           confirmColor: 'bg-[#10b981]',
         });
         return;

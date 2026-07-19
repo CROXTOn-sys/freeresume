@@ -40,7 +40,7 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         order_id: orderId,
-        order_amount: 2,
+        order_amount: 19,
         order_currency: 'INR',
         customer_details: {
           customer_id: user.id.slice(0, 20),

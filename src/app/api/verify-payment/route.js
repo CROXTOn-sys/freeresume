@@ -43,8 +43,8 @@ export async function POST(request) {
       .from('payments')
       .insert({
         user_id: user.id,
-        razorpay_order_id: orderId,
-        razorpay_payment_id: orderData.cf_order_id || orderId,
+        order_id: orderId,
+        payment_id: orderData.cf_order_id || orderId,
         amount: 1900,
         status: 'paid',
       });

@@ -1,9 +1,27 @@
 import { supabase } from './supabase';
 
+// Preload Cashfree SDK on first import
+if (typeof window !== 'undefined' && !document.querySelector('script[src*="cashfree"]')) {
+  const script = document.createElement('script');
+  script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+  script.async = true;
+  document.head.appendChild(script);
+}
+
+// Cache for payment status
+let cachedAccess = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 60000; // 1 minute
+
 /**
  * Check if user can download for free or needs to pay
  */
 export async function checkDownloadAccess() {
+  // Return cached result if fresh
+  if (cachedAccess && Date.now() - cacheTimestamp < CACHE_TTL) {
+    return cachedAccess;
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) return { canDownload: false, isPaid: false, downloadCount: 0, noAuth: true };
 
@@ -11,7 +29,17 @@ export async function checkDownloadAccess() {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (!res.ok) return { canDownload: true, isPaid: false, downloadCount: 0 };
-  return await res.json();
+  
+  const result = await res.json();
+  cachedAccess = result;
+  cacheTimestamp = Date.now();
+  return result;
+}
+
+/** Invalidate cache after a successful download or payment */
+export function invalidateDownloadCache() {
+  cachedAccess = null;
+  cacheTimestamp = 0;
 }
 
 /**
@@ -30,18 +58,19 @@ export function initiatePayment() {
       });
       const orderData = await orderRes.json();
 
-      if (orderData.alreadyPaid) { resolve({ alreadyPaid: true }); return; }
+      if (orderData.alreadyPaid) { invalidateDownloadCache(); resolve({ alreadyPaid: true }); return; }
       if (!orderData.paymentSessionId) { reject(new Error('Failed to create order')); return; }
 
-      // Load Cashfree SDK
-      if (!window.Cashfree) {
-        const script = document.createElement('script');
-        script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
-        script.onload = () => openCashfreeCheckout(orderData, session.access_token, resolve, reject);
-        document.head.appendChild(script);
-      } else {
-        openCashfreeCheckout(orderData, session.access_token, resolve, reject);
-      }
+      // Wait for SDK if still loading
+      const waitForSdk = () => new Promise((res) => {
+        if (window.Cashfree) { res(); return; }
+        const interval = setInterval(() => { if (window.Cashfree) { clearInterval(interval); res(); } }, 100);
+        setTimeout(() => { clearInterval(interval); res(); }, 5000);
+      });
+      await waitForSdk();
+
+      if (!window.Cashfree) { reject(new Error('Payment SDK failed to load')); return; }
+      openCashfreeCheckout(orderData, session.access_token, resolve, reject);
     } catch (err) {
       reject(err);
     }
@@ -76,6 +105,7 @@ function openCashfreeCheckout(orderData, accessToken, resolve, reject) {
         });
         const verifyResult = await verifyRes.json();
         if (verifyResult.success) {
+          invalidateDownloadCache();
           resolve({ paid: true });
         } else {
           reject(new Error('Payment verification failed'));

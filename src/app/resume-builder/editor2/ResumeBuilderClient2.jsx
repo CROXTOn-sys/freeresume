@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template2Preview from '../../../components/template-previews/Template2Preview';
 import { supabase } from '../../../lib/supabase';
-import { checkDownloadAccess, initiatePayment } from '../../../lib/payment';
+import { checkDownloadAccess, initiatePayment, invalidateDownloadCache } from '../../../lib/payment';
 
 const steps = ['Personal Info', 'Skills', 'Work Experience', 'Education', 'Projects', 'Certifications'];
 const makeId = () => Date.now() + Math.random();
@@ -375,7 +375,7 @@ export default function ResumeBuilderClient2() {
       const access = await checkDownloadAccess();
       if (!access.canDownload && !access.isPaid) {
         setConfirmModal({
-          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹2.',
+          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
           onConfirm: async () => {
             setConfirmModal(null);
             try {
@@ -389,7 +389,7 @@ export default function ResumeBuilderClient2() {
               }
             }
           },
-          confirmText: 'Pay ₹2',
+          confirmText: 'Pay ₹19',
           confirmColor: 'bg-[#10b981]',
         });
         return;

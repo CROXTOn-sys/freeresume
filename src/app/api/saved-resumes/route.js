@@ -17,7 +17,7 @@ export async function GET(request) {
 
   const { data, error } = await supabaseAdmin
     .from('saved_resumes')
-    .select('id, name, template_id, created_at')
+    .select('id, name, template_id, resume_data, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
