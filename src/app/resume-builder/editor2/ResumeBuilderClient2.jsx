@@ -554,7 +554,7 @@ export default function ResumeBuilderClient2() {
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
-              <div className="grid grid-cols-[1fr_auto] gap-[10px]">
+              <div className="grid grid-cols-[2fr_1fr] gap-[10px]">
                 <Input label="Project Name" value={proj.name} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, name: v })) }))} placeholder="Word Lookup Dictionary" error={showErrors && !proj.name.trim()} maxLength={100} />
                 <Input label="Year" value={proj.year} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, year: v })) }))} placeholder="2015" maxLength={20} />
               </div>
