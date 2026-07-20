@@ -65,7 +65,7 @@ export default function Hero({ onCreateResume }) {
         </div>
         <div className="min-w-0 rounded-[14px] border border-[color:var(--border-soft)] bg-[var(--surface-soft)] px-[8px] py-[10px] text-center shadow-[0_8px_18px_rgba(17,24,39,0.04)]">
           <strong className="mb-[2px] block text-[14px] tracking-[-0.02em] text-[var(--text-dark)]">one-click</strong>
-          <span className="block text-[11px] text-[var(--text-light)]">Export PDF</span>
+          <span className="block text-[11px] text-[var(--text-light)]">Export PDF,DOCX</span>
         </div>
         <div className="min-w-0 rounded-[14px] border border-[color:var(--border-soft)] bg-[var(--surface-soft)] px-[8px] py-[10px] text-center shadow-[0_8px_18px_rgba(17,24,39,0.04)]">
           <strong className="mb-[2px] block text-[14px] tracking-[-0.02em] text-[var(--text-dark)]">Free</strong>

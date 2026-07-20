@@ -4,7 +4,7 @@ const templates = [
   {
     badge: 'Popular',
     title: 'Shakra',
-    users: '5.8K users',
+    users: '1.3K users',
     variant: 'Shakra',
     templateId: 1,
     thumbClass: 'bg-[linear-gradient(135deg,#f0eeff_0%,#e8e0ff_100%)]',
@@ -14,7 +14,7 @@ const templates = [
   {
     badge: 'ATS friendly',
     title: 'Ashish',
-    users: '2.3K users',
+    users: '1.1K users',
     variant: 'Ashish',
     templateId: 2,
     thumbClass: 'bg-[linear-gradient(135deg,#e8e0ff_0%,#d4ccff_100%)]',
