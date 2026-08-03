@@ -1,7 +1,7 @@
 export default function FaqItem({ question, answer, isOpen, onToggle }) {
   return (
     <div
-      className="mb-[10px] cursor-pointer overflow-hidden rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg-soft)]"
+      className="mb-[10px] cursor-pointer overflow-hidden rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg-soft)] transition-all duration-200 lg:rounded-[12px] lg:hover:bg-[rgba(108,99,255,0.03)] lg:border-b lg:border-[color:var(--border-soft)]"
       role="button"
       tabIndex={0}
       onClick={onToggle}

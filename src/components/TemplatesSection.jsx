@@ -43,23 +43,25 @@ export default function TemplatesSection({ highlight = false }) {
   return (
     <section
       id="templates-section"
-      className={`mt-[6px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[22px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 ${
+      className={`mt-[6px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[22px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 lg:mt-[0px] lg:px-[64px] lg:pb-[40px] lg:pt-[40px] lg:rounded-none lg:border-x-0 lg:mx-0 ${
         highlight ? 'ring-4 ring-[rgba(95,84,240,0.22)] ring-offset-2 ring-offset-transparent' : ''
       }`}
     >
+      <div className="lg:max-w-[1120px] lg:mx-auto">
       <div className="mb-[16px] flex items-center justify-between">
-        <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-[var(--text-dark)]">
+        <h2 className="text-[17px] font-extrabold tracking-[-0.02em] text-[var(--text-dark)] lg:text-[24px]">
           Get started with a template
         </h2>
-        <a href="#" className="flex items-center gap-[2px] py-[6px] text-[13px] font-semibold text-[var(--purple)] no-underline">
+        <a href="#" className="flex items-center gap-[2px] py-[6px] text-[13px] font-semibold text-[var(--purple)] no-underline lg:text-[14px]">
           See All <span aria-hidden="true">&gt;</span>
         </a>
       </div>
 
-      <div className="flex gap-[12px] overflow-x-auto pb-[8px] [scrollbar-width:none] [-ms-overflow-style:none]">
+      <div className="flex gap-[12px] overflow-x-auto pb-[8px] [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-[20px] lg:overflow-x-visible lg:pb-0">
         {templates.map((template) => (
           <TemplateCard key={template.title} {...template} />
         ))}
+      </div>
       </div>
     </section>
   );

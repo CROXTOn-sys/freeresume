@@ -10,7 +10,7 @@ const steps = ['Personal Info', 'Skills', 'Work Experience', 'Education', 'Proje
 const makeId = () => Date.now() + Math.random();
 
 const initialData = {
-  personal: { fullName: '', email: '', phone: '', github: '', linkedin: '' },
+  personal: { fullName: '', targetJobTitle: '', targetJobDescription: '', email: '', phone: '', github: '', linkedin: '' },
   skills: [{ id: makeId(), category: '', items: [''] }],
   experience: [{ id: makeId(), company: '', location: '', role: '', startDate: '', endDate: '', bullets: [''], toolsUsed: '' }],
   education: [{ id: makeId(), institution: '', degree: '', startDate: '', endDate: '', score: '', scoreLabel: 'CGPA', coursework: '' }],
@@ -34,9 +34,24 @@ const TextArea = ({ label, value, onChange, placeholder, rows = 3, maxLength, er
   </label>
 );
 
-const Card = ({ title, description, children }) => (
+const Card = ({ title, description, children, saved, celebration }) => (
   <section className="rounded-[22px] border border-[color:rgba(229,231,235,0.95)] bg-white p-[14px] shadow-[0_10px_26px_rgba(17,24,39,0.06)] md:p-[16px]">
-    <h2 className="text-[18px] font-bold tracking-[-0.02em] text-black">{title}</h2>
+    <div className="flex items-center justify-between gap-[12px]">
+      <h2 className="text-[18px] font-bold tracking-[-0.02em] text-black">{title}</h2>
+      <div className="flex items-center gap-[6px]">
+        {celebration && (
+          <span className="flex items-center gap-[3px] rounded-full bg-[linear-gradient(135deg,rgba(99,91,255,0.1),rgba(139,131,255,0.1))] px-[8px] py-[3px] text-[10px] font-semibold text-[#4f46e5] animate-[fadeIn_0.3s]">
+            {celebration}
+          </span>
+        )}
+        {saved && !celebration && (
+          <span className="flex items-center gap-[3px] rounded-full bg-[rgba(16,185,129,0.08)] px-[8px] py-[3px] text-[10px] font-medium text-[#10b981] animate-[fadeIn_0.3s]">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+            Saved
+          </span>
+        )}
+      </div>
+    </div>
     {description && <p className="mt-[4px] text-[12.5px] leading-[1.5] text-[#666]">{description}</p>}
     <div className="mt-[14px]">{children}</div>
   </section>
@@ -59,6 +74,35 @@ const hasFormatErrors2 = (personal) => {
   return false;
 };
 
+// ATS scoring imported from centralized utility (single source of truth)
+import { getTargetJobContext, getAtsSectionScore as _getAtsSectionScore, getAtsOverallScore as _getAtsOverallScore, getAtsRecommendations as _getAtsRecommendations, getAtsInsights as _getAtsInsights, computeAtsBreakdown as _computeAtsBreakdown, formatKeyword, getBulletFeedback, isSkillKeyword } from '../../../lib/ats-score';
+import { useImportAnimation } from '../../../lib/useImportAnimation';
+
+// Template 2 field map: different field names from template 1
+const TEMPLATE2_FIELD_MAP = {
+  personal: { name: 'fullName', title: null, email: 'email', phone: 'phone', linkedin: 'linkedin', github: 'github' },
+  experience: { company: 'company', role: 'role', toolsUsed: 'toolsUsed' },
+  projects: { name: 'name', tech: 'technologies', description: 'description' },
+  certifications: { title: 'title' },
+};
+
+// Template 2 section weights (no summary section)
+const TEMPLATE2_WEIGHTS = [
+  ['personal', 0.14],
+  ['skills', 0.24],
+  ['experience', 0.26],
+  ['education', 0.12],
+  ['projects', 0.16],
+  ['certifications', 0.08],
+];
+
+// Wrappers that pass template 2 field map automatically
+const getAtsSectionScore = (section, data, targetJob) => _getAtsSectionScore(section, data, targetJob, TEMPLATE2_FIELD_MAP);
+const getAtsOverallScore = (data, targetJob) => _getAtsOverallScore(data, targetJob, { fieldMap: TEMPLATE2_FIELD_MAP, weights: TEMPLATE2_WEIGHTS });
+const getAtsRecommendations = (data, targetJob) => _getAtsRecommendations(data, targetJob, { ...TEMPLATE2_FIELD_MAP, noSummary: true });
+const getAtsInsights = (data, targetJob) => _getAtsInsights(data, targetJob, TEMPLATE2_FIELD_MAP);
+const computeAtsBreakdown = (data, targetJob) => _computeAtsBreakdown(data, targetJob, { ...TEMPLATE2_FIELD_MAP, noSummary: true });
+
 // Post-import cleanup: extract contact info from summary-like fields
 function cleanupImportedSrc(src) {
   if (!src) return src;
@@ -77,7 +121,45 @@ function cleanupImportedSrc(src) {
   const rawLinkedin = personal.linkedInUrl || personal.linkedin || '';
   const linkedInMatch = rawLinkedin.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s,|)]+/i);
   if (linkedInMatch) { personal.linkedInUrl = linkedInMatch[0]; personal.linkedin = linkedInMatch[0]; }
-  return { ...src, personal };
+
+  // --- Migrate misplaced certifications from projects array ---
+  const certHeadingRe = /^(awards?\s*(?:&|and)?\s*certific?at(?:ions|es)?|certific?at(?:ions|es)|achievements?|honors?|accomplishments?|credentials?)$/i;
+  const certLikeRe = /\b(coursera|udemy|google|aws|microsoft|linkedin|edx|nptel|hackerrank|certificate|certified|course|completed|awarded|top\s*\d+%|ranked|hackathon|challenge|competition|best\s+(project|paper|student))\b/i;
+  let projects = Array.isArray(src.projects) ? [...src.projects] : [];
+  let certifications = Array.isArray(src.certifications) ? [...src.certifications] : [];
+
+  const migratedCerts = [];
+  projects = projects.filter((proj) => {
+    const name = (proj.projectName || proj.project_name || proj.name || '').trim();
+    const bullets = proj.bullets || [];
+    const desc = proj.description || '';
+    const allBullets = bullets.length ? bullets : (desc ? [desc] : []);
+    const nameIsCertHeading = certHeadingRe.test(name);
+    const nameHasCertTerms = /\b(award|certific?at|achievement|honor|credential)/i.test(name) && !/\b(system|app|platform|tool|website|dashboard|portal|api|service|bot|game)\b/i.test(name);
+
+    if (nameIsCertHeading || nameHasCertTerms) {
+      const certScore = allBullets.reduce((s, b) => s + (certLikeRe.test(b) ? 1 : 0), 0);
+      if (allBullets.length === 0 || certScore > 0 || nameIsCertHeading) {
+        allBullets.forEach((b) => {
+          const parts = b.match(/^(.+?)(?:\s*[-–—]\s*(.+?))?(?::\s*(.+))?$/);
+          migratedCerts.push({
+            id: Date.now() + Math.random(),
+            certificationName: parts ? parts[1].trim() : b.trim(),
+            issuer: parts && parts[2] ? parts[2].trim() : '',
+            description: parts && parts[3] ? parts[3].trim() : '',
+          });
+        });
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if (migratedCerts.length) {
+    certifications = [...certifications, ...migratedCerts];
+  }
+
+  return { ...src, personal, projects, certifications };
 }
 
 export default function ResumeBuilderClient2() {
@@ -92,11 +174,71 @@ export default function ResumeBuilderClient2() {
   const [confirmModal, setConfirmModal] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [showSavedToast, setShowSavedToast] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [showAtsDetails, setShowAtsDetails] = useState(false);
+  const [atsApplying, setAtsApplying] = useState(false);
+  const [displayAtsScore, setDisplayAtsScore] = useState(0);
+  const [atsBreakdown, setAtsBreakdown] = useState(null);
+  const [prevAtsScore, setPrevAtsScore] = useState(null);
+
+  // Import animation ref — actual hook is called after previewData
+  const startAnimationRef = useRef(null);
+  const [atsAppliedKeywords, setAtsAppliedKeywords] = useState([]);
   const [suggesting, setSuggesting] = useState(null);
+  const [autoSaved, setAutoSaved] = useState(false);
+  const [scoreCelebration, setScoreCelebration] = useState('');
+  const [undoStack, setUndoStack] = useState({});
+  const [targetJob, setTargetJob] = useState({ title: '', description: '' });
   const downloadMenuRef = useRef(null);
   const stepRailRef = useRef(null);
+
+  // Debounced ATS scoring (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const breakdown = computeAtsBreakdown(data, targetJob);
+      setAtsBreakdown(breakdown);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [data, targetJob]);
+
+  const atsOverallScore = atsBreakdown?.overall ?? 0;
+  const atsInsights = atsBreakdown ? { hasTarget: (atsBreakdown.categories.jdMatch.total || 0) > 0, matched: atsBreakdown.matchedKeywords || [], missing: atsBreakdown.missingKeywords || [], keywords: [...(atsBreakdown.matchedKeywords || []), ...(atsBreakdown.missingKeywords || [])].slice(0, 10) } : { hasTarget: false, matched: [], missing: [], keywords: [] };
+
+  // Animate score changes + track delta + celebrations
+  useEffect(() => {
+    const nextScore = atsOverallScore;
+    const start = displayAtsScore;
+    if (start === nextScore) return;
+    if (start > 0) {
+      setPrevAtsScore(start);
+      if (nextScore >= 85 && start < 85) setScoreCelebration('🎉 Great Match! Your resume is ATS-ready!');
+      else if (nextScore >= 70 && start < 70) setScoreCelebration('🚀 Strong Match! Your resume just got stronger!');
+      else if (nextScore >= 55 && start < 55) setScoreCelebration('✨ Nice! Resume is shaping up well');
+      else if (nextScore > start && nextScore - start >= 5) setScoreCelebration('📈 Score improved!');
+    }
+    const duration = 420;
+    const stepsCount = 14;
+    const diff = nextScore - start;
+    let frame = 0;
+    const timer = window.setInterval(() => {
+      frame += 1;
+      const progress = frame / stepsCount;
+      const eased = progress < 1 ? 1 - Math.pow(1 - progress, 3) : 1;
+      const value = Math.round(start + diff * eased);
+      setDisplayAtsScore(value);
+      if (frame >= stepsCount) window.clearInterval(timer);
+    }, duration / stepsCount);
+    return () => window.clearInterval(timer);
+  }, [atsOverallScore]);
+
+  // Auto-dismiss celebration
+  useEffect(() => {
+    if (!scoreCelebration) return;
+    const t = setTimeout(() => setScoreCelebration(''), 3000);
+    return () => clearTimeout(t);
+  }, [scoreCelebration]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { setUser(data?.user || null); if (data?.user) prefetchDownloadAccess(); });
@@ -128,6 +270,7 @@ export default function ResumeBuilderClient2() {
 
   useEffect(() => {
     try {
+      setTargetJob(getTargetJobContext());
       const fresh = searchParams.get('fresh') === 'true';
       if (fresh) {
         window.sessionStorage.removeItem('ResumeLab-editor2-state');
@@ -187,6 +330,8 @@ export default function ResumeBuilderClient2() {
         }
         window.sessionStorage.removeItem('ResumeLab-imported-resume');
         window.sessionStorage.removeItem('ResumeLab-imported-raw-text');
+        setMobileView('preview');
+        setTimeout(() => { if (startAnimationRef.current) startAnimationRef.current(); }, 150);
         return;
       }
 
@@ -199,7 +344,12 @@ export default function ResumeBuilderClient2() {
   useEffect(() => {
     const hasContent = data.personal.fullName || data.personal.email || data.experience.some((e) => e.company);
     if (!hasContent) return;
-    try { window.sessionStorage.setItem('ResumeLab-editor2-state', JSON.stringify(data)); } catch {}
+    try {
+      window.sessionStorage.setItem('ResumeLab-editor2-state', JSON.stringify(data));
+      setAutoSaved(true);
+      const t = setTimeout(() => setAutoSaved(false), 1500);
+      return () => clearTimeout(t);
+    } catch {}
   }, [data]);
 
   useEffect(() => {
@@ -220,13 +370,18 @@ export default function ResumeBuilderClient2() {
     phone: data.personal.phone || '',
     github: data.personal.github || '',
     linkedin: data.personal.linkedin || '',
-    skills_categories: data.skills.map((s) => ({ category_label: s.category, skills_list: s.items.filter(Boolean).join(', ') })),
-    experience: data.experience.map((e) => ({ company: e.company, location: e.location, role: e.role, start_date: e.startDate, end_date: e.endDate, bullets: e.bullets.filter(Boolean), tools_used: e.toolsUsed })),
-    education: data.education.map((e) => ({ institution: e.institution, degree: e.degree, start_date: e.startDate, end_date: e.endDate, score: e.score, score_label: e.scoreLabel, graduation_date: e.endDate, coursework: e.coursework })),
-    projects: data.projects.map((p) => ({ project_name: p.name, year: p.year, description: p.description, technologies: p.technologies })),
-    certifications: data.certifications.map((c) => ({ cert_title: c.title, issuer: c.issuer, cert_description: c.description })),
+    skills_categories: data.skills.map((s) => ({ category_label: s.category || '', skills_list: (s.items || []).filter(Boolean).join(', ') })),
+    experience: data.experience.map((e) => ({ company: e.company || '', location: e.location || '', role: e.role || '', start_date: e.startDate || '', end_date: e.endDate || '', bullets: (e.bullets || []).filter(Boolean), tools_used: e.toolsUsed || '' })),
+    education: data.education.map((e) => ({ institution: e.institution || '', degree: e.degree || '', start_date: e.startDate || '', end_date: e.endDate || '', score: e.score || '', score_label: e.scoreLabel || '', graduation_date: e.endDate || '', coursework: e.coursework || '' })),
+    projects: data.projects.map((p) => ({ project_name: p.name || '', year: p.year || '', description: p.description || '', technologies: p.technologies || '' })),
+    certifications: data.certifications.map((c) => ({ cert_title: c.title || '', issuer: c.issuer || '', cert_description: c.description || '' })),
     _templateId: '2',
   }), [data]);
+
+  // Import animation hook + display data
+  const { animatedPreviewData, isAnimating, progress, startAnimation } = useImportAnimation(previewData, '2');
+  startAnimationRef.current = startAnimation;
+  const displayPreviewData = isAnimating && animatedPreviewData ? animatedPreviewData : previewData;
 
   const handleDownload = async () => {
     if (downloading) return;
@@ -241,7 +396,7 @@ export default function ResumeBuilderClient2() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'resume.pdf'; a.click();
       URL.revokeObjectURL(url);
-      try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: '2', resume_data: previewData }) }); } } catch {}
+      try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: '2', resume_data: previewData }) }); setShowSavedToast(true); setTimeout(() => setShowSavedToast(false), 3000); } } catch {}
     } catch (err) { console.error(err); window.alert('PDF generation failed. Please try again.'); }
     finally { setDownloading(false); }
   };
@@ -259,7 +414,7 @@ export default function ResumeBuilderClient2() {
       const a = document.createElement('a'); a.href = url; a.download = 'resume.docx'; a.click();
       URL.revokeObjectURL(url);
       setShowSuccess(true); setTimeout(() => setShowSuccess(false), 1200);
-      try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: '2', resume_data: previewData }) }); } } catch {}
+      try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { fetch('/api/saved-resumes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ name: data.personal.fullName || 'My Resume', template_id: '2', resume_data: previewData }) }); setShowSavedToast(true); setTimeout(() => setShowSavedToast(false), 3000); } } catch {}
     } catch (err) { console.error(err); window.alert('DOCX generation failed. Please try again.'); }
     finally { setDownloading(false); }
   };
@@ -297,6 +452,62 @@ export default function ResumeBuilderClient2() {
     });
   };
 
+  const handleApplyAtsKeywords = () => {
+    if (!atsInsights.hasTarget || !atsInsights.missing.length) return;
+    // Only add keywords that are actual skills/tools, not domain terms
+    const remaining = atsInsights.missing
+      .map(formatKeyword)
+      .filter((kw) => !atsAppliedKeywords.includes(kw) && isSkillKeyword(kw))
+      .slice(0, 6);
+    if (!remaining.length) return;
+    setAtsApplying(true);
+    const oldSkills = JSON.parse(JSON.stringify(data.skills));
+    window.setTimeout(() => {
+      setData((current) => {
+        const next = { ...current, personal: { ...current.personal }, skills: Array.isArray(current.skills) ? current.skills.map((group) => ({ ...group, items: Array.isArray(group.items) ? [...group.items] : [''] })) : [] };
+        if (!next.skills.length) {
+          next.skills = [{ id: makeId(), category: 'ATS Keywords', items: remaining }];
+        } else {
+          const firstGroup = { ...next.skills[0] };
+          const existing = new Set((firstGroup.items || []).map((item) => String(item).trim().toLowerCase()).filter(Boolean));
+          const newItems = [...(firstGroup.items || [])];
+          remaining.forEach((kw) => { if (!existing.has(kw.toLowerCase())) { newItems.push(kw); existing.add(kw.toLowerCase()); } });
+          firstGroup.items = newItems;
+          if (!firstGroup.category.trim()) firstGroup.category = 'ATS Keywords';
+          next.skills = [firstGroup, ...next.skills.slice(1)];
+        }
+        return next;
+      });
+      setUndoStack((prev) => ({ ...prev, 'keywords': oldSkills }));
+      setTimeout(() => setUndoStack((prev) => { const next = { ...prev }; delete next['keywords']; return next; }), 12000);
+      setAtsAppliedKeywords((prev) => [...prev, ...remaining]);
+      setShowAtsDetails(false);
+      setAtsApplying(false);
+      setStep(1); // Navigate to Skills section so user sees the change
+    }, 450);
+  };
+
+  // Add a single keyword chip to the Skills section (only if it's a valid skill)
+  const addSingleKeyword = (displayKeyword) => {
+    if (!isSkillKeyword(displayKeyword)) return;
+    setData((current) => {
+      const next = { ...current, skills: Array.isArray(current.skills) ? current.skills.map((group) => ({ ...group, items: Array.isArray(group.items) ? [...group.items] : [''] })) : [] };
+      if (!next.skills.length) {
+        next.skills = [{ id: makeId(), category: 'ATS Keywords', items: [displayKeyword] }];
+      } else {
+        const firstGroup = { ...next.skills[0] };
+        const existing = new Set((firstGroup.items || []).map((item) => String(item).trim().toLowerCase()).filter(Boolean));
+        if (!existing.has(displayKeyword.toLowerCase())) {
+          firstGroup.items = [...(firstGroup.items || []), displayKeyword];
+          if (!firstGroup.category.trim()) firstGroup.category = 'ATS Keywords';
+        }
+        next.skills = [firstGroup, ...next.skills.slice(1)];
+      }
+      return next;
+    });
+    setAtsAppliedKeywords((prev) => [...prev, displayKeyword]);
+  };
+
   const runEnhanceAll = async () => {
     setLoadingText('Enhancing...');
     setDownloading(true);
@@ -314,6 +525,9 @@ export default function ResumeBuilderClient2() {
       const enhanced = result.enhanced;
       if (!enhanced) throw new Error('No enhanced data returned');
       setData((prev) => {
+        // Save pre-enhancement state for undo
+        setUndoStack((u) => ({ ...u, 'enhance-all': { experience: prev.experience, projects: prev.projects, certifications: prev.certifications, education: prev.education } }));
+        setTimeout(() => setUndoStack((u) => { const next = { ...u }; delete next['enhance-all']; return next; }), 15000);
         const next = { ...prev };
         if (Array.isArray(enhanced.experience)) {
           next.experience = prev.experience.map((exp, i) => {
@@ -387,6 +601,22 @@ export default function ResumeBuilderClient2() {
     }
     setShowErrors(false);
 
+    // ATS readiness check — warn if score is below 50
+    if (atsOverallScore < 50 && atsOverallScore > 0) {
+      setConfirmModal({
+        message: `Your resume scores ${atsOverallScore}/100. Key sections may be incomplete or missing job keywords. Download anyway or improve first?`,
+        onConfirm: () => { setConfirmModal(null); proceedWithDownload2(downloadFn); },
+        confirmText: 'Download Anyway',
+        confirmColor: 'bg-[#6C63FF]',
+        cancelText: 'Improve First',
+      });
+      return;
+    }
+
+    proceedWithDownload2(downloadFn);
+  };
+
+  const proceedWithDownload2 = async (downloadFn) => {
     // Check payment status
     try {
       const access = await checkDownloadAccess();
@@ -433,7 +663,7 @@ export default function ResumeBuilderClient2() {
   };
 
   const sections = [    // Personal Info
-    <Card key="personal" title="Personal Information" description="Your name and contact details.">
+    <Card key="personal" saved={autoSaved} celebration={scoreCelebration} title="Personal Information" description="Your name and contact details.">
       <div className="grid gap-[12px]">
         <Input label="Full Name" value={data.personal.fullName} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, fullName: v } }))} placeholder="Ashish Pratap Singh" error={(showErrors && !data.personal.fullName.trim()) || (data.personal.fullName.trim() && !isValidName(data.personal.fullName))} maxLength={60} />
         <Input label="Email" value={data.personal.email} onChange={(v) => setData((p) => ({ ...p, personal: { ...p.personal, email: v } }))} placeholder="your@email.com" error={(showErrors && !data.personal.email.trim()) || (data.personal.email.trim() && !isValidEmail(data.personal.email))} maxLength={80} />
@@ -444,7 +674,7 @@ export default function ResumeBuilderClient2() {
     </Card>,
 
     // Skills
-    <Card key="skills" title="Skills" description="Technical skills grouped by category.">
+    <Card key="skills" saved={autoSaved} celebration={scoreCelebration} title="Skills" description="Technical skills grouped by category.">
       <div className="grid gap-[12px]">
         {data.skills.map((g, gi) => (
           <div key={g.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
@@ -462,7 +692,7 @@ export default function ResumeBuilderClient2() {
     </Card>,
 
     // Work Experience
-    <Card key="experience" title="Work Experience" description="Your professional experience.">
+    <Card key="experience" saved={autoSaved} celebration={scoreCelebration} title="Work Experience" description="Your professional experience.">
       <div className="grid gap-[12px]">
         {data.experience.map((exp, ei) => (
           <div key={exp.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
@@ -488,17 +718,61 @@ export default function ResumeBuilderClient2() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </div>
+                {/* Weak bullet hint + Fix button */}
+                {b.trim() && getBulletFeedback(b) && (
+                  <div className="ml-[2px] flex items-center gap-[6px] text-[10px] text-amber-600">
+                    <span>💡 {getBulletFeedback(b)}</span>
+                    <button
+                      type="button"
+                      disabled={suggesting === `fix-${ei}-${bi}`}
+                      onClick={async () => {
+                        const key = `exp-${ei}-${bi}`;
+                        setUndoStack((prev) => ({ ...prev, [key]: b }));
+                        setSuggesting(`fix-${ei}-${bi}`);
+                        try {
+                          const tj = getTargetJobContext();
+                          const hint = getBulletFeedback(b);
+                          const res = await fetch('/api/ai-enhance', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ section: 'experience_bullet', text: b, context: `Role: ${exp.role} at ${exp.company}. Target job: ${tj.title || 'N/A'}. Job keywords: ${tj.description ? tj.description.slice(0, 300) : 'N/A'}. CRITICAL FIX: ${hint}. You MUST address this.` }),
+                          });
+                          if (res.status === 429) { setSuggesting(null); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
+                          const result = await res.json();
+                          if (result.text) {
+                            setData((p) => ({ ...p, experience: p.experience.map((e, i) => i === ei ? { ...e, bullets: e.bullets.map((bullet, j) => j === bi ? result.text : bullet) } : e) }));
+                            setTimeout(() => setUndoStack((prev) => { const next = { ...prev }; delete next[key]; return next; }), 8000);
+                          }
+                        } catch {} finally { setSuggesting(null); }
+                      }}
+                      className="flex items-center gap-[2px] rounded-full bg-[rgba(99,91,255,0.08)] px-[7px] py-[2px] text-[10px] font-semibold text-[#4f46e5] hover:bg-[rgba(99,91,255,0.15)] transition-colors disabled:opacity-50"
+                    >
+                      {suggesting === `fix-${ei}-${bi}` ? '...' : '✨ Fix'}
+                    </button>
+                  </div>
+                )}
+                {/* Undo after fix */}
+                {undoStack[`exp-${ei}-${bi}`] && !getBulletFeedback(b) && (
+                  <button type="button" onClick={() => { setData((p) => ({ ...p, experience: p.experience.map((e, i) => i === ei ? { ...e, bullets: e.bullets.map((bullet, j) => j === bi ? undoStack[`exp-${ei}-${bi}`] : bullet) } : e) })); setUndoStack((prev) => { const next = { ...prev }; delete next[`exp-${ei}-${bi}`]; return next; }); }} className="ml-[2px] text-[10px] font-medium text-[#8b94a7] hover:text-[#4f46e5] transition-colors">
+                    ↩ Undo
+                  </button>
+                )}
                 {!b.trim() && (exp.company.trim() || exp.role.trim()) && (
                   <button
                     type="button"
                     disabled={suggesting === `exp-${ei}-${bi}`}
                     onClick={async () => {
+                      const key = `exp-${ei}-${bi}`;
+                      const oldValue = b;
                       setSuggesting(`exp-${ei}-${bi}`);
                       try {
                         const res = await fetch('/api/ai-suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context: `${exp.role} at ${exp.company}`, fieldType: 'experience_bullet' }) });
+                        if (res.status === 429) { setSuggesting(null); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
                         const result = await res.json();
                         if (result.suggestion) {
+                          setUndoStack((prev) => ({ ...prev, [key]: oldValue }));
                           setData((p) => ({ ...p, experience: p.experience.map((e, i) => i === ei ? { ...e, bullets: e.bullets.map((bullet, j) => j === bi ? result.suggestion : bullet) } : e) }));
+                          setTimeout(() => setUndoStack((prev) => { const next = { ...prev }; delete next[key]; return next; }), 8000);
                         }
                       } catch {} finally { setSuggesting(null); }
                     }}
@@ -509,7 +783,10 @@ export default function ResumeBuilderClient2() {
                 )}
                 </Fragment>
               ))}
-              <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: addItem(item.bullets, '') })) }))} className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-dashed border-[color:#cfc8ff] bg-[rgba(108,99,255,0.04)] text-[color:var(--purple)]" aria-label="Add bullet"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+              <div className="flex items-center">
+                <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: addItem(item.bullets, '') })) }))} className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-dashed border-[color:#cfc8ff] bg-[rgba(108,99,255,0.04)] text-[color:var(--purple)]" aria-label="Add bullet"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                <span className="ml-[10px] text-[11px] text-[#8b94a7]">✦ Leave blank for AI suggestions</span>
+              </div>
               <Input label="Tools / Technologies Used" value={exp.toolsUsed} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="AWS, EC2, S3, Kafka, Docker" maxLength={150} />
             </div>
           </div>
@@ -519,7 +796,7 @@ export default function ResumeBuilderClient2() {
     </Card>,
 
     // Education
-    <Card key="education" title="Education" description="Academic background.">
+    <Card key="education" saved={autoSaved} celebration={scoreCelebration} title="Education" description="Academic background.">
       <div className="grid gap-[12px]">
         {data.education.map((edu, ei) => (
           <div key={edu.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
@@ -546,7 +823,7 @@ export default function ResumeBuilderClient2() {
     </Card>,
 
     // Projects
-    <Card key="projects" title="Project Work" description="Key projects with descriptions.">
+    <Card key="projects" saved={autoSaved} celebration={scoreCelebration} title="Project Work" description="Key projects with descriptions.">
       <div className="grid gap-[12px]">
         {data.projects.map((proj, pi) => (
           <div key={proj.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
@@ -564,18 +841,29 @@ export default function ResumeBuilderClient2() {
                   type="button"
                   disabled={suggesting === `projdesc-${pi}`}
                   onClick={async () => {
+                    const key = `projdesc-${pi}`;
+                    const oldValue = proj.description;
                     setSuggesting(`projdesc-${pi}`);
                     try {
                       const res = await fetch('/api/ai-suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ context: proj.name, fieldType: 'project_description' }) });
+                      if (res.status === 429) { setSuggesting(null); setConfirmModal({ message: "You're going too fast! Please wait a moment before trying again.", onConfirm: () => setConfirmModal(null), singleButton: true, confirmText: 'OK', confirmColor: 'bg-[#6C63FF]' }); return; }
                       const result = await res.json();
                       if (result.suggestion) {
+                        setUndoStack((prev) => ({ ...prev, [key]: oldValue }));
                         setData((p) => ({ ...p, projects: p.projects.map((pr, i) => i === pi ? { ...pr, description: result.suggestion } : pr) }));
+                        setTimeout(() => setUndoStack((prev) => { const next = { ...prev }; delete next[key]; return next; }), 8000);
                       }
                     } catch {} finally { setSuggesting(null); }
                   }}
                   className="mt-[-8px] text-[11px] font-semibold text-[color:var(--purple)] hover:underline"
                 >
                   {suggesting === `projdesc-${pi}` ? '...' : '✦ Suggest'}
+                </button>
+              )}
+              {/* Undo after project description suggest */}
+              {undoStack[`projdesc-${pi}`] && (
+                <button type="button" onClick={() => { setData((p) => ({ ...p, projects: p.projects.map((pr, i) => i === pi ? { ...pr, description: undoStack[`projdesc-${pi}`] } : pr) })); setUndoStack((prev) => { const next = { ...prev }; delete next[`projdesc-${pi}`]; return next; }); }} className="mt-[-4px] text-[10px] font-medium text-[#8b94a7] hover:text-[#4f46e5] transition-colors">
+                  ↩ Undo
                 </button>
               )}
               <Input label="Technologies" value={proj.technologies} onChange={(v) => setData((p) => ({ ...p, projects: updateItem(p.projects, pi, (item) => ({ ...item, technologies: v })) }))} placeholder="Python, BeautifulSoup, C++" maxLength={150} />
@@ -587,7 +875,7 @@ export default function ResumeBuilderClient2() {
     </Card>,
 
     // Certifications
-    <Card key="certifications" title="Awards & Certificates" description="Certifications and achievements.">
+    <Card key="certifications" saved={autoSaved} celebration={scoreCelebration} title="Awards & Certificates" description="Certifications and achievements.">
       <div className="grid gap-[12px]">
         {data.certifications.map((cert, ci) => (
           <div key={cert.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
@@ -652,7 +940,20 @@ export default function ResumeBuilderClient2() {
                     </>
                   )}
                 </div>
-                <button type="button" onClick={() => router.push(`/template-details?template=2`)} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#f4f4f6]" aria-label="Close">
+                <button type="button" onClick={() => {
+                  const hasData = data.personal.fullName.trim() || data.experience.some((e) => e.company.trim() || e.role.trim()) || data.projects.some((p) => p.name.trim()) || data.skills.some((s) => s.items.some((i) => String(i).trim()));
+                  if (hasData) {
+                    setConfirmModal({
+                      message: 'Going back will leave this editor. Your data is auto-saved and will be here when you return.',
+                      onConfirm: () => { setConfirmModal(null); router.push('/template-details?template=2'); },
+                      confirmText: 'Go Back',
+                      confirmColor: 'bg-[#6C63FF]',
+                      cancelText: 'Stay',
+                    });
+                  } else {
+                    router.push('/template-details?template=2');
+                  }
+                }} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#f4f4f6]" aria-label="Close">
                   <svg viewBox="0 0 24 24" className="h-[16px] w-[16px] fill-none stroke-black stroke-[2.4]"><path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" /></svg>
                 </button>
               </div>
@@ -661,12 +962,41 @@ export default function ResumeBuilderClient2() {
 
           {/* Step tabs */}
           <div ref={stepRailRef} className="flex gap-[8px] overflow-x-auto pb-[4px] [scrollbar-width:none]">
-            {steps.map((label, index) => (
-              <button key={label} type="button" onClick={() => setStep(index)} className={`whitespace-nowrap rounded-full px-[14px] py-[8px] text-[12px] font-bold ${step === index ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-white text-black shadow-[0_6px_16px_rgba(17,24,39,0.06)]'}`}>{label}{stepHasErrors(index) && <span className="ml-[4px] inline-block h-[6px] w-[6px] rounded-full bg-red-500" />}</button>
-            ))}
+            {steps.map((label, index) => {
+              const sectionKeys = ['personal', 'skills', 'experience', 'education', 'projects', 'certifications'];
+              const sectionScore = getAtsSectionScore(sectionKeys[index], data, targetJob);
+              const isFilledSection = index === 3 || index === 5; // Education & Certifications: show ✓ when filled
+              return (
+              <button key={label} type="button" onClick={() => setStep(index)} className={`whitespace-nowrap rounded-full px-[14px] py-[8px] text-[12px] font-bold ${step === index ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-white text-black shadow-[0_6px_16px_rgba(17,24,39,0.06)]'}`}>
+                {label}
+                <span className={`ml-[5px] rounded-full px-[6px] py-[1px] text-[9px] font-bold ${
+                  isFilledSection
+                    ? (sectionScore > 0 ? 'bg-[rgba(16,185,129,0.1)] text-[#059669]' : 'bg-[rgba(239,68,68,0.08)] text-[#dc2626]')
+                    : (sectionScore >= 80 ? 'bg-[rgba(16,185,129,0.1)] text-[#059669]' : sectionScore === 0 ? 'bg-[rgba(239,68,68,0.08)] text-[#dc2626]' : 'bg-[rgba(108,99,255,0.08)] text-[color:var(--purple)]')
+                }`}>
+                  {isFilledSection
+                    ? (sectionScore > 0 ? '✓' : '—')
+                    : (<>{sectionScore >= 80 ? '✓' : sectionScore}{sectionScore < 80 ? '' : ''}</>)
+                  }
+                </span>
+                {stepHasErrors(index) && <span className="ml-[4px] inline-block h-[6px] w-[6px] rounded-full bg-red-500" />}
+              </button>
+              );
+            })}
           </div>
 
-          <div className="flex-1">{sections[step]}</div>
+          <div className="flex-1">
+            {/* Bulk undo banner */}
+            {(undoStack['enhance-all'] || undoStack['keywords']) && (
+              <div className="mb-[8px] flex items-center justify-between rounded-[12px] border border-[rgba(99,91,255,0.2)] bg-[rgba(108,99,255,0.05)] px-[12px] py-[8px]">
+                <span className="text-[11px] font-medium text-[#4f46e5]">{undoStack['enhance-all'] ? 'AI enhancement applied' : 'Keywords added to skills'}</span>
+                <button type="button" onClick={() => { if (undoStack['enhance-all']) { setData((p) => ({ ...p, experience: undoStack['enhance-all'].experience, projects: undoStack['enhance-all'].projects, certifications: undoStack['enhance-all'].certifications, education: undoStack['enhance-all'].education })); setUndoStack((prev) => { const next = { ...prev }; delete next['enhance-all']; return next; }); } else if (undoStack['keywords']) { setData((p) => ({ ...p, skills: undoStack['keywords'] })); setAtsAppliedKeywords([]); setUndoStack((prev) => { const next = { ...prev }; delete next['keywords']; return next; }); } }} className="rounded-full bg-white border border-[rgba(99,91,255,0.2)] px-[10px] py-[4px] text-[10px] font-semibold text-[#4f46e5] hover:bg-[rgba(99,91,255,0.08)] transition-colors">
+                  ↩ Undo
+                </button>
+              </div>
+            )}
+            {sections[step]}
+          </div>
 
           <div className="flex items-center justify-between gap-[12px] pt-[4px]">
             <button type="button" onClick={() => setStep((p) => Math.max(p - 1, 0))} disabled={step === 0} className="rounded-[14px] border border-[color:#e5e7eb] bg-white px-[16px] py-[12px] text-[14px] font-bold text-black disabled:opacity-50">Previous</button>
@@ -693,14 +1023,132 @@ export default function ResumeBuilderClient2() {
         {/* Preview panel */}
         <div className={`${mobileView === 'form' ? 'hidden lg:block' : 'block'} lg:sticky lg:top-[16px] lg:h-[calc(100vh-32px)]`}>
           <div className="flex h-full flex-col rounded-[22px] border border-[color:rgba(229,231,235,0.95)] bg-white p-[12px] shadow-[0_10px_26px_rgba(17,24,39,0.06)]">
-            <div className="mb-[12px] flex items-center justify-center relative">
+            <div className="mb-[12px] flex items-center justify-between relative">
               <span className="text-[18px] font-bold text-black">PREVIEW</span>
-              <button type="button" onClick={() => setMobileView('form')} className="absolute right-0 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[18px] text-black lg:hidden">×</button>
+              <button
+                type="button"
+                onClick={() => setMobileView('form')}
+                disabled={isAnimating}
+                className={`flex items-center gap-[6px] rounded-full border px-[14px] py-[7px] text-[12px] font-semibold transition-all lg:hidden ${isAnimating ? 'border-[#e5e7eb] bg-[#f8f8fa] text-[#bbb] cursor-not-allowed' : 'border-[#d8d2ff] bg-[rgba(108,99,255,0.06)] text-[#4f46e5] shadow-[0_4px_12px_rgba(99,91,255,0.08)] hover:bg-[rgba(108,99,255,0.12)]'}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
+              </button>
+            </div>
+
+            {/* ATS Score Compact Banner */}
+            <div className="mb-[12px] relative z-[45]">
+              <div className="flex items-center justify-between rounded-[16px] border border-[color:rgba(226,232,240,0.92)] bg-white p-[10px] shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center gap-[12px]">
+                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[conic-gradient(from_220deg,#635bff_0deg,#2da6ff_70deg,#29d9c2_170deg,#7fe36a_250deg,#e5e7eb_305deg,#e5e7eb_360deg)] p-[4px] shadow-[0_4px_10px_rgba(99,91,255,0.12)]">
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
+                      <span className="text-[15px] font-black tracking-[-0.03em] text-[#0f1f44]">{displayAtsScore}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-[6px]">
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#64718a]">Resume Lab ATS</div>
+                      <span className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[rgba(16,185,129,0.1)] text-[9px] font-bold text-[#10b981]">✓</span>
+                    </div>
+                    <div className="mt-[2px] text-[14px] font-bold text-[#0f1f44]">
+                      {displayAtsScore >= 85 ? 'Great Match' : displayAtsScore >= 70 ? 'Strong Match' : displayAtsScore >= 55 ? 'Fair Match' : 'Needs Work'}
+                    </div>
+                    {targetJob.title ? (
+                      <div className="mt-[1px] max-w-[180px] truncate text-[10px] text-[#8b94a7]">vs &ldquo;{targetJob.title}&rdquo;</div>
+                    ) : null}
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAtsDetails((v) => !v)} 
+                  className="rounded-full bg-[rgba(99,91,255,0.08)] px-[14px] py-[8px] text-[12px] font-semibold text-[#4f46e5] transition-colors hover:bg-[rgba(99,91,255,0.12)]"
+                >
+                  {showAtsDetails ? 'Hide Details' : 'Improve Score'}
+                </button>
+              </div>
+
+              {/* Floating ATS Details Modal */}
+              {showAtsDetails && atsBreakdown ? (
+                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[50] max-h-[420px] overflow-y-auto rounded-[20px] border border-[rgba(226,232,240,0.95)] bg-white p-[14px] shadow-[0_20px_40px_rgba(15,23,42,0.12)] [scrollbar-width:thin]">
+                  <div className="grid gap-[10px]">
+                    {/* Score Delta */}
+                    {prevAtsScore !== null && prevAtsScore !== atsOverallScore && (
+                      <div className={`flex items-center gap-[6px] rounded-[12px] px-[12px] py-[8px] text-[12px] font-semibold ${atsOverallScore > prevAtsScore ? 'bg-[rgba(16,185,129,0.08)] text-[#059669]' : 'bg-[rgba(239,68,68,0.06)] text-[#dc2626]'}`}>
+                        <span>{atsOverallScore > prevAtsScore ? '↑' : '↓'}</span>
+                        <span>{Math.abs(atsOverallScore - prevAtsScore)} points {atsOverallScore > prevAtsScore ? 'improved' : 'decreased'}</span>
+                      </div>
+                    )}
+
+                    {/* Category Breakdown */}
+                    <div className="rounded-[14px] bg-[rgba(248,250,252,0.95)] px-[12px] py-[10px]">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#7a7a86] mb-[8px]">Category Breakdown</div>
+                      <div className="grid gap-[5px]">
+                        {Object.values(atsBreakdown.categories).map((cat) => (
+                          <div key={cat.label} className="flex items-center gap-[8px]">
+                            <span className="min-w-[100px] text-[10px] text-[#555]">{cat.label}</span>
+                            <div className="flex-1 h-[4px] rounded-full bg-[#e5e7eb] overflow-hidden">
+                              <div className="h-full rounded-full bg-[linear-gradient(90deg,#6C63FF,#8B83FF)] transition-all duration-300" style={{ width: `${cat.score}%` }} />
+                            </div>
+                            <span className="min-w-[24px] text-right text-[10px] font-bold text-[#333]">{cat.score}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Strengths */}
+                    {atsBreakdown.strengths.length > 0 && (
+                      <div className="rounded-[14px] border border-[rgba(16,185,129,0.15)] bg-[rgba(16,185,129,0.04)] px-[12px] py-[10px]">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#059669] mb-[6px]">Strengths</div>
+                        <div className="flex flex-wrap gap-[5px]">{atsBreakdown.strengths.map((s) => (<span key={s} className="rounded-full bg-white border border-[rgba(16,185,129,0.2)] px-[8px] py-[3px] text-[10px] font-medium text-[#059669]">✓ {s}</span>))}</div>
+                      </div>
+                    )}
+
+                    {/* Missing Keywords — Skills (tappable) + Domain terms (info only) */}
+                    <div className="rounded-[14px] border border-[color:#eef0f4] bg-white px-[12px] py-[10px] shadow-sm">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#7a7a86] mb-[6px]">Missing Keywords</div>
+                      <div className="flex flex-wrap gap-[5px]">
+                        {atsInsights.missing.length ? atsInsights.missing.map(formatKeyword).map((item) => (
+                          isSkillKeyword(item) ? (
+                            <button key={item} type="button" onClick={() => addSingleKeyword(item)} disabled={atsAppliedKeywords.includes(item)}
+                              className={`flex items-center gap-[3px] rounded-full border px-[8px] py-[3px] text-[10px] font-semibold transition-colors ${atsAppliedKeywords.includes(item) ? 'bg-[rgba(16,185,129,0.10)] border-[rgba(16,185,129,0.2)] text-[#0f9d58]' : 'bg-[rgba(99,91,255,0.06)] border-[rgba(99,91,255,0.2)] text-[#4f46e5] hover:bg-[rgba(99,91,255,0.12)]'}`}>
+                              {atsAppliedKeywords.includes(item) ? '✓' : '+'} {item}
+                            </button>
+                          ) : (
+                            <span key={item} className="rounded-full border border-[#e5e7eb] bg-[#f9fafb] px-[8px] py-[3px] text-[10px] font-medium text-[#6b7280]" title="Mention in summary or bullets">
+                              {item}
+                            </span>
+                          )
+                        )) : <p className="text-[11px] text-[#666]">No keyword gaps detected.</p>}
+                      </div>
+                      {atsInsights.missing.some((kw) => !isSkillKeyword(formatKeyword(kw))) && (
+                        <p className="mt-[6px] text-[9px] text-[#9ca3af]">Gray terms are domain keywords — mention them in your summary or experience bullets.</p>
+                      )}
+                    </div>
+
+                    {/* High Priority Fixes */}
+                    {atsBreakdown.highPriority.length > 0 && (
+                      <div className="rounded-[14px] border border-[rgba(239,68,68,0.12)] bg-[rgba(239,68,68,0.03)] px-[12px] py-[10px]">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#dc2626] mb-[6px]">High Priority</div>
+                        <ul className="space-y-[3px]">{atsBreakdown.highPriority.map((item) => (<li key={item} className="text-[11px] text-[#555] pl-[10px] relative before:content-['•'] before:absolute before:left-0 before:text-[#dc2626]">{item}</li>))}</ul>
+                      </div>
+                    )}
+
+                    {/* Apply Keywords Button */}
+                    <button type="button" onClick={handleApplyAtsKeywords} disabled={downloading || atsApplying || !atsInsights.hasTarget || atsInsights.missing.filter((kw) => !atsAppliedKeywords.includes(formatKeyword(kw))).length === 0}
+                      className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(99,91,255,0.18)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
+                      {atsApplying ? 'Adding...' : atsInsights.missing.filter((kw) => !atsAppliedKeywords.includes(formatKeyword(kw))).length === 0 ? 'All Keywords Added' : 'Auto-Apply Missing Keywords'}
+                    </button>
+
+                    {/* Transparency Note */}
+                    <p className="text-[9px] text-center leading-[1.4] text-[#9ca3af]">This Resume Lab ATS Score estimates how well your resume aligns with the provided Job Description and common ATS/recruiter best practices. Different employers and ATS platforms may evaluate resumes differently.</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-[4px] border border-black bg-[#f4f4f6]">
               <div className="flex h-full flex-col bg-white">
                 <div className="min-h-0 flex-1 overflow-auto">
-                  <Template2Preview data={previewData} previewMode />
+                  <Template2Preview data={displayPreviewData} previewMode />
                 </div>
               </div>
               {/* Watermark overlay */}
@@ -715,6 +1163,16 @@ export default function ResumeBuilderClient2() {
                   ))}
                 </div>
               </div>
+              {/* Import Animation Overlay */}
+              {isAnimating && (
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[10] flex flex-col items-center pt-[8px]">
+                  <div className="flex items-center gap-[8px] rounded-full bg-[rgba(99,91,255,0.95)] px-[14px] py-[6px] shadow-[0_4px_16px_rgba(99,91,255,0.3)]">
+                    <span className="inline-block h-[6px] w-[6px] animate-pulse rounded-full bg-white" />
+                    <span className="text-[11px] font-semibold text-white">Scanning your resume...</span>
+                    <span className="text-[10px] font-bold text-white/70">{Math.round(progress * 100)}%</span>
+                  </div>
+                </div>
+              )}
             </div>
             <p className="mt-[8px] text-center text-[10px] text-[#aaa]">Download to remove watermark</p>
             <p className="mt-[4px] text-center text-[11px] text-[#888] md:hidden">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
@@ -763,6 +1221,17 @@ export default function ResumeBuilderClient2() {
           </div>
         </div>
       </div>
+
+      {/* Saved to My Resumes toast */}
+      {showSavedToast && (
+        <div className="fixed bottom-[80px] left-1/2 z-[500] -translate-x-1/2 animate-[fadeIn_0.3s] md:bottom-[24px]">
+          <div className="flex items-center gap-[8px] rounded-full border border-[rgba(16,185,129,0.2)] bg-white px-[14px] py-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+            <img src="/images/download.png" alt="" className="h-[18px] w-[18px]" />
+            <span className="text-[12px] font-semibold text-[#333]">Resume saved to My Resumes</span>
+            <span className="text-[12px] text-[#10b981]">✓</span>
+          </div>
+        </div>
+      )}
 
       {/* Loading overlay */}
       {downloading && (

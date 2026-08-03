@@ -53,10 +53,13 @@ body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 <section class="resume-section"><div class="section-title">Certifications</div><ul class="cert-list">{{certifications_html}}</ul></section>
 <section class="resume-section"><div class="section-title">Education</div>{{education_html}}</section>
 </div>
-<script>
+</body>
+</html>`;
+
+// Auto-fit script injected into iframe
+const FIT_SCRIPT = `<script>
 (function(){
-var PAGE_H=1122;
-var w=document.querySelector('.resume-wrapper');
+var PAGE_H=1122;var w=document.querySelector('.resume-wrapper');
 var BF=10.5,HF=11.5,NF=20,RF=10,SF=9.5;
 var presets=[
 {sm:18,em:12,lh:1.55,pad:'30px 36px 24px',blh:1.5,cmb:5,sp:'2px 0'},
@@ -91,15 +94,13 @@ function fit(){for(var i=0;i<presets.length;i++){apply(presets[i]);if(w.scrollHe
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit);}
 else{window.addEventListener('load',fit);}
 })();
-</script>
-</body>
-</html>`;
+<\/script>`;
 
 function esc(str) {
   return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function renderTemplate(data) {
+function renderTemplate(data, includeFitScript = true) {
   const d = data || {};
   const skillsHtml = (d.skills_categories || []).map((s) => `<tr><td class="skills-category-label">${esc(s.category_label)}:</td><td>${esc(s.skills_list)}</td></tr>`).join('');
   const experienceHtml = (d.experience || []).map((e) => { const b = (e.bullets || []).map((x) => `<li>${esc(x)}</li>`).join(''); const tools = e.tools_used ? `<div class="entry-tools">Tools Used: ${esc(e.tools_used)}</div>` : ''; return `<div class="entry"><div class="entry-header"><div class="entry-org">${esc(e.company)}</div><div class="entry-dates">${esc(e.start_date)} - ${esc(e.end_date)}</div></div><div class="entry-role-row"><div class="entry-role">${esc(e.role)}</div>${tools}</div><ul class="entry-bullets">${b}</ul></div>`; }).join('');
@@ -107,7 +108,7 @@ function renderTemplate(data) {
   const certificationsHtml = (d.certifications || []).map((c) => { const issuer = c.issuer ? ` - ${esc(c.issuer)}` : ''; const desc = c.cert_description ? `: ${esc(c.cert_description)}` : ''; return `<li><strong>${esc(c.cert_title)}</strong>${issuer}${desc}</li>`; }).join('');
   const educationHtml = (d.education || []).map((e) => { const gradDate = e.graduation_date ? `<div class="edu-dates">Graduated: ${esc(e.graduation_date)}</div>` : ''; const score = e.score ? `<div class="edu-score">CGPA: ${esc(e.score)}</div>` : ''; return `<div class="edu-entry"><div><div class="edu-degree">${esc(e.degree)}</div><div class="edu-institution">${esc(e.institution)}</div></div><div style="text-align:right">${gradDate}${score}</div></div>`; }).join('');
 
-  return TEMPLATE
+  let html = TEMPLATE
     .replace('{{name}}', esc(d.name || 'Your Name'))
     .replace('{{job_title}}', esc(d.job_title || 'Professional Title'))
     .replace('{{phone}}', esc(d.phone || 'Phone Number'))
@@ -119,12 +120,37 @@ function renderTemplate(data) {
     .replace('{{projects_html}}', projectsHtml)
     .replace('{{certifications_html}}', certificationsHtml)
     .replace('{{education_html}}', educationHtml);
+
+  if (includeFitScript) {
+    html = html.replace('</body>', FIT_SCRIPT + '</body>');
+  }
+  return html;
 }
 
 export default function Template1Preview({ data = {}, previewMode = false }) {
-  const html = useMemo(() => renderTemplate(data), [data]);
   const containerRef = useRef(null);
+  const iframeRef = useRef(null);
   const [scale, setScale] = useState(0.45);
+  const prevHtmlRef = useRef('');
+
+  // Generate HTML from data
+  const html = useMemo(() => renderTemplate(data, true), [data]);
+
+  // Write to iframe via contentDocument to avoid full reload flicker
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    // Only rewrite if content actually changed
+    if (prevHtmlRef.current === html) return;
+    prevHtmlRef.current = html;
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+  }, [html]);
 
   useEffect(() => {
     if (!previewMode) return;
@@ -133,9 +159,7 @@ export default function Template1Preview({ data = {}, previewMode = false }) {
 
     const updateScale = () => {
       const w = container.offsetWidth;
-      if (w > 0) {
-        setScale(w / 794);
-      }
+      if (w > 0) setScale(w / 794);
     };
 
     updateScale();
@@ -156,12 +180,11 @@ export default function Template1Preview({ data = {}, previewMode = false }) {
           width: '100%',
           overflow: 'hidden',
           position: 'relative',
-          // Height is determined by A4 aspect ratio scaled to container width
           height: `${1122 * scale}px`,
         }}
       >
         <iframe
-          srcDoc={html}
+          ref={iframeRef}
           style={{
             position: 'absolute',
             top: 0,
@@ -181,7 +204,7 @@ export default function Template1Preview({ data = {}, previewMode = false }) {
 
   return (
     <iframe
-      srcDoc={html}
+      ref={iframeRef}
       style={{ width: '100%', height: '842px', border: 'none', display: 'block', background: '#fff' }}
       title="Resume Preview"
     />

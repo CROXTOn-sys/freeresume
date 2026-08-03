@@ -1,6 +1,6 @@
 export default function TestimonialCard({ text, name, role, avatar, avatarClass = '' }) {
   return (
-    <div className="flex h-[228px] w-[228px] flex-none flex-col rounded-[20px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[15px] pb-[16px] pt-[18px] shadow-[0_12px_30px_rgba(17,24,39,0.05)]">
+    <div className="flex h-[228px] w-[228px] flex-none flex-col rounded-[20px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[15px] pb-[16px] pt-[18px] shadow-[0_12px_30px_rgba(17,24,39,0.05)] lg:w-auto lg:flex-1 lg:h-auto lg:min-h-[220px] lg:px-[20px] lg:py-[22px] transition-all duration-200 lg:hover:shadow-[0_16px_36px_rgba(17,24,39,0.1)] lg:hover:-translate-y-[2px]">
       <div className="text-[12px] font-bold leading-[1] text-[#f59e0b]">5.0</div>
       <div className="pt-[2px] text-[13px] leading-[1.5] text-[var(--text-mid)]">
         <div className="mb-[10px] block text-[30px] font-black leading-[1] text-[var(--purple)]">"</div>
