@@ -46,8 +46,9 @@ export default function ReviewUs() {
   }
 
   return (
-    <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)]">
-      <h2 className="mb-[16px] text-center text-[20px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">
+    <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pb-[40px] lg:pt-[40px] lg:rounded-none lg:mx-0">
+      <div className="lg:max-w-[520px] lg:mx-auto">
+      <h2 className="mb-[16px] text-center text-[20px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)] lg:text-[24px]">
         Review Us
       </h2>
       <p className="mb-[18px] text-center text-[13px] text-[#888]">How was your experience with ResumeLab?</p>
@@ -92,6 +93,7 @@ export default function ReviewUs() {
       >
         {submitting ? 'Submitting...' : 'Submit Review'}
       </button>
+      </div>
     </section>
   );
 }

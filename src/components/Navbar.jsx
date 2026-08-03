@@ -33,19 +33,35 @@ export default function Navbar({ theme, onToggleTheme }) {
 
   return (
     <>
-      <nav className="fixed left-0 right-0 top-0 z-[100] mx-auto flex w-full max-w-[480px] items-center justify-between border-b border-[color:var(--border-soft)] bg-[var(--nav-bg)] px-[18px] py-[14px] shadow-[var(--nav-shadow)] backdrop-blur-[18px]">
-        <a href="#" className="flex items-center gap-[8px] text-[17px] font-bold text-[var(--text-dark)] no-underline">
+      <nav className="fixed left-0 right-0 top-0 z-[100] mx-auto flex w-full max-w-[480px] items-center justify-between border-b border-[color:var(--border-soft)] bg-[var(--nav-bg)] px-[18px] py-[14px] shadow-[var(--nav-shadow)] backdrop-blur-[18px] lg:max-w-none lg:px-[64px] lg:py-[16px] lg:rounded-none">
+        <a href="#" className="flex items-center gap-[8px] text-[17px] font-bold text-[var(--text-dark)] no-underline lg:text-[19px]">
           <img src="/images/logo.png" alt="ResumeLab" className="h-[32px] w-[32px] rounded-[10px]" />
           ResumeLab
         </a>
+
+        {/* Desktop inline nav links */}
+        <div className="hidden lg:flex items-center gap-[32px]">
+          <button type="button" onClick={() => scrollTo('templates-section')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Templates</button>
+          <button type="button" onClick={() => router.push('/my-resumes')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">My Resumes</button>
+          <button type="button" onClick={() => scrollTo('reviews-section')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Reviews</button>
+          <button type="button" onClick={() => router.push('/about')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">About</button>
+        </div>
 
         <div className="flex items-center gap-[10px]">
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
           {user ? (
-            <span className="flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]">
-              {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
-            </span>
+            <>
+              <span className="hidden lg:inline-flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]">
+                {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+              </span>
+              <button type="button" onClick={handleSignOut} className="hidden lg:inline-flex items-center gap-[5px] rounded-[22px] border border-[color:#d8d2ff] bg-[rgba(108,99,255,0.04)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)] hover:bg-[rgba(108,99,255,0.1)] transition-colors">
+                Sign Out
+              </button>
+              <span className="lg:hidden flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]">
+                {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+              </span>
+            </>
           ) : (
             <a
               href="/auth/signup"
@@ -58,11 +74,12 @@ export default function Navbar({ theme, onToggleTheme }) {
             </a>
           )}
 
+          <a href="https://www.croxton.in/" target="_blank" rel="noopener noreferrer" className="hidden lg:inline-flex text-[12px] font-medium text-[var(--text-light)] hover:text-[var(--purple)] transition-colors">Croxton.in</a>
           <button
             type="button"
             aria-label="Menu"
             onClick={() => setMenuOpen(true)}
-            className="flex h-[36px] w-[36px] flex-col items-center justify-center gap-[4px] rounded-full border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--control-bg-start),var(--control-bg-end))] p-[10px] shadow-[0_4px_12px_rgba(17,24,39,0.04)]"
+            className="flex h-[36px] w-[36px] flex-col items-center justify-center gap-[4px] rounded-full border border-[color:var(--border)] bg-[linear-gradient(180deg,var(--control-bg-start),var(--control-bg-end))] p-[10px] shadow-[0_4px_12px_rgba(17,24,39,0.04)] lg:hidden"
           >
             <span className="block h-[2px] w-[16px] rounded-[2px] bg-[var(--text-dark)]" />
             <span className="block h-[2px] w-[16px] rounded-[2px] bg-[var(--text-dark)]" />
@@ -127,7 +144,8 @@ export default function Navbar({ theme, onToggleTheme }) {
               </button>
               <button
                 type="button"
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black"
+                onClick={() => { setMenuOpen(false); window.open('https://www.croxton.in/#products', '_blank'); }}
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Explore More Apps

@@ -144,6 +144,236 @@ function normalizeImportedSchema(payload = {}) {
   return resume;
 }
 
+/**
+ * Post-process imported data to fix common parsing issues:
+ * 1. Experience: split company/role/bullets when they're merged into one field
+ * 2. Projects: extract tech from project name parentheses → technologiesUsed
+ * 3. Certifications: extract issuer from description brackets [Udemy] → issuer
+ */
+function postProcessImportedData(resume) {
+  // --- FIX EXPERIENCE: separate role from company, extract bullets from company field ---
+  resume.experience = resume.experience.map((entry) => {
+    let { companyName, role, bullets, toolsUsed } = entry;
+
+    // If companyName contains "Role — Company" or "Role — [ ] – description" pattern
+    // Common patterns: "Embedded System Design Intern — [ ] – Worked on..."
+    if (companyName && !role) {
+      // Try "Role — Company" or "Role at Company"
+      const dashSplit = companyName.match(/^(.+?)\s*[\u2014\u2013—-]+\s*(.+)$/);
+      if (dashSplit) {
+        const part1 = dashSplit[1].trim();
+        const part2 = dashSplit[2].trim();
+        // If part1 looks like a role (contains intern, engineer, developer, analyst, etc.)
+        if (/(intern|engineer|developer|analyst|manager|designer|specialist|lead|associate|consultant|architect|scientist)/i.test(part1)) {
+          role = part1;
+          // part2 might be company or might be a bullet/description
+          if (/\b(worked|developed|built|created|designed|managed|led|implemented|maintained)\b/i.test(part2)) {
+            // It's a description/bullet, not a company
+            bullets = [part2, ...bullets.filter(Boolean)];
+            companyName = '';
+          } else {
+            companyName = part2.replace(/^\[\s*\]\s*[-–—]\s*/, '').trim();
+          }
+        } else if (/(intern|engineer|developer|analyst|manager|designer|specialist|lead|associate)/i.test(part2)) {
+          companyName = part1;
+          role = part2;
+        }
+      }
+    }
+
+    // If companyName looks like a role (and role is empty), swap them
+    if (companyName && !role && /(intern|engineer|developer|analyst|manager|designer|specialist|lead|associate|consultant|architect|scientist)\b/i.test(companyName) && companyName.split(/\s+/).length <= 6) {
+      role = companyName;
+      companyName = '';
+    }
+
+    // Extract company name from bullets if it's in ALL CAPS and companyName is empty
+    if (!companyName && bullets.length) {
+      for (let i = 0; i < bullets.length; i++) {
+        // Pattern: "...in COMPANY NAME" or "...at COMPANY NAME" at end of bullet
+        const allCapsMatch = bullets[i].match(/\b(?:in|at|for|with)\s+([A-Z][A-Z\s]{4,}[A-Z])\s*$/);
+        if (allCapsMatch) {
+          companyName = allCapsMatch[1].trim();
+          bullets[i] = bullets[i].replace(/\s*(?:in|at|for|with)\s+[A-Z][A-Z\s]{4,}[A-Z]\s*$/, '').trim();
+          break;
+        }
+      }
+    }
+
+    // Clean up companyName: remove brackets, role-like text at start
+    companyName = companyName.replace(/^\[\s*\]\s*[-–—]?\s*/, '').replace(/\s*[-–—]\s*$/, '').trim();
+
+    return { ...entry, companyName, role, bullets: bullets.filter(Boolean), toolsUsed: toolsUsed || '' };
+  });
+
+  // --- FIX PROJECTS: extract tech from parentheses in project name ---
+  resume.projects = resume.projects.map((proj) => {
+    let { projectName, technologiesUsed } = proj;
+    if (projectName) {
+      // Pattern: "Student Management System (Python, SQL)"
+      const techMatch = projectName.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+      if (techMatch) {
+        const possibleTech = techMatch[2].trim();
+        // Check if contents of parentheses look like tech (short, comma-separated, known keywords)
+        const techWords = possibleTech.split(/,/).map((s) => s.trim()).filter(Boolean);
+        const looksLikeTech = techWords.length >= 1 && techWords.every((w) => w.split(/\s+/).length <= 3);
+        if (looksLikeTech) {
+          projectName = techMatch[1].trim();
+          // Append to existing tech or set it
+          technologiesUsed = technologiesUsed ? `${technologiesUsed}, ${possibleTech}` : possibleTech;
+        }
+      }
+    }
+    return { ...proj, projectName, technologiesUsed };
+  });
+
+  // --- FIX MISPLACED SECTIONS: detect certifications/awards stuck in projects array ---
+  // Pattern: A "project" whose name looks like a section heading (awards, certifications, achievements, etc.)
+  // and whose bullets look like certification entries (contain year/issuer/description patterns, not code/tech descriptions)
+  const certSectionHeadingRe = /^(awards?\s*(?:&|and)?\s*certific?at(?:ions|es)?|certific?at(?:ions|es)|achievements?|honors?|accomplishments?|credentials?)$/i;
+  const certLikePatterns = [
+    /\b(coursera|udemy|google|aws|microsoft|linkedin|edx|nptel|hackerrank|hacker\s*rank|codecademy|great\s*learning|datacamp)\b/i,
+    /\b(certificate|certified|certification|credential|course|completed|issued|awarded|earned)\b/i,
+    /\b(top\s*\d+%|ranked?\s*(among|top|#?\d))/i,
+    /\b(hackathon|challenge|competition|olympiad|workshop)\b/i,
+    /\b(best\s+(project|paper|performer|student))\b/i,
+  ];
+  const projectLikePatterns = [
+    /\b(built|developed|created|designed|implemented|deployed|architected|engineered)\b/i,
+    /\b(using|with|stack|frontend|backend|fullstack|api|database|server|client)\b/i,
+    /\b(github\.com|live\s*demo|deployed\s*(on|to|at))\b/i,
+  ];
+
+  const migratedCerts = [];
+  resume.projects = resume.projects.filter((proj) => {
+    const name = (proj.projectName || '').trim();
+    const bullets = proj.bullets || [];
+    const allText = [name, ...bullets].join(' ');
+
+    // Check 1: Project name IS a section heading for certifications
+    const nameIsCertHeading = certSectionHeadingRe.test(name);
+
+    // Check 2: Project name contains cert-like terms but isn't a real project
+    const nameHasCertTerms = /\b(award|certific?at|achievement|honor|credential)/i.test(name) && !/\b(system|app|platform|tool|website|dashboard|portal|api|service|bot|game|engine|cli|library)\b/i.test(name);
+
+    // Check 3: Bullets look like certifications (contain issuers, years, "completed", "ranked", etc.)
+    const certScore = bullets.reduce((score, b) => {
+      if (certLikePatterns.some((p) => p.test(b))) score += 1;
+      if (projectLikePatterns.some((p) => p.test(b))) score -= 1;
+      return score;
+    }, 0);
+
+    const shouldMigrate = (nameIsCertHeading || nameHasCertTerms) && (bullets.length === 0 || certScore >= 0);
+
+    if (shouldMigrate) {
+      // Migrate bullets as individual certifications
+      if (bullets.length > 0) {
+        bullets.forEach((b) => {
+          // Try to split "Name – Issuer (Year): Description" pattern
+          const parts = b.match(/^(.+?)(?:\s*[-–—]\s*(.+?))?(?::\s*(.+))?$/);
+          migratedCerts.push({
+            id: makeId(),
+            certificationName: parts ? parts[1].trim() : b.trim(),
+            issuer: parts && parts[2] ? parts[2].trim() : '',
+            description: parts && parts[3] ? parts[3].trim() : '',
+          });
+        });
+      } else if (name && !nameIsCertHeading) {
+        // The name itself is a certification (no bullets)
+        migratedCerts.push({ id: makeId(), certificationName: name, issuer: '', description: '' });
+      }
+      return false; // Remove from projects
+    }
+    return true; // Keep as project
+  });
+
+  // Append migrated certs to existing certifications
+  if (migratedCerts.length) {
+    resume.certifications = [...resume.certifications, ...migratedCerts];
+  }
+
+  // --- Also check: experiences that look like certifications stuck in experience array ---
+  const migratedCertsFromExp = [];
+  resume.experience = resume.experience.filter((entry) => {
+    const company = (entry.companyName || '').trim();
+    const role = (entry.role || '').trim();
+    const combined = `${company} ${role}`.trim();
+    if (certSectionHeadingRe.test(combined) || certSectionHeadingRe.test(company)) {
+      // This "experience" is actually a certifications section heading
+      (entry.bullets || []).forEach((b) => {
+        const parts = b.match(/^(.+?)(?:\s*[-–—]\s*(.+?))?(?::\s*(.+))?$/);
+        migratedCertsFromExp.push({
+          id: makeId(),
+          certificationName: parts ? parts[1].trim() : b.trim(),
+          issuer: parts && parts[2] ? parts[2].trim() : '',
+          description: parts && parts[3] ? parts[3].trim() : '',
+        });
+      });
+      return false;
+    }
+    return true;
+  });
+  if (migratedCertsFromExp.length) {
+    resume.certifications = [...resume.certifications, ...migratedCertsFromExp];
+  }
+
+  // --- FIX CERTIFICATIONS: extract issuer from description or brackets ---
+  const KNOWN_ISSUERS = ['udemy', 'coursera', 'linkedin learning', 'linkedin', 'google', 'aws', 'microsoft', 'meta', 'ibm', 'oracle', 'hacker rank', 'hackerrank', 'freecodecamp', 'edx', 'pluralsight', 'codecademy', 'skillshare', 'brilliant', 'datacamp', 'nptel', 'swayam', 'great learning'];
+  resume.certifications = resume.certifications.map((cert) => {
+    let { certificationName, issuer, description } = cert;
+
+    // Extract [Udemy] or [Coursera] from description
+    if (description && !issuer) {
+      const bracketMatch = description.match(/\[([^\]]+)\]/);
+      if (bracketMatch) {
+        const candidate = bracketMatch[1].trim();
+        if (KNOWN_ISSUERS.some((k) => candidate.toLowerCase().includes(k))) {
+          issuer = candidate;
+          description = description.replace(bracketMatch[0], '').replace(/^\s*[-–—:]\s*/, '').trim();
+        }
+      }
+    }
+
+    // Extract issuer from description if it contains a known platform name
+    if (description && !issuer) {
+      const descLower = description.toLowerCase();
+      const foundIssuer = KNOWN_ISSUERS.find((k) => descLower.includes(k));
+      if (foundIssuer) {
+        issuer = description.trim();
+        description = '';
+      }
+    }
+
+    // Extract [Platform] from certificationName itself
+    if (certificationName && !issuer) {
+      const bracketInName = certificationName.match(/\[([^\]]+)\]/);
+      if (bracketInName) {
+        const candidate = bracketInName[1].trim();
+        if (KNOWN_ISSUERS.some((k) => candidate.toLowerCase().includes(k))) {
+          issuer = candidate;
+          certificationName = certificationName.replace(bracketInName[0], '').replace(/\s*[-–—]\s*$/, '').trim();
+        }
+      }
+    }
+
+    // Extract "Course - Platform" pattern from certificationName
+    if (certificationName && !issuer) {
+      const dashParts = certificationName.split(/\s*[-–—]\s*/);
+      if (dashParts.length === 2) {
+        const candidate = dashParts[1].trim();
+        if (KNOWN_ISSUERS.some((k) => candidate.toLowerCase().includes(k))) {
+          certificationName = dashParts[0].trim();
+          issuer = candidate;
+        }
+      }
+    }
+
+    return { ...cert, certificationName, issuer, description };
+  });
+
+  return resume;
+}
+
 async function extractPdfText(fileBuffer) {
   const buf = Buffer.from(fileBuffer);
   const uint8 = new Uint8Array(buf);
@@ -178,7 +408,35 @@ async function extractDocxText(fileBuffer) {
 async function enhanceImportedResume(text) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return null;
-  const prompt = `You are converting an imported resume into a structured JSON object for a resume builder.\nReturn only valid JSON and nothing else.\n\nTarget schema:\n{"personal":{"fullName":"","professionalTitle":"","phoneNumber":"","emailAddress":"","linkedInUrl":""},"summary":"","skills":[{"category":"","items":[""]}],"experience":[{"companyName":"","location":"","role":"","startDate":"","endDate":"","toolsUsed":"","bullets":[""]}],"projects":[{"projectName":"","technologiesUsed":"","bullets":[""]}],"certifications":[{"certificationName":"","issuer":""}],"education":[{"degree":"","institution":"","graduationYear":"","gpa":""}]}\n\nRules:\n- Map the imported resume into the schema above.\n- "companyName" is the organization/company name (e.g. "Adobe", "Google"). "role" is the job title/position (e.g. "Computer Scientist", "Software Engineer"). "location" is the city/place (e.g. "Bangalore", "New York"). Do NOT mix these up.\n- "toolsUsed" is the comma-separated list of technologies/tools used in that role (e.g. "Java, Python, AWS, Docker"). This is NOT a bullet point.\n- Normalize headings into our standard sections.\n- Preserve meaning.\n- Split text into short resume-ready bullets when possible.\n- Do not invent facts.\n- Return strict JSON only.\n\nImported resume text:\n${text}`;
+  const prompt = `You are converting an imported resume into a structured JSON object for a resume builder.
+Return only valid JSON and nothing else.
+
+Target schema:
+{"personal":{"fullName":"","professionalTitle":"","phoneNumber":"","emailAddress":"","linkedInUrl":""},"summary":"","skills":[{"category":"","items":[""]}],"experience":[{"companyName":"","location":"","role":"","startDate":"","endDate":"","toolsUsed":"","bullets":[""]}],"projects":[{"projectName":"","technologiesUsed":"","bullets":[""]}],"certifications":[{"certificationName":"","issuer":""}],"education":[{"degree":"","institution":"","graduationYear":"","gpa":""}]}
+
+CRITICAL SECTION MAPPING RULES:
+- "Experience", "Work Experience", "Professional Experience", "Employment", "Internship Experience", "Internship", "Work History" → ALL go into "experience" array. An internship IS work experience.
+- "Projects", "Project Work", "Academic Projects", "Personal Projects", "Side Projects" → go into "projects" array. Only actual built projects (apps, tools, systems).
+- "Certifications", "Certificates", "Awards", "Academic Achievements", "Achievements", "Honors", "Accomplishments" → ALL go into "certifications" array.
+- "Languages" → If items are courses/certifications (e.g. "SQL for Data Analysis - Udemy") → put in "certifications". If items are programming languages or spoken languages → put in "skills".
+- "Skills", "Technical Skills", "Tools", "Technologies", "Core Competencies" → go into "skills" array.
+- "Education", "Academic Details", "Qualifications" → go into "education" array.
+- "Summary", "Profile", "Objective", "About" → goes into "summary" string.
+
+OTHER RULES:
+- "companyName" is ONLY the organization/company name (e.g. "Crimson Innovative Technologies", "Google", "Adobe"). It must NOT contain the role, description, or bullets.
+- "role" is ONLY the job title/position (e.g. "Embedded System Design Intern", "Software Engineer"). Separate it clearly from company.
+- "toolsUsed" is the comma-separated technologies/tools used in that role. This is NOT a bullet point.
+- "bullets" are descriptions of what was done. If you see "Worked on X", "Developed Y", "Built Z" — those are bullets, NOT part of companyName.
+- For internships: the company is the organization name (e.g. "Crimson Innovative Technologies"). The role is the title (e.g. "Embedded System Design Intern"). If the company name appears WITHIN a description (e.g. "Worked on PCB design in CRIMSON INNOVATIVE TECHNOLOGIES"), extract it into the companyName field and remove it from the bullet text.
+- For projects: "projectName" is ONLY the project title (e.g. "Student Management System"). If technologies appear in parentheses like "(Python, SQL)", extract them into "technologiesUsed" — do NOT include them in projectName.
+- For certifications: "certificationName" is the course/cert title. "issuer" is the platform (Udemy, Coursera, Google, AWS, LinkedIn Learning, etc.). If you see "[Udemy]" or "- Udemy" after a course name, put "Udemy" in issuer field, not description.
+- Preserve all factual content. Do not invent information.
+- Split text into short resume-ready bullets when possible.
+- Return strict JSON only.
+
+Imported resume text:
+${text}`;
   let lastError = '';
   for (const model of MODEL_FALLBACKS) {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -190,7 +448,7 @@ async function enhanceImportedResume(text) {
     const payload = await response.json();
     const content = payload?.choices?.[0]?.message?.content || '';
     const json = safeJsonParse(content);
-    if (json) return normalizeImportedSchema(json);
+    if (json) return postProcessImportedData(normalizeImportedSchema(json));
     lastError = content;
   }
   console.error('[import-resume] AI mapping failed', lastError);
@@ -203,12 +461,12 @@ function heuristicImport(text) {
   if (!rawLines.length) return resume;
 
   const sectionDefs = [
-    { key: 'summary', pattern: /^(summary|professional summary|profile|objective|about me?)$/i },
-    { key: 'skills', pattern: /^(skills|technical skills|core competencies|competencies|technical expertise|key skills)$/i },
-    { key: 'experience', pattern: /^(experience|work experience|professional experience|employment history|employment|internship|internships)$/i },
-    { key: 'projects', pattern: /^(projects|project work|project experience|academic projects|personal projects|key projects)$/i },
-    { key: 'certifications', pattern: /^(certifications|certificates|awards & certifications|awards and certifications|awards and certificates|awards|licenses|credentials)$/i },
-    { key: 'education', pattern: /^(education|academic details|qualifications|academic background)$/i },
+    { key: 'summary', pattern: /^(summary|professional summary|profile|objective|about me?|career objective|career summary)$/i },
+    { key: 'skills', pattern: /^(skills|technical skills|core competencies|competencies|technical expertise|key skills|tools & technologies|tools and technologies|technologies|tech stack)$/i },
+    { key: 'experience', pattern: /^(experience|work experience|professional experience|employment history|employment|internship|internships|internship experience|work history|career history|relevant experience|professional background)$/i },
+    { key: 'projects', pattern: /^(projects|project work|project experience|academic projects|personal projects|key projects|side projects|notable projects)$/i },
+    { key: 'certifications', pattern: /^(certific?ations|certific?ates|awards\s*&\s*certific?at(?:ions|es)|awards\s+and\s+certific?at(?:ions|es)|awards|licenses|credentials|academic achievements|achievements|honors|honors\s*&\s*awards|honours|accomplishments|courses|training|professional development|languages)$/i },
+    { key: 'education', pattern: /^(education|academic details|qualifications|academic background|educational background|academic qualifications)$/i },
   ];
   const isSectionHeading = (line) => sectionDefs.some(({ pattern }) => pattern.test(line));
   const bulletRe = /^[-\u2013\u2014\u2022\u25cf\u25e6\u25aa\u2023~]\s/;
@@ -767,10 +1025,8 @@ function heuristicImport(text) {
   }
 
   // --- Fallbacks ---
-  if (!resume.summary) {
-    const nonHeading = lines.filter((l) => !isSectionHeading(l) && l !== nameLine && l !== titleLine);
-    resume.summary = nonHeading.slice(0, 3).join(' ');
-  }
+  // Do NOT blindly fill summary with random lines. If no summary section found, leave empty.
+  // The user can write one or use AI suggest.
   if (!resume.skills.length) {
     const kw = joinedText.match(/\b(javascript|typescript|python|java|c\+\+|c#|sql|html|css|react|angular|vue|next\.?js|node\.?js|express|django|flask|spring|\.net|aws|azure|docker|kubernetes|git|linux|mongodb|postgresql|mysql|graphql|excel|power bi|tableau|data analysis|project management|communication|teamwork)\b/gi);
     if (kw?.length) resume.skills = [{ id: makeId(), category: 'Skills', items: Array.from(new Set(kw.map((s) => s.trim()))).slice(0, 20) }];
@@ -816,7 +1072,7 @@ export async function POST(request) {
       console.warn('[import-resume] WARNING: extracted text is empty!');
     }
 
-    const fallbackData = heuristicImport(extractedText);
+    const fallbackData = postProcessImportedData(heuristicImport(extractedText));
     let importedData = fallbackData;
     if (extractedText) {
       try {

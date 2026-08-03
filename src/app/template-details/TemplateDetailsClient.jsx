@@ -84,12 +84,62 @@ export default function TemplateDetailsClient() {
   const templateId = searchParams.get('template') || '1';
   const template = templateMeta[templateId] || templateMeta['1'];
   const [showBuildModal, setShowBuildModal] = useState(false);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [buildStep, setBuildStep] = useState(0);
+  const [targetJobTitle, setTargetJobTitle] = useState('');
+  const [targetJobDescription, setTargetJobDescription] = useState('');
   const [importing, setImporting] = useState(false);
   const uploadInputRef = useRef(null);
   const isPopularTemplate = templateId === '1' || templateId === '2';
 
   const handleUploadClick = () => {
     uploadInputRef.current?.click();
+  };
+
+  const openJobModal = () => {
+    // Pre-fill from sessionStorage if available
+    try {
+      const saved = window.sessionStorage.getItem('ResumeLab-target-job');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const title = parsed?.title || parsed?.targetJobTitle || '';
+        const desc = parsed?.description || parsed?.targetJobDescription || '';
+        if (title.trim()) {
+          setTargetJobTitle(title);
+          setTargetJobDescription(desc);
+        }
+      }
+    } catch {}
+    setShowJobModal(true);
+  };
+
+  const closeJobModal = () => {
+    setShowJobModal(false);
+    setBuildStep(0);
+    setTargetJobTitle('');
+    setTargetJobDescription('');
+  };
+
+  const saveTargetJob = () => {
+    try {
+      window.sessionStorage.setItem(
+        'ResumeLab-target-job',
+        JSON.stringify({
+          title: targetJobTitle.trim(),
+          description: targetJobDescription.trim(),
+          targetJobTitle: targetJobTitle.trim(),
+          targetJobDescription: targetJobDescription.trim(),
+        })
+      );
+    } catch {
+      // ignore storage issues
+    }
+  };
+
+  const goToBuildOptions = () => {
+    if (!targetJobTitle.trim() || !targetJobDescription.trim()) return;
+    saveTargetJob();
+    setBuildStep(1);
   };
 
   const handleFileChange = async (event) => {
@@ -138,6 +188,8 @@ export default function TemplateDetailsClient() {
       }
 
       setShowBuildModal(false);
+      setShowJobModal(false);
+      setBuildStep(0);
       router.push(`/resume-builder/${templateId === '2' ? 'editor2' : 'editor'}?template=${templateId}`);
     } catch (error) {
       window.alert(error?.message || 'Unable to import resume right now.');
@@ -167,39 +219,55 @@ export default function TemplateDetailsClient() {
         </svg>
       </button>
 
-      <div className="mx-auto flex w-full max-w-[920px] flex-col gap-[18px] px-[16px] pb-[96px] pt-[18px]">
-        <section className="flex justify-center pt-[38px]">
-          <div className="w-[90%] max-w-[720px]">
-            <div className="overflow-hidden rounded-[18px] bg-white p-[14px] shadow-[0_16px_40px_rgba(17,24,39,0.08)] transition-transform duration-300 hover:scale-[1.01] active:scale-[0.995]">
-              <div className="relative h-[40vh] min-h-[280px] w-full">
-                <Image
-                  src={template.image}
-                  alt="Resume template preview"
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 90vw, 720px"
-                  className="object-contain object-center"
-                />
+      <div className="mx-auto flex w-full max-w-[920px] flex-col gap-[18px] px-[16px] pb-[96px] pt-[18px] lg:max-w-[1120px] lg:pt-[0px] lg:pb-[40px] lg:min-h-[calc(100vh-40px)] lg:justify-center">
+        {/* Desktop: two-column layout, Mobile: stacked */}
+        <div className="lg:flex lg:items-start lg:gap-[48px]">
+          {/* Left: Resume preview */}
+          <section className="flex justify-center pt-[38px] lg:pt-0 lg:sticky lg:top-[24px] lg:w-[55%]">
+            <div className="w-[90%] max-w-[720px] lg:w-full">
+              <div className="overflow-hidden rounded-[18px] bg-white p-[14px] shadow-[0_16px_40px_rgba(17,24,39,0.08)] transition-transform duration-300 hover:scale-[1.01] active:scale-[0.995]">
+                <div className="relative h-[40vh] min-h-[280px] w-full lg:h-[60vh] lg:min-h-[480px] border border-[#d1d5db] rounded-[8px]">
+                  <Image
+                    src={template.image}
+                    alt="Resume template preview"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 90vw, (max-width: 1024px) 720px, 550px"
+                    className="object-contain object-center"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="px-[4px]">
-          <h1 className="text-[22px] font-bold tracking-[-0.02em] text-black">{template.title}</h1>
-          <div className="mt-[16px] grid gap-[12px]">
-            {template.features.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
-            ))}
-          </div>
-        </section>
+          {/* Right: Features + CTA */}
+          <section className="px-[4px] lg:w-[45%] lg:pt-[38px] lg:px-0">
+            <h1 className="text-[22px] font-bold tracking-[-0.02em] text-black lg:text-[26px]">{template.title}</h1>
+            <div className="mt-[16px] grid gap-[12px]">
+              {template.features.map((feature) => (
+                <FeatureCard key={feature.title} {...feature} />
+              ))}
+            </div>
+            {/* Desktop CTA button (in addition to the fixed bottom bar) */}
+            <div className="hidden lg:block mt-[28px]">
+              <button
+                type="button"
+                onClick={isPopularTemplate ? () => openJobModal() : undefined}
+                disabled={!isPopularTemplate}
+                className={`h-[56px] w-full rounded-[16px] text-[15px] font-bold shadow-[0_14px_28px_rgba(108,99,255,0.24)] transition-transform duration-200 active:scale-[0.98] ${isPopularTemplate ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-[#e5e7eb] text-[#aaa] cursor-not-allowed'}`}
+              >
+                {isPopularTemplate ? 'Create Resume' : 'Coming soon'}
+              </button>
+            </div>
+          </section>
+        </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-[40] border-t border-[color:rgba(230,228,255,0.9)] bg-[rgba(255,255,255,0.82)] px-[16px] py-[12px] backdrop-blur-[16px]">
+      <div className="fixed bottom-0 left-0 right-0 z-[40] border-t border-[color:rgba(230,228,255,0.9)] bg-[rgba(255,255,255,0.82)] px-[16px] py-[12px] backdrop-blur-[16px] lg:hidden">
         <div className="mx-auto flex w-full max-w-[920px] justify-center">
           <button
             type="button"
-            onClick={isPopularTemplate ? () => setShowBuildModal(true) : undefined}
+            onClick={isPopularTemplate ? () => openJobModal() : undefined}
             disabled={!isPopularTemplate}
             className={`h-[56px] w-[90%] max-w-[720px] rounded-[16px] text-[15px] font-bold shadow-[0_14px_28px_rgba(108,99,255,0.24)] transition-transform duration-200 active:scale-[0.98] ${isPopularTemplate
               ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white'
@@ -210,6 +278,119 @@ export default function TemplateDetailsClient() {
           </button>
         </div>
       </div>
+
+      {showJobModal && isPopularTemplate ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">
+          <div className="relative w-full max-w-[520px] rounded-[24px] bg-white p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={closeJobModal}
+              className="absolute right-[14px] top-[14px] z-[10] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[20px] font-light leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
+            >
+              x
+            </button>
+
+            <main className="relative z-[1] bg-white px-[4px] py-[8px] text-black">
+              <div className="mx-auto flex w-full max-w-[520px] flex-col">
+                {buildStep === 0 ? (
+                  <>
+                    <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">What are you applying for?</h1>
+                    <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">Tell us the target role first. We&apos;ll use it for ATS scoring and AI suggestions.</p>
+                    <div className="mt-[18px] grid gap-[12px]">
+                      <label className="block">
+                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Target Job Title</span>
+                        <input
+                          value={targetJobTitle}
+                          onChange={(e) => setTargetJobTitle(e.target.value)}
+                          placeholder="Frontend Developer"
+                          className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Job Description / ATS Keywords</span>
+                        <textarea
+                          value={targetJobDescription}
+                          onChange={(e) => setTargetJobDescription(e.target.value)}
+                          placeholder="Paste the job description here..."
+                          rows={6}
+                          className="w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] py-[12px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-[18px] flex gap-[10px]">
+                      <button type="button" onClick={closeJobModal} className="h-[52px] flex-1 rounded-[16px] border border-[color:#e5e7eb] bg-white text-[15px] font-bold text-black">Cancel</button>
+                      <button type="button" onClick={goToBuildOptions} disabled={!targetJobTitle.trim() || !targetJobDescription.trim()} className="h-[52px] flex-1 rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white disabled:opacity-50">Next</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">How would you like to build your resume?</h1>
+                    <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">Upload an existing one or start fresh - we&apos;ll make it easy either way!</p>
+                    <div className="mt-[8px] rounded-[14px] bg-[rgba(95,84,240,0.06)] px-[12px] py-[10px] text-[12px] text-[#4a41c8]">Optimizing for: <span className="font-bold">{targetJobTitle}</span></div>
+                    <div className="mt-[22px] grid grid-cols-2 gap-[12px]">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={handleUploadClick}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            handleUploadClick();
+                          }
+                        }}
+                        className={`cursor-pointer rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)] ${importing ? 'opacity-60' : ''}`}
+                      >
+                        <div className="flex justify-center text-[30px] text-[#666]">☁</div>
+                        <div className="mt-[10px] text-center">
+                          <h2 className="text-[15px] font-bold text-black">{importing ? 'Importing...' : 'Upload resume'}</h2>
+                          <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">PDF, DOCX . Max file size: 10 MB</p>
+                        </div>
+                      </div>
+                      <div className="relative rounded-[16px] border border-[color:#d9d9e3] bg-white p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)] opacity-60">
+                        <div className="absolute top-[10px] right-[10px]">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        </div>
+                        <div className="flex justify-center text-[34px] font-bold text-[#0a66c2]">in</div>
+                        <div className="mt-[10px] text-center">
+                          <h2 className="text-[15px] font-bold text-black">Import LinkedIn</h2>
+                          <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">Coming soon</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-[14px] rounded-[16px] border border-[color:#d9d9e3] bg-white p-[16px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                      <div className="flex items-center gap-[12px]">
+                        <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[18px] font-bold text-white">✦</div>
+                        <div>
+                          <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
+                          <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
+                        </div>
+                        <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">Free</span>
+                      </div>
+                    </div>
+                    <div className="my-[18px] flex items-center gap-[12px] text-[#a0a0ad]">
+                      <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+                      <span className="text-[13px]">or</span>
+                      <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+                    </div>
+                    <Link
+                      href={`/resume-builder/${templateId === '2' ? 'editor2' : 'editor'}?template=${templateId}&fresh=true`}
+                      onClick={() => {
+                        saveTargetJob();
+                        closeJobModal();
+                      }}
+                      className={`flex h-[52px] items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white shadow-[0_14px_28px_rgba(108,99,255,0.22)] ${importing ? 'pointer-events-none opacity-60' : ''}`}
+                    >
+                      + Start from scratch
+                    </Link>
+                    <button type="button" onClick={closeJobModal} className="mt-[10px] h-[48px] w-full rounded-[16px] border border-[color:#e5e7eb] bg-white text-[14px] font-semibold text-black">Cancel</button>
+                  </>
+                )}
+              </div>
+            </main>
+          </div>
+        </div>
+      ) : null}
 
       {showBuildModal && isPopularTemplate ? (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">

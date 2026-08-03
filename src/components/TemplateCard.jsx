@@ -106,21 +106,21 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
   return (
     <CardTag
       {...cardProps}
-      className="relative block flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)]"
+      className="relative block flex-[0_0_clamp(118px,38vw,130px)] overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[0_10px_24px_rgba(17,24,39,0.05)] lg:flex-auto lg:transition-all lg:duration-200 lg:hover:scale-[1.03] lg:hover:shadow-[0_16px_40px_rgba(17,24,39,0.12)]"
     >
       <div className="absolute left-[10px] top-[10px] z-[2] rounded-full border border-[color:var(--badge-border)] bg-[var(--badge-bg)] px-[7px] py-[4px] text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--badge-text)] shadow-[0_8px_18px_rgba(17,24,39,0.06)]">
         {badge}
       </div>
 
-      <div className={`relative flex h-[174px] w-full items-center justify-center overflow-hidden ${thumbClass}`}>
+      <div className={`relative flex h-[174px] w-full items-center justify-center overflow-hidden lg:h-[240px] ${thumbClass}`}>
         {isPreview && templateId === 1 && (
           <div className="flex h-full w-full items-center justify-center bg-white px-[8px] py-[8px]">
-            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
+            <div className="relative h-full w-full overflow-hidden rounded-[6px] border border-[#d1d5db]">
               <Image
                 src="/images/template1.png"
                 alt="Resume template preview"
                 fill
-                sizes="(max-width: 480px) 38vw, 130px"
+                sizes="(max-width: 480px) 38vw, (max-width: 1024px) 130px, 250px"
                 className="object-contain object-center"
                 priority
               />
@@ -129,12 +129,12 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
         )}
         {isPreview && templateId === 2 && (
           <div className="flex h-full w-full items-center justify-center bg-white px-[8px] py-[8px]">
-            <div className="relative h-full w-full overflow-hidden rounded-[6px]">
+            <div className="relative h-full w-full overflow-hidden rounded-[6px] border border-[#d1d5db]">
               <Image
                 src="/images/template2.png"
                 alt="Resume template preview"
                 fill
-                sizes="(max-width: 480px) 38vw, 130px"
+                sizes="(max-width: 480px) 38vw, (max-width: 1024px) 130px, 250px"
                 className="object-contain object-center"
               />
             </div>

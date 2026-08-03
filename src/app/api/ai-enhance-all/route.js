@@ -16,7 +16,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { experience, projects, certifications, education } = body || {};
+    const { experience, projects, certifications, education, targetJobTitle, targetJobDescription } = body || {};
 
     // Build a structured prompt
     const inputData = { experience: [], projects: [], certifications: [], education: [] };
@@ -49,12 +49,17 @@ export async function POST(request) {
     const hasContent = inputData.experience.length || inputData.projects.length || inputData.certifications.length || inputData.education.length;
     if (!hasContent) return NextResponse.json({ error: 'No content to enhance' }, { status: 400 });
 
-    const prompt = `You are a professional resume writer. Enhance the following resume text fields.
+    const jobContext = targetJobTitle 
+      ? `\n\nTARGET JOB ROLE: "${targetJobTitle}"\n${targetJobDescription ? `INCORPORATE KEYWORDS FROM THIS DESCRIPTION:\n${targetJobDescription}` : ''}`
+      : '';
+
+    const prompt = `You are a professional resume writer. Enhance the following resume text fields.${jobContext}
 
 STRICT RULES:
 - Each enhanced text MUST have the SAME word count as the original (±2 words maximum)
 - Start each bullet with a strong action verb
 - Preserve ALL numbers, metrics, percentages, and technical keywords exactly
+- If a target job role or description is provided, naturally incorporate relevant keywords without sounding forced.
 - Use plain professional English (ATS-friendly)
 - Do NOT add symbols, emojis, or special characters
 - Do NOT add new information that wasn't in the original

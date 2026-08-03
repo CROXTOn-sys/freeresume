@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rateLimit } from '../../../lib/rate-limit.js';
 
 const MODEL_FALLBACKS = [
   'google/gemma-3-12b-it:free',
@@ -59,6 +60,9 @@ function extractText(payload) {
 }
 
 export async function POST(request) {
+  const { success } = rateLimit(request, { limit: 8, windowMs: 60000 });
+  if (!success) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+
   const apiKey = process.env.OPENROUTER_API_KEY;
   console.log('[ai-enhance] env status', {
     hasOpenRouterApiKey: Boolean(apiKey),

@@ -71,7 +71,7 @@ function BuilderChoice() {
         // ignore storage issues
       }
 
-      router.push(`/resume-builder/editor?template=${templateId}`);
+      router.push(`/resume-builder/editor?template=${templateId}&importAnim=true`);
     } catch (error) {
       window.alert(error?.message || 'Unable to import resume right now.');
     } finally {

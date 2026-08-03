@@ -16,18 +16,22 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { context, fieldType } = body;
+    const { context, fieldType, targetJobTitle, targetJobDescription } = body;
 
     if (!context || !context.trim()) {
       return NextResponse.json({ error: 'Need context (title/role) to generate suggestion' }, { status: 400 });
     }
 
+    const jobContext = targetJobTitle 
+      ? ` The user is applying for a "${targetJobTitle}" role. ${targetJobDescription ? `Incorporate relevant keywords from this job description if applicable: ${targetJobDescription}` : ''}`
+      : '';
+
     const prompts = {
-      experience_bullet: `You are a resume writer. Based on the role "${context}", generate ONE professional resume bullet point. Start with a strong action verb. Keep it under 25 words. Include a measurable outcome if possible. Return ONLY the bullet text, no quotes, no dash, no prefix.`,
-      project_bullet: `You are a resume writer. Based on the project "${context}", generate ONE professional resume bullet point describing what was built or achieved. Keep it under 25 words. Return ONLY the bullet text, no quotes, no dash, no prefix.`,
-      project_description: `You are a resume writer. Based on the project "${context}", generate a ONE sentence project description (what it does, tools used, outcome). Keep it under 30 words. Return ONLY the description text, no quotes.`,
+      experience_bullet: `You are a resume writer. Based on the role "${context}", generate ONE professional resume bullet point.${jobContext} Start with a strong action verb. Keep it under 25 words. Include a measurable outcome if possible. Return ONLY the bullet text, no quotes, no dash, no prefix.`,
+      project_bullet: `You are a resume writer. Based on the project "${context}", generate ONE professional resume bullet point describing what was built or achieved.${jobContext} Keep it under 25 words. Return ONLY the bullet text, no quotes, no dash, no prefix.`,
+      project_description: `You are a resume writer. Based on the project "${context}", generate a ONE sentence project description (what it does, tools used, outcome).${jobContext} Keep it under 30 words. Return ONLY the description text, no quotes.`,
       certification_description: `You are a resume writer. Based on the certification "${context}", generate ONE sentence describing what was learned or achieved. Keep it under 20 words. Return ONLY the text, no quotes.`,
-      summary: `You are a resume writer. Based on the professional title "${context}", generate a 2-3 sentence professional summary for a resume. Keep it ATS-friendly and under 50 words. Return ONLY the summary text, no quotes.`,
+      summary: `You are a resume writer. Based on the professional title "${context}", generate a 2-3 sentence professional summary for a resume.${jobContext} Keep it ATS-friendly and under 50 words. Return ONLY the summary text, no quotes.`,
       coursework: `Based on the degree "${context}", suggest 5-6 relevant courses separated by commas. Return ONLY the course names, no numbering.`,
     };
 

@@ -25,18 +25,20 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   return (
-    <section id="reviews-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)]">
-      <h2 className="mb-[8px] text-[21px] font-extrabold leading-[1.25] tracking-[-0.03em] text-[var(--text-dark)]">
+    <section id="reviews-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pb-[48px] lg:pt-[48px] lg:rounded-none lg:border-y lg:border-[color:var(--border-soft)] lg:mx-0">
+      <div className="lg:max-w-[1120px] lg:mx-auto">
+      <h2 className="mb-[8px] text-[21px] font-extrabold leading-[1.25] tracking-[-0.03em] text-[var(--text-dark)] lg:text-[28px] lg:mb-[10px]">
         Hear From Job Seekers Who Got Results
       </h2>
-      <p className="mb-[20px] text-[13px] leading-[1.5] text-[var(--text-light)]">
+      <p className="mb-[20px] text-[13px] leading-[1.5] text-[var(--text-light)] lg:text-[16px]">
         Trusted by students and professionals to build the best resume.
       </p>
 
-      <div className="flex gap-[12px] overflow-x-auto pb-[8px] [scrollbar-width:none] [-ms-overflow-style:none]">
+      <div className="flex gap-[12px] overflow-x-auto pb-[8px] [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-3 lg:gap-[24px] lg:overflow-x-visible lg:pb-0">
         {testimonials.map((testimonial) => (
           <TestimonialCard key={testimonial.name} {...testimonial} />
         ))}
+      </div>
       </div>
     </section>
   );

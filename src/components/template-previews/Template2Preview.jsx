@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const TEMPLATE = `<!doctype html>
 <html>
@@ -143,7 +143,23 @@ function renderTemplate(data) {
 export default function Template2Preview({ data = {}, previewMode = false }) {
   const html = renderTemplate(data);
   const containerRef = useRef(null);
+  const iframeRef = useRef(null);
   const [scale, setScale] = useState(0.45);
+  const prevHtmlRef = useRef('');
+
+  // Write to iframe via contentDocument to avoid full reload flicker
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    if (prevHtmlRef.current === html) return;
+    prevHtmlRef.current = html;
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+  }, [html]);
 
   useEffect(() => {
     if (!previewMode) return;
@@ -163,10 +179,10 @@ export default function Template2Preview({ data = {}, previewMode = false }) {
   if (previewMode) {
     return (
       <div ref={containerRef} style={{ width: '100%', overflow: 'hidden', position: 'relative', height: `${1122 * scale}px` }}>
-        <iframe srcDoc={html} style={{ position: 'absolute', top: 0, left: 0, width: '794px', height: '1122px', border: 'none', background: '#fff', transform: `scale(${scale})`, transformOrigin: 'top left' }} title="Resume Preview" />
+        <iframe ref={iframeRef} style={{ position: 'absolute', top: 0, left: 0, width: '794px', height: '1122px', border: 'none', background: '#fff', transform: `scale(${scale})`, transformOrigin: 'top left' }} title="Resume Preview" />
       </div>
     );
   }
 
-  return <iframe srcDoc={html} style={{ width: '100%', height: '842px', border: 'none', display: 'block', background: '#fff' }} title="Resume Preview" />;
+  return <iframe ref={iframeRef} style={{ width: '100%', height: '842px', border: 'none', display: 'block', background: '#fff' }} title="Resume Preview" />;
 }
