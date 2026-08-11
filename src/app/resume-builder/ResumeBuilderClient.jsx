@@ -371,6 +371,25 @@ export default function ResumeBuilderClient() {
   const stepButtonRefs = useRef([]);
   const downloadMenuRef = useRef(null);
 
+  // Stable key generator for bullet items to prevent mobile editing issues
+  const bulletKeyCounter = useRef(0);
+  const bulletKeyMap = useRef(new Map()); // Map<string, string[]> — parentId -> array of stable keys
+  const getBulletKeys = (parentId, bulletsLength) => {
+    const mapKey = String(parentId);
+    let keys = bulletKeyMap.current.get(mapKey);
+    if (!keys) { keys = []; bulletKeyMap.current.set(mapKey, keys); }
+    // Grow the keys array if bullets were added
+    while (keys.length < bulletsLength) { keys.push(`bk-${++bulletKeyCounter.current}`); }
+    // Shrink if bullets were removed (trim from end)
+    if (keys.length > bulletsLength) { keys.length = bulletsLength; }
+    return keys;
+  };
+  const removeBulletKey = (parentId, index) => {
+    const mapKey = String(parentId);
+    const keys = bulletKeyMap.current.get(mapKey);
+    if (keys) { keys.splice(index, 1); }
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => { setUser(data?.user || null); if (data?.user) prefetchDownloadAccess(); });
     const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => { setUser(session?.user || null); if (session?.user) prefetchDownloadAccess(); });
@@ -821,7 +840,7 @@ export default function ResumeBuilderClient() {
               <Input label="Tools Used" value={exp.toolsUsed || ''} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, toolsUsed: v })) }))} placeholder="Excel, SQL, Power BI" maxLength={150} />
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Experience Summary</span>
               {exp.bullets.map((b, bi) => (
-                <React.Fragment key={bi}>
+                <React.Fragment key={getBulletKeys(exp.id, exp.bullets.length)[bi]}>
                 <div className="flex gap-[8px]">
                   <input
                     value={b}
@@ -840,15 +859,16 @@ export default function ResumeBuilderClient() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      removeBulletKey(exp.id, bi);
                       setData((p) => ({
                         ...p,
                         experience: updateItem(p.experience, ei, (item) => ({
                           ...item,
                           bullets: removeItem(item.bullets, bi),
                         })),
-                      }))
-                    }
+                      }));
+                    }}
                     className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
                     aria-label="Remove"
                   >
@@ -996,7 +1016,7 @@ export default function ResumeBuilderClient() {
               </div>
               <span className="mb-[2px] mt-[4px] block text-[12px] font-semibold text-black">Project Summary</span>
               {p.bullets.map((b, bi) => (
-                <React.Fragment key={bi}>
+                <React.Fragment key={getBulletKeys(p.id, p.bullets.length)[bi]}>
                 <div className="flex gap-[8px]">
                   <input
                     value={b}
@@ -1015,15 +1035,16 @@ export default function ResumeBuilderClient() {
                   />
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      removeBulletKey(p.id, bi);
                       setData((d) => ({
                         ...d,
                         projects: updateItem(d.projects, pi, (item) => ({
                           ...item,
                           bullets: removeItem(item.bullets, bi),
                         })),
-                      }))
-                    }
+                      }));
+                    }}
                     className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
                     aria-label="Remove"
                   >

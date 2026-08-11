@@ -13,6 +13,7 @@
     -webkit-text-size-adjust: 100%;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    scroll-behavior: smooth;
   }
 
   html::-webkit-scrollbar,
@@ -25,12 +26,23 @@
   body {
     @apply m-0 overflow-x-hidden antialiased;
     letter-spacing: -0.01em;
-    transition: background 0.25s ease, color 0.25s ease;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
   a,
   button {
     -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  input,
+  textarea,
+  select {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+
+  img {
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
 }
 
@@ -55,4 +67,70 @@
 }
 .animate-marquee {
   animation: marquee 20s linear infinite;
+}
+
+/* Smooth modal/popup overlays */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Apply to fixed/absolute overlays globally */
+[class*="fixed"][class*="inset-0"] {
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+/* Smooth sections, cards, and panels */
+section,
+[class*="rounded-"][class*="border"][class*="bg-"] {
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.2s ease;
+}
+
+/* Smooth focus rings */
+*:focus-visible {
+  outline: 2px solid rgba(108, 99, 255, 0.5);
+  outline-offset: 2px;
+  transition: outline-offset 0.15s ease;
+}
+
+/* GPU-accelerated transforms for interactive elements */
+button:active,
+a:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Smooth page transitions via Next.js navigation */
+main {
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* Smooth accordion/collapsible content */
+[style*="grid-template-rows"] {
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth chip/tag hover states */
+[class*="rounded-full"][class*="px-"] {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
