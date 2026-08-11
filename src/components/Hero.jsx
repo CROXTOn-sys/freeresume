@@ -95,22 +95,22 @@ export default function Hero({ onCreateResume }) {
           </p>
 
           {/* Buttons */}
-          <div className="lg:flex lg:items-center lg:gap-[14px]">
+          <div className="flex flex-col gap-[10px] sm:flex-row sm:items-center lg:gap-[14px]">
             <a
               href="#"
               onClick={(e) => {
                 e.preventDefault();
                 onCreateResume?.();
               }}
-              className="mb-0 block w-full rounded-[50px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[24px] py-[16px] text-[15.5px] font-bold text-white no-underline shadow-[0_16px_30px_rgba(95,84,240,0.22)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(95,84,240,0.26)] lg:w-auto lg:inline-block lg:px-[36px] lg:py-[16px] lg:text-[16px] text-center"
+              className="block w-full rounded-[50px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[24px] py-[16px] text-[15.5px] font-bold text-white no-underline shadow-[0_16px_30px_rgba(95,84,240,0.22)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(95,84,240,0.26)] sm:w-auto sm:inline-block lg:px-[36px] lg:py-[16px] lg:text-[16px] text-center"
             >
-              Create My Free Resume
+              Build Resume
             </a>
             <a
-              href="/my-resumes"
-              className="hidden lg:inline-block rounded-[50px] border-2 border-[color:var(--border)] bg-white px-[36px] py-[14px] text-[16px] font-bold text-[var(--text-dark)] no-underline transition-colors hover:border-[var(--purple)] hover:text-[var(--purple)]"
+              href="/interview-prep"
+              className="block w-full rounded-[50px] border-2 border-[color:var(--border)] bg-[var(--card-bg)] px-[24px] py-[14px] text-[15px] font-bold text-[var(--text-dark)] no-underline transition-colors hover:border-[var(--purple)] hover:text-[var(--purple)] sm:w-auto sm:inline-block lg:px-[36px] lg:py-[14px] lg:text-[16px] text-center"
             >
-              Import Resume
+              Interview Prep 🎯
             </a>
           </div>
 

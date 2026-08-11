@@ -114,6 +114,14 @@ export default function Page() {
       setTheme('light');
     }
     setMounted(true);
+    // Auto-trigger template selection if redirected from interview-prep
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'templates') {
+        setTimeout(() => setShowTemplatePrompt(true), 300);
+        window.history.replaceState({}, '', '/');
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {

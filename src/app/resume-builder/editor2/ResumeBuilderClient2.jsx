@@ -194,6 +194,23 @@ export default function ResumeBuilderClient2() {
   const downloadMenuRef = useRef(null);
   const stepRailRef = useRef(null);
 
+  // Stable key generator for bullet items to prevent mobile editing issues
+  const bulletKeyCounter = useRef(0);
+  const bulletKeyMap = useRef(new Map());
+  const getBulletKeys = (parentId, bulletsLength) => {
+    const mapKey = String(parentId);
+    let keys = bulletKeyMap.current.get(mapKey);
+    if (!keys) { keys = []; bulletKeyMap.current.set(mapKey, keys); }
+    while (keys.length < bulletsLength) { keys.push(`bk-${++bulletKeyCounter.current}`); }
+    if (keys.length > bulletsLength) { keys.length = bulletsLength; }
+    return keys;
+  };
+  const removeBulletKey = (parentId, index) => {
+    const mapKey = String(parentId);
+    const keys = bulletKeyMap.current.get(mapKey);
+    if (keys) { keys.splice(index, 1); }
+  };
+
   // Debounced ATS scoring (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -711,10 +728,10 @@ export default function ResumeBuilderClient2() {
               </div>
               <span className="text-[12px] font-semibold text-black">Bullet Points</span>
               {exp.bullets.map((b, bi) => (
-                <Fragment key={bi}>
+                <Fragment key={getBulletKeys(exp.id, exp.bullets.length)[bi]}>
                 <div className="flex gap-[8px]">
                   <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder={suggesting === `exp-${ei}-${bi}` ? '✦ Generating suggestion...' : 'Achievement or responsibility'} maxLength={300} className={`h-[44px] flex-1 rounded-[12px] border px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)] ${suggesting === `exp-${ei}-${bi}` ? 'animate-pulse border-[color:var(--purple)] bg-[rgba(108,99,255,0.03)]' : showErrors && !b.trim() ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
-                  <button type="button" onClick={() => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) }))} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+                  <button type="button" onClick={() => { removeBulletKey(exp.id, bi); setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) })); }} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </div>
