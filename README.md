@@ -28,7 +28,7 @@ A modern, AI-powered resume builder with real-time ATS scoring. Built with Next.
 | PDF/DOCX Parsing | unpdf, pdfjs-dist, mammoth |
 | PDF Generation | Puppeteer Core |
 | DOCX Generation | docx |
-| Payments | Razorpay |
+| Payments | Cashfree |
 
 ## Getting Started
 

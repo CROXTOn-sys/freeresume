@@ -76,6 +76,7 @@ const hasFormatErrors2 = (personal) => {
 
 // ATS scoring imported from centralized utility (single source of truth)
 import { getTargetJobContext, getAtsSectionScore as _getAtsSectionScore, getAtsOverallScore as _getAtsOverallScore, getAtsRecommendations as _getAtsRecommendations, getAtsInsights as _getAtsInsights, computeAtsBreakdown as _computeAtsBreakdown, formatKeyword, getBulletFeedback, isSkillKeyword } from '../../../lib/ats-score';
+import { getKeywordsForRole } from '../../../lib/ats-keywords-data';
 import { useImportAnimation } from '../../../lib/useImportAnimation';
 
 // Template 2 field map: different field names from template 1
@@ -262,6 +263,9 @@ export default function ResumeBuilderClient2() {
     const { data: listener } = supabase.auth.onAuthStateChange((_ev, session) => { setUser(session?.user || null); if (session?.user) prefetchDownloadAccess(); });
     return () => listener?.subscription?.unsubscribe();
   }, []);
+
+  // Register ATS keywords lookup for fallback scoring
+  useEffect(() => { window.__atsKeywordsCache = getKeywordsForRole; }, []);
 
   const requireAuth = (pendingAction) => {
     if (user) return true;
