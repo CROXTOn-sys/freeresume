@@ -579,7 +579,6 @@ function heuristicImport(text) {
   //   "Role"
   //   - bullets
   const expBlock = findSection('experience');
-  console.log('[import-resume] expBlock lines:', expBlock.map((l, i) => `${i}: [${isBullet(l) ? 'BULLET' : 'TEXT'}] "${l.slice(0, 80)}"`));
   if (expBlock.length) {
     const entries = [];
     let cur = null;
@@ -1074,45 +1073,7 @@ export async function POST(request) {
     }
 
     const fallbackData = postProcessImportedData(heuristicImport(extractedText));
-    console.log('[import-resume] heuristic result', { 
-      exp: fallbackData?.experience?.length, 
-      expBullets: fallbackData?.experience?.map(e => e.bullets?.length),
-      proj: fallbackData?.projects?.length,
-      projBullets: fallbackData?.projects?.map(p => p.bullets?.length),
-      cert: fallbackData?.certifications?.length, 
-      edu: fallbackData?.education?.length 
-    });
     let importedData = fallbackData;
-    // Use AI to fill in missing bullets only when heuristic finds entries but no bullets
-    const hasMissingBullets = fallbackData?.experience?.some(e => !e.bullets || e.bullets.length === 0) || fallbackData?.projects?.some(p => !p.bullets || p.bullets.length === 0);
-    if (extractedText && hasMissingBullets) {
-      try {
-        const aiData = await enhanceImportedResume(extractedText);
-        if (aiData) {
-          console.log('[import-resume] AI filling missing bullets');
-          // Only take AI bullets for entries that are missing them
-          if (aiData.experience && fallbackData.experience) {
-            fallbackData.experience = fallbackData.experience.map((entry, i) => {
-              if ((!entry.bullets || entry.bullets.length === 0) && aiData.experience[i]?.bullets?.length > 0) {
-                return { ...entry, bullets: aiData.experience[i].bullets };
-              }
-              return entry;
-            });
-          }
-          if (aiData.projects && fallbackData.projects) {
-            fallbackData.projects = fallbackData.projects.map((entry, i) => {
-              if ((!entry.bullets || entry.bullets.length === 0) && aiData.projects[i]?.bullets?.length > 0) {
-                return { ...entry, bullets: aiData.projects[i].bullets };
-              }
-              return entry;
-            });
-          }
-          importedData = fallbackData;
-        }
-      } catch (error) {
-        console.error('[import-resume] AI bullet fill failed', error?.message);
-      }
-    }
 
     console.log('[import-resume] final payload', { personal: importedData.personal, summary: importedData.summary?.length, skills: importedData.skills?.length, exp: importedData.experience?.length, proj: importedData.projects?.length, cert: importedData.certifications?.length, edu: importedData.education?.length });
 
