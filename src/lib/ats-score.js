@@ -294,10 +294,16 @@ export const getTargetJobContext = () => {
     const saved = window.sessionStorage.getItem('ResumeLab-target-job');
     if (!saved) return { title: '', description: '' };
     const parsed = JSON.parse(saved);
-    return {
-      title: String(parsed?.title || parsed?.targetJobTitle || '').trim(),
-      description: String(parsed?.description || parsed?.targetJobDescription || '').trim(),
-    };
+    const title = String(parsed?.title || parsed?.targetJobTitle || '').trim();
+    let description = String(parsed?.description || parsed?.targetJobDescription || '').trim();
+    // Fallback: if no job description provided, use role-based ATS keywords
+    if (!description && title && typeof window !== 'undefined' && window.__atsKeywordsCache) {
+      const keywords = window.__atsKeywordsCache(title);
+      if (keywords && keywords.length) {
+        description = keywords.join(', ');
+      }
+    }
+    return { title, description };
   } catch {
     return { title: '', description: '' };
   }

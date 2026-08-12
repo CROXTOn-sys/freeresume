@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
+import RoleCombobox from '../components/RoleCombobox';
 import TemplatesSection from '../components/TemplatesSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FaqSection from '../components/FaqSection';
@@ -202,7 +203,7 @@ export default function Page() {
   };
 
   const handleBuildNext = () => {
-    if (!targetJobTitle.trim() || !targetJobDescription.trim()) return;
+    if (!targetJobTitle.trim()) return;
     saveTargetJob();
     setBuildStep(1);
   };
@@ -370,20 +371,15 @@ export default function Page() {
                     <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">Tell us the target role first. We&apos;ll use it for ATS scoring and AI suggestions.</p>
                     <div className="mt-[18px] grid gap-[12px]">
                       <label className="block">
-                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Target Job Title</span>
-                        <input
-                          value={targetJobTitle}
-                          onChange={(e) => setTargetJobTitle(e.target.value)}
-                          placeholder="Frontend Developer"
-                          className="h-[44px] w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
-                        />
+                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Target Job Title <span className="text-red-500">*</span></span>
+                        <RoleCombobox value={targetJobTitle} onChange={setTargetJobTitle} />
                       </label>
                       <label className="block">
-                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Job Description / ATS Keywords</span>
+                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Job Description / ATS Keywords <span className="text-[#8b94a7] font-normal">(optional)</span></span>
                         <textarea
                           value={targetJobDescription}
                           onChange={(e) => setTargetJobDescription(e.target.value)}
-                          placeholder="Paste the job description here..."
+                          placeholder="Paste a job description from LinkedIn for best ATS accuracy, or leave blank to use role-based keywords..."
                           rows={6}
                           className="w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] py-[12px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
                         />
@@ -391,7 +387,7 @@ export default function Page() {
                     </div>
                     <div className="mt-[18px] flex gap-[10px]">
                       <button type="button" onClick={closeBuildModal} className="h-[52px] flex-1 rounded-[16px] border border-[color:#e5e7eb] bg-white text-[15px] font-bold text-black">Cancel</button>
-                      <button type="button" onClick={handleBuildNext} disabled={!targetJobTitle.trim() || !targetJobDescription.trim()} className="h-[52px] flex-1 rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white disabled:opacity-50">Next</button>
+                      <button type="button" onClick={handleBuildNext} disabled={!targetJobTitle.trim()} className="h-[52px] flex-1 rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white disabled:opacity-50">Next</button>
                     </div>
                   </>
                 ) : (
