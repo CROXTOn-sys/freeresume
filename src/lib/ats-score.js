@@ -709,6 +709,19 @@ const CATEGORY_WEIGHTS = {
  * Returns category scores (0-100 each), weighted overall, strengths, weaknesses, etc.
  */
 export function computeAtsBreakdown(data, targetJob = { title: '', description: '' }, fieldMap = {}) {
+  // Determine if user provided a JD or if we're using keyword fallback
+  let userProvidedJd = true;
+  try {
+    if (typeof window !== 'undefined') {
+      const saved = window.sessionStorage.getItem('ResumeLab-target-job');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const originalDesc = String(parsed?.description || parsed?.targetJobDescription || '').trim();
+        if (!originalDesc) userProvidedJd = false;
+      }
+    }
+  } catch {}
+
   const jd = scoreJobDescriptionMatch(data, targetJob, fieldMap);
   const completeness = scoreCompleteness(data, fieldMap);
   const expQuality = scoreExperienceQuality(data, fieldMap);
@@ -762,7 +775,7 @@ export function computeAtsBreakdown(data, targetJob = { title: '', description: 
   return {
     overall,
     categories: {
-      jdMatch: { score: jd.score, maxPoints: CATEGORY_WEIGHTS.jdMatch, label: 'Job Description Match', matched: jd.matched, missing: jd.missing, total: jd.total },
+      jdMatch: { score: jd.score, maxPoints: CATEGORY_WEIGHTS.jdMatch, label: userProvidedJd ? 'Job Description Match' : 'Keyword Match', matched: jd.matched, missing: jd.missing, total: jd.total },
       completeness: { score: completeness.score, maxPoints: CATEGORY_WEIGHTS.completeness, label: 'Resume Completeness', missing: completeness.missing },
       experienceQuality: { score: expQuality.score, maxPoints: CATEGORY_WEIGHTS.experienceQuality, label: 'Experience Quality', strengths: expQuality.strengths, weaknesses: expQuality.weaknesses },
       projectsQuality: { score: projQuality.score, maxPoints: CATEGORY_WEIGHTS.projectsQuality, label: 'Projects Quality', strengths: projQuality.strengths, weaknesses: projQuality.weaknesses },
