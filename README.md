@@ -24,7 +24,7 @@ A modern, AI-powered resume builder with real-time ATS scoring. Built with Next.
 | UI | React, Tailwind CSS |
 | Auth | Supabase Auth (Google OAuth) |
 | Database | Supabase (PostgreSQL) |
-| AI | OpenRouter API |
+| AI | OpenRouter API, OpenAI API|
 | PDF/DOCX Parsing | unpdf, pdfjs-dist, mammoth |
 | PDF Generation | Puppeteer Core |
 | DOCX Generation | docx |
