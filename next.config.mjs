@@ -19,11 +19,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://*.supabase.co https://sdk.cashfree.com https://*.cashfree.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://*.supabase.co https://sdk.cashfree.com https://*.cashfree.com https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https://*.supabase.co https://*.googleusercontent.com",
-              "connect-src 'self' https://*.supabase.co https://openrouter.ai https://api.openai.com https://accounts.google.com https://*.contaboserver.net https://*.cashfree.com https://sdk.cashfree.com",
+              "connect-src 'self' https://*.supabase.co https://openrouter.ai https://api.openai.com https://accounts.google.com https://*.contaboserver.net https://*.cashfree.com https://sdk.cashfree.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
               "frame-src https://accounts.google.com https://*.supabase.co https://sdk.cashfree.com https://api.cashfree.com https://*.cashfree.com",
               "form-action 'self' https://*.cashfree.com",
               "base-uri 'self'",

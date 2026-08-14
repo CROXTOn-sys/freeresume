@@ -1,4 +1,5 @@
 import './globals.css';
+import Script from 'next/script';
 
 export const metadata = {
   title: 'ResumeLab - ATS Friendly Resume Builder',
@@ -41,7 +42,18 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-TileColor" content="#6C63FF" />
         <meta name="msapplication-TileImage" content="/images/logo.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-0JKSFPH61G" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-0JKSFPH61G');
+          `}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }
