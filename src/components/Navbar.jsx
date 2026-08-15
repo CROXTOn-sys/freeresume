@@ -44,6 +44,7 @@ export default function Navbar({ theme, onToggleTheme }) {
           <button type="button" onClick={() => scrollTo('templates-section')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Templates</button>
           <button type="button" onClick={() => router.push('/my-resumes')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">My Resumes</button>
           <button type="button" onClick={() => router.push('/interview-prep')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Interview Prep</button>
+          <button type="button" onClick={() => router.push('/ats-checker')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">ATS Checker</button>
           <button type="button" onClick={() => scrollTo('reviews-section')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Reviews</button>
           <button type="button" onClick={() => router.push('/about')} className="text-[14px] font-medium text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">About</button>
         </div>
@@ -134,6 +135,14 @@ export default function Navbar({ theme, onToggleTheme }) {
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 Interview Prep
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMenuOpen(false); router.push('/ats-checker'); }}
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                ATS Checker
               </button>
               <button
                 type="button"
