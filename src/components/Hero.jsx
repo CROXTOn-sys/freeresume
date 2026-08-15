@@ -113,6 +113,7 @@ export default function Hero({ onCreateResume }) {
               Interview Prep 🎯
             </a>
           </div>
+          <a href="/ats-checker" className="mt-[12px] inline-block text-[13px] font-medium text-[var(--text-light)] transition-colors hover:text-[var(--purple)]">or check your resume&apos;s <span className="text-[var(--purple)] underline">ATS score</span> →</a>
 
           {/* Desktop marquee — constrained to right column, goes behind left resume */}
           <div className="mt-[24px] hidden lg:block">
