@@ -270,7 +270,7 @@ export default function Page() {
         onChange={handleHomepageFileChange}
       />
 
-      <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
+      <div className="mx-auto w-full max-w-[480px] lg:max-w-none xl:max-w-[1400px] xl:mx-auto 2xl:max-w-[1600px]">
         <Navbar theme={theme} onToggleTheme={onToggleTheme} />
         <Hero onCreateResume={promptTemplateSelection} />
         <div data-animate>
@@ -280,7 +280,7 @@ export default function Page() {
           <TestimonialsSection />
         </div>
         <div data-animate>
-          <FaqSection openIndex={openIndex} onToggle={onToggleFaq} />
+          <FaqSection openIndex={openIndex} onToggle={onToggleFaq} reviewSlot={<ReviewUs compact />} />
         </div>
         <div data-animate>
           <ReviewUs />
@@ -296,7 +296,7 @@ export default function Page() {
         </div>
 
         <footer className="hidden lg:block lg:mt-[48px] lg:border-t lg:border-[color:var(--border-soft)] lg:pt-[40px] lg:pb-[32px] lg:px-[64px]">
-          <div className="lg:max-w-[1120px] lg:mx-auto lg:grid lg:grid-cols-3 lg:gap-[48px]">
+          <div className="lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto lg:grid lg:grid-cols-3 lg:gap-[48px]">
             <div>
               <h4 className="text-[14px] font-bold text-[var(--text-dark)] mb-[14px]">Product</h4>
               <ul className="list-none p-0 m-0 space-y-[10px]">
@@ -321,7 +321,7 @@ export default function Page() {
               </ul>
             </div>
           </div>
-          <div className="lg:max-w-[1120px] lg:mx-auto lg:mt-[32px] lg:pt-[20px] lg:border-t lg:border-[color:var(--border-soft)] lg:text-center">
+          <div className="lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto lg:mt-[32px] lg:pt-[20px] lg:border-t lg:border-[color:var(--border-soft)] lg:text-center">
             <p className="text-[12px] text-[var(--text-light)]">© 2024 ResumeLab. All rights reserved. Powered by Croxton.in</p>
           </div>
         </footer>
@@ -334,9 +334,9 @@ export default function Page() {
 
       {showTemplatePrompt ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(17,24,39,0.35)] px-[12px] backdrop-blur-[3px]" onClick={() => setShowTemplatePrompt(false)}>
-          <div className="w-full max-w-[400px] rounded-[22px] bg-white p-[24px] shadow-[0_24px_60px_rgba(17,24,39,0.22)] lg:max-w-[560px] lg:p-[32px]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-[400px] rounded-[22px] bg-white p-[24px] shadow-[0_24px_60px_rgba(17,24,39,0.22)] lg:max-w-[560px] lg:p-[32px] xl:max-w-[640px] xl:p-[36px] 2xl:max-w-[720px]" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-[18px] text-center text-[18px] font-bold text-black lg:text-[22px] lg:mb-[24px]">Choose a template</h3>
-            <div className="grid grid-cols-2 gap-[14px] lg:gap-[20px]">
+            <div className="grid grid-cols-2 gap-[14px] lg:gap-[20px] xl:gap-[24px]">
               <a href="/template-details?template=1" className="group block overflow-hidden rounded-[16px] border-2 border-[#e5e7eb] transition-all hover:border-[var(--purple)] hover:shadow-[0_8px_20px_rgba(99,91,255,0.15)]">
                 <img src="/images/template1.png" alt="Template 1" className="w-full aspect-[3/4] object-cover object-top" />
                 <div className="px-[10px] py-[8px] text-center text-[13px] font-semibold text-[#333] group-hover:text-[var(--purple)] lg:text-[15px] lg:py-[10px]">Classic</div>

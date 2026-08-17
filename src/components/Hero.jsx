@@ -16,7 +16,7 @@ function MarqueeStrip() {
       <div className="flex w-max animate-marquee gap-[12px] hover:[animation-play-state:paused]">
         {[...marqueeCards, ...marqueeCards].map((card, i) => (
           <div key={i} className="flex-shrink-0 flex items-center justify-center gap-[6px] rounded-[14px] border border-[color:var(--border-soft)] bg-[var(--surface-soft)] px-[16px] py-[10px] shadow-[0_4px_12px_rgba(17,24,39,0.04)]">
-            <span className="text-[18px] font-black text-[var(--purple)] whitespace-nowrap">{card.bold}</span>
+            <span className="text-[18px] font-black text-[#059669] whitespace-nowrap">{card.bold}</span>
             <span className="text-[11px] leading-[1.3] text-[var(--text-light)] whitespace-nowrap">{card.sub}</span>
           </div>
         ))}
@@ -61,11 +61,11 @@ export default function Hero({ onCreateResume }) {
       </div>
 
       {/* Desktop two-column layout */}
-      <div className="relative z-[1] lg:flex lg:items-center lg:gap-[56px] lg:max-w-[1120px] lg:mx-auto">
+      <div className="relative z-[1] lg:flex lg:items-center lg:gap-[56px] lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
         {/* Left: Resume mockup (desktop only) */}
         <div className="hidden lg:block lg:flex-shrink-0 lg:relative lg:z-[2]">
           <div className="relative">
-            <div className="w-[340px] rounded-[16px] border border-[color:var(--border-soft)] bg-white p-[8px] shadow-[0_20px_50px_rgba(17,24,39,0.12)] rotate-[-2deg]">
+            <div className="w-[340px] xl:w-[380px] 2xl:w-[420px] rounded-[16px] border border-[color:var(--border-soft)] bg-white p-[8px] shadow-[0_20px_50px_rgba(17,24,39,0.12)] rotate-[-2deg]">
               <img src="/images/template1.png" alt="Resume template preview" className="w-full rounded-[8px] border border-[#d1d5db]" />
             </div>
             <div className="absolute -right-[40px] top-[30px] w-[180px] rounded-[12px] border border-[color:var(--border-soft)] bg-white p-[6px] shadow-[0_14px_36px_rgba(17,24,39,0.14)] rotate-[3deg]">
@@ -80,13 +80,13 @@ export default function Hero({ onCreateResume }) {
             ATS resume builder
           </div>
 
-          <h1 className="mb-[12px] text-[29px] font-black leading-[1.1] tracking-[-0.04em] text-[var(--text-dark)] lg:text-[42px] lg:mb-[16px] lg:leading-[1.15]">
+          <h1 className="mb-[12px] text-[29px] font-black leading-[1.1] tracking-[-0.04em] text-[var(--text-dark)] lg:text-[42px] xl:text-[48px] 2xl:text-[54px] lg:mb-[16px] lg:leading-[1.15]">
             Build your ATS Resume
             <br />
             <span className="text-[var(--purple)]">in just 2 minutes for FREE!</span>
           </h1>
 
-          <p className="mb-[8px] text-[14px] leading-[1.5] text-[var(--text-mid)] lg:text-[17px] lg:mb-[12px]">
+          <p className="mb-[8px] text-[14px] leading-[1.5] text-[var(--text-mid)] lg:text-[17px] xl:text-[18px] lg:mb-[12px]">
             Easily create a resume from any device with our ATS-friendly templates trusted by recruiters.
           </p>
 
@@ -102,7 +102,7 @@ export default function Hero({ onCreateResume }) {
                 e.preventDefault();
                 onCreateResume?.();
               }}
-              className="block w-full rounded-[50px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[24px] py-[16px] text-[15.5px] font-bold text-white no-underline shadow-[0_16px_30px_rgba(95,84,240,0.22)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(95,84,240,0.26)] sm:w-auto sm:inline-block lg:px-[36px] lg:py-[16px] lg:text-[16px] text-center"
+              className="block w-full rounded-[50px] bg-[linear-gradient(135deg,var(--purple),var(--purple-light))] px-[24px] py-[16px] text-[15.5px] font-bold text-white no-underline shadow-[0_16px_30px_rgba(95,84,240,0.22)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(95,84,240,0.26)] sm:w-auto sm:inline-block lg:px-[36px] lg:py-[16px] lg:text-[16px] xl:px-[40px] xl:py-[18px] xl:text-[17px] text-center"
             >
               Build Resume
             </a>

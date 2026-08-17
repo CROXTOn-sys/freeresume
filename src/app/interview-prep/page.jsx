@@ -135,7 +135,7 @@ export default function InterviewPrepPage() {
 
   if (selectedRole) {
     return (
-      <main className="min-h-screen bg-[#fafafa] px-[16px] py-[24px] md:px-[40px] md:py-[40px]">
+      <main className="min-h-screen bg-[#fafafa] px-[16px] py-[24px] md:px-[40px] xl:px-[64px] 2xl:px-[80px] md:py-[40px]">
         <RoleView role={selectedRole} onBack={() => setSelectedRole(null)} />
       </main>
     );
@@ -144,7 +144,7 @@ export default function InterviewPrepPage() {
   return (
     <main className="min-h-screen bg-[#fafafa]">
       {/* Header */}
-      <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[40px] text-center md:py-[56px]">
+      <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[40px] text-center md:py-[56px] xl:py-[64px] 2xl:py-[72px]">
         <Link
           href="/"
           className="absolute right-[16px] top-[16px] flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] text-[#b0b0c8] hover:text-white hover:border-[rgba(255,255,255,0.4)] transition-colors"
@@ -154,11 +154,11 @@ export default function InterviewPrepPage() {
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </Link>
-        <h1 className="text-[26px] font-bold leading-[1.2] text-white md:text-[36px]">
+        <h1 className="text-[26px] font-bold leading-[1.2] text-white md:text-[36px] xl:text-[42px] 2xl:text-[48px]">
           Interview Prep
         </h1>
         <p className="mx-auto mt-[10px] max-w-[500px] text-[14px] leading-[1.6] text-[#b0b0c8] md:text-[16px]">
-          Top 10 most-asked questions for 40+ roles — with expert answers. Free forever.
+          Top 10 most-asked questions for 70+ roles — with expert answers. Free forever.
         </p>
         <div className="mx-auto mt-[20px] max-w-[400px]">
           <input
@@ -172,7 +172,7 @@ export default function InterviewPrepPage() {
       </section>
 
       {/* Category filters */}
-      <div className="overflow-x-auto px-[16px] py-[16px] md:px-[40px]">
+      <div className="overflow-x-auto px-[16px] py-[16px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
         <div className="flex gap-[8px]">
           <button
             type="button"
@@ -195,11 +195,11 @@ export default function InterviewPrepPage() {
       </div>
 
       {/* Role cards grid */}
-      <div className="px-[16px] pb-[40px] md:px-[40px]">
+      <div className="px-[16px] pb-[40px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
         {filtered.length === 0 ? (
           <p className="py-[40px] text-center text-[14px] text-[#999]">No roles found matching &ldquo;{search}&rdquo;</p>
         ) : (
-          <div className="grid gap-[12px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-[12px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map((role) => (
               <button
                 key={role.id}

@@ -28,30 +28,18 @@ const faqs = [
   },
 ];
 
-export default function FaqSection({ openIndex, onToggle }) {
+export default function FaqSection({ openIndex, onToggle, reviewSlot }) {
   return (
-    <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-0 pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pt-[48px] lg:pb-[48px] lg:rounded-none lg:border-y lg:border-[color:var(--border-soft)] lg:mx-0">
-      <div className="lg:max-w-[1120px] lg:mx-auto">
-        <h2 className="mb-[22px] text-center text-[23px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)] lg:text-[28px] lg:mb-[32px] lg:text-left">
+    <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pt-[48px] lg:pb-[48px] lg:rounded-none lg:border-y lg:border-[color:var(--border-soft)] lg:mx-0">
+      <div className="lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
+        <h2 className="mb-[22px] text-center text-[23px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)] lg:text-[28px] xl:text-[32px] lg:mb-[32px] lg:text-left">
           Still in Doubt?
         </h2>
 
-        {/* Mobile: stacked FAQ, Desktop: two-column with resume mockups left + FAQ right */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:gap-[48px]">
-          {/* Left: Resume mockups (desktop only) */}
-          <div className="hidden lg:block lg:flex-shrink-0 lg:sticky lg:top-[100px]">
-            <div className="relative w-[360px]">
-              <div className="w-[280px] rounded-[16px] border border-[color:var(--border-soft)] bg-white p-[8px] shadow-[0_20px_50px_rgba(17,24,39,0.12)] rotate-[-3deg]">
-                <img src="/images/template1.png" alt="Resume template preview" className="w-full rounded-[8px] border border-[#d1d5db]" />
-              </div>
-              <div className="absolute right-[0px] top-[40px] w-[160px] rounded-[12px] border border-[color:var(--border-soft)] bg-white p-[6px] shadow-[0_14px_36px_rgba(17,24,39,0.14)] rotate-[4deg]">
-                <img src="/images/template2.png" alt="Resume template 2 preview" className="w-full rounded-[6px] border border-[#d1d5db]" />
-              </div>
-            </div>
-          </div>
-
-          {/* Right: FAQ items */}
-          <div className="flex flex-col flex-1 lg:max-w-[600px]">
+        {/* Desktop: FAQ left + Review right side by side */}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:gap-[40px] xl:gap-[56px]">
+          {/* Left: FAQ items */}
+          <div className="flex flex-col flex-1">
             {faqs.map((item, index) => (
               <FaqItem
                 key={item.question}
@@ -62,6 +50,13 @@ export default function FaqSection({ openIndex, onToggle }) {
               />
             ))}
           </div>
+
+          {/* Right: Review Us (desktop only — rendered via slot) */}
+          {reviewSlot && (
+            <div className="hidden lg:block lg:w-[360px] xl:w-[400px] lg:flex-shrink-0 lg:sticky lg:top-[100px]">
+              {reviewSlot}
+            </div>
+          )}
         </div>
       </div>
     </section>

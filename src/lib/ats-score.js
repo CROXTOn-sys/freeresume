@@ -333,6 +333,10 @@ function scoreJobDescriptionMatch(data, targetJob, fieldMap = {}) {
   const jdTerms = splitKeywords(jdText);
   if (!jdTerms.length) return { score: 0, matched: [], missing: [], total: 0 };
 
+  // Detect if description is a role-keyword fallback (comma-separated list) vs a real JD (prose)
+  const desc = String(targetJob.description || '').trim();
+  const isRoleKeywordFallback = desc && !desc.includes('.') && (desc.split(',').length > 10);
+
   // Build full resume text
   const resumeParts = [
     data.personal?.[f.personal.title],
@@ -353,8 +357,16 @@ function scoreJobDescriptionMatch(data, targetJob, fieldMap = {}) {
   }
 
   const matchRatio = jdTerms.length > 0 ? matched.length / jdTerms.length : 0;
-  // Scale: 0% match = 0pts, 100% match = 40pts (non-linear to reward getting past 50%)
-  const score = Math.round(40 * Math.pow(matchRatio, 0.8));
+
+  let score;
+  if (isRoleKeywordFallback) {
+    // Generous curve for role-keyword fallback: matching ~50% gives ~85%, matching ~30% gives ~65%
+    // This reflects that role keyword lists are broad supersets — no one needs all of them
+    score = Math.round(40 * Math.pow(matchRatio, 0.45));
+  } else {
+    // Standard curve for actual JD: still slightly non-linear to reward getting past 50%
+    score = Math.round(40 * Math.pow(matchRatio, 0.8));
+  }
   return { score: clamp(score * 2.5), matched, missing, total: jdTerms.length };
 }
 

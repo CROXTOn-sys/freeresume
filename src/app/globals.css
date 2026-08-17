@@ -134,3 +134,16 @@ main {
     scroll-behavior: auto !important;
   }
 }
+
+/* 4K / Large screen enhancements */
+@media (min-width: 1280px) {
+  .animate-fade-in-up {
+    animation-duration: 0.5s;
+  }
+}
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 17px;
+  }
+}
