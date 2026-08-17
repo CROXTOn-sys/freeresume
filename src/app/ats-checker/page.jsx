@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { rolesList, getKeywordsForRole } from '../../lib/ats-keywords-data';
-import { normalizeText, splitKeywords } from '../../lib/ats-score';
+import { normalizeText, splitKeywords, formatKeyword } from '../../lib/ats-score';
 
 function RoleDropdown({ value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -62,9 +62,145 @@ function computeAtsCheck(resumeText, jobTitle, jobDescription) {
   const matched = [];
   const missing = [];
 
+  // Synonym groups for better matching (same as the resume builder engine)
+  const SYNONYM_GROUPS = [
+    ['react', 'reactjs', 'react.js'],
+    ['javascript', 'js'],
+    ['typescript', 'ts'],
+    ['node', 'nodejs', 'node.js'],
+    ['next', 'nextjs', 'next.js'],
+    ['vue', 'vuejs', 'vue.js'],
+    ['angular', 'angularjs'],
+    ['express', 'expressjs', 'express.js'],
+    ['postgres', 'postgresql', 'psql'],
+    ['mongo', 'mongodb'],
+    ['artificial intelligence', 'ai'],
+    ['machine learning', 'ml'],
+    ['deep learning', 'dl'],
+    ['natural language processing', 'nlp'],
+    ['computer vision', 'cv'],
+    ['amazon web services', 'aws'],
+    ['google cloud platform', 'gcp', 'google cloud'],
+    ['microsoft azure', 'azure'],
+    ['kubernetes', 'k8s'],
+    ['continuous integration', 'ci'],
+    ['continuous deployment', 'cd'],
+    ['ci/cd', 'ci cd', 'cicd'],
+    ['docker', 'containerization'],
+    ['rest', 'restful', 'rest api', 'restful api'],
+    ['graphql', 'graph ql'],
+    ['tensorflow', 'tf'],
+    ['pytorch', 'torch'],
+    ['scikit-learn', 'sklearn', 'scikit learn'],
+    ['pandas', 'pd'],
+    ['numpy', 'np'],
+    ['dotnet', '.net', 'asp.net'],
+    ['csharp', 'c#', 'c sharp'],
+    ['cpp', 'c++'],
+    ['golang', 'go'],
+    ['ruby on rails', 'rails', 'ror'],
+    ['spring boot', 'springboot', 'spring'],
+    ['tailwind', 'tailwindcss', 'tailwind css'],
+    ['sass', 'scss'],
+    ['mysql', 'my sql'],
+    ['redis', 'redis cache'],
+    ['elasticsearch', 'elastic search', 'es'],
+    ['rabbitmq', 'rabbit mq'],
+    ['apache kafka', 'kafka'],
+    ['power bi', 'powerbi'],
+    ['user experience', 'ux'],
+    ['user interface', 'ui'],
+    ['microservices', 'micro services'],
+    ['serverless', 'lambda', 'cloud functions'],
+    ['infrastructure as code', 'iac', 'terraform'],
+    ['object oriented', 'oop', 'object-oriented'],
+    ['test driven development', 'tdd'],
+    ['behavior driven development', 'bdd'],
+    ['agile', 'scrum', 'kanban'],
+    ['devops', 'dev ops'],
+    ['mlops', 'ml ops'],
+    ['data warehouse', 'dwh', 'data warehousing'],
+    ['etl', 'extract transform load'],
+    ['business intelligence', 'bi'],
+    ['version control', 'git', 'github', 'gitlab', 'bitbucket'],
+    ['solid principles', 'solid'],
+    ['design patterns', 'design pattern'],
+    ['data structures', 'data structure'],
+    ['algorithms', 'algorithm'],
+    ['message queues', 'message queue', 'rabbitmq', 'kafka', 'sqs'],
+    ['caching', 'cache', 'redis cache', 'memcached'],
+    ['clean code', 'clean architecture'],
+    ['code review', 'code reviews', 'peer review'],
+    ['linux', 'unix', 'ubuntu', 'centos', 'debian'],
+    ['nginx', 'apache'],
+    ['embedded c', 'embedded-c'],
+    ['rtos', 'freertos', 'real-time operating system'],
+    ['pcb design', 'pcb layout'],
+    ['emi/emc', 'emi', 'emc', 'electromagnetic interference', 'electromagnetic compatibility'],
+    ['dfm', 'design for manufacturing'],
+    ['dft', 'design for testability'],
+    ['bom', 'bill of materials'],
+    ['pid controller', 'pid control', 'pid'],
+    ['plc', 'programmable logic controller'],
+    ['scada', 'supervisory control'],
+    ['hvac', 'heating ventilation air conditioning'],
+    ['fea', 'finite element analysis'],
+    ['cad', 'solidworks', 'autocad', 'catia', 'creo'],
+    ['six sigma', '6 sigma', 'dmaic'],
+    ['lean manufacturing', 'lean'],
+    ['oee', 'overall equipment effectiveness'],
+    ['tpm', 'total productive maintenance'],
+    ['rcm', 'reliability-centered maintenance'],
+    ['mtbf', 'mean time between failures'],
+    ['mttr', 'mean time to repair'],
+    ['bms', 'battery management system'],
+    ['soc', 'state of charge'],
+    ['soh', 'state of health'],
+    ['can', 'can bus', 'can protocol'],
+    ['autosar', 'autosar classic', 'autosar adaptive'],
+    ['iso 26262', 'functional safety'],
+    ['spc', 'statistical process control'],
+    ['cmp', 'chemical-mechanical planarization'],
+    ['feol', 'front-end-of-line'],
+    ['beol', 'back-end-of-line'],
+    ['vrf', 'variable refrigerant flow'],
+    ['etp', 'effluent treatment plant'],
+    ['stp', 'sewage treatment plant'],
+    ['eia', 'environmental impact assessment'],
+    ['cpm', 'critical path method'],
+    ['gis', 'geographic information system', 'arcgis', 'qgis'],
+    ['fsi', 'far', 'floor space index', 'floor area ratio'],
+    ['tod', 'transit-oriented development'],
+    ['cbr', 'california bearing ratio'],
+    ['spt', 'standard penetration test'],
+  ];
+
+  // Build synonym lookup
+  const synonymLookup = new Map();
+  for (const group of SYNONYM_GROUPS) {
+    const normalized = group.map((t) => normalizeText(t));
+    for (const term of normalized) {
+      if (!synonymLookup.has(term)) synonymLookup.set(term, new Set());
+      for (const syn of normalized) {
+        if (syn !== term) synonymLookup.get(term).add(syn);
+      }
+    }
+  }
+
+  const hasSynonymMatch = (haystack, term) => {
+    if (haystack.includes(term)) return true;
+    const syns = synonymLookup.get(term);
+    if (syns) {
+      for (const syn of syns) {
+        if (haystack.includes(syn)) return true;
+      }
+    }
+    return false;
+  };
+
   keywords.forEach((kw) => {
     const kwNorm = normalizeText(kw);
-    if (kwNorm && resumeNorm.includes(kwNorm)) {
+    if (kwNorm && hasSynonymMatch(resumeNorm, kwNorm)) {
       matched.push(kw);
     } else if (kwNorm) {
       missing.push(kw);
@@ -131,7 +267,7 @@ export default function AtsCheckerPage() {
   return (
     <main className="min-h-screen bg-[#fafafa]">
       {/* Header */}
-      <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[36px] text-center md:py-[48px]">
+      <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[36px] text-center md:py-[48px] xl:py-[56px] 2xl:py-[64px]">
         <Link
           href="/"
           className="absolute right-[16px] top-[16px] flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] text-[#b0b0c8] hover:text-white hover:border-[rgba(255,255,255,0.4)] transition-colors"
@@ -141,13 +277,13 @@ export default function AtsCheckerPage() {
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </Link>
-        <h1 className="text-[24px] font-bold text-white md:text-[32px]">ATS Score Checker</h1>
+        <h1 className="text-[24px] font-bold text-white md:text-[32px] xl:text-[36px] 2xl:text-[40px]">ATS Score Checker</h1>
         <p className="mx-auto mt-[8px] max-w-[420px] text-[13px] text-[#b0b0c8] md:text-[15px]">
           Upload your resume and get an instant ATS keyword match score.
         </p>
       </section>
 
-      <div className="mx-auto max-w-[560px] px-[16px] py-[32px]">
+      <div className="mx-auto max-w-[560px] xl:max-w-[640px] 2xl:max-w-[720px] px-[16px] py-[32px]">
         {/* Step 0: Upload */}
         {step === 0 && (
           <div className="animate-[fadeIn_0.2s] rounded-[18px] border border-[#eceef2] bg-white p-[24px] shadow-[0_8px_24px_rgba(17,24,39,0.06)] text-center">
@@ -197,16 +333,30 @@ export default function AtsCheckerPage() {
         {/* Step 2: Result */}
         {step === 2 && result && (
           <div className="animate-[fadeIn_0.2s]">
-            {/* Score circle */}
+            {/* Grade display */}
             <div className="rounded-[18px] border border-[#eceef2] bg-white p-[24px] shadow-[0_8px_24px_rgba(17,24,39,0.06)] text-center">
-              <div className="mx-auto flex h-[100px] w-[100px] items-center justify-center rounded-full border-[6px] border-[#6C63FF]">
-                <span className="text-[32px] font-black text-[#6C63FF]">{result.score}</span>
-              </div>
-              <p className="mt-[10px] text-[14px] font-semibold text-black">ATS Keyword Match Score</p>
-              <p className="mt-[4px] text-[12px] text-[#8b94a7]">
-                {result.matched.length} of {result.total} keywords matched
-                {!jobDescription.trim() ? ' (based on role keywords)' : ' (based on job description)'}
-              </p>
+              {(() => {
+                const count = result.matched.length;
+                let grade, gradeColor, gradeEmoji, gradeDesc;
+                if (count >= 20) { grade = 'Excellent'; gradeColor = '#10b981'; gradeEmoji = '🏆'; gradeDesc = 'Your resume is very well aligned with this role.'; }
+                else if (count >= 15) { grade = 'Strong'; gradeColor = '#22c55e'; gradeEmoji = '💪'; gradeDesc = 'Great keyword coverage — you\'re a strong match.'; }
+                else if (count >= 10) { grade = 'Good'; gradeColor = '#6C63FF'; gradeEmoji = '👍'; gradeDesc = 'Solid match. A few more keywords could strengthen it.'; }
+                else if (count >= 5) { grade = 'Fair'; gradeColor = '#f59e0b'; gradeEmoji = '📝'; gradeDesc = 'You have some relevant keywords. Consider adding more from the missing list.'; }
+                else { grade = 'Needs Work'; gradeColor = '#ef4444'; gradeEmoji = '⚠️'; gradeDesc = 'Low keyword match — tailor your resume to include relevant skills for this role.'; }
+                return (
+                  <>
+                    <div className="mx-auto flex h-[100px] w-[100px] items-center justify-center rounded-full border-[6px]" style={{ borderColor: gradeColor }}>
+                      <span className="text-[36px]">{gradeEmoji}</span>
+                    </div>
+                    <p className="mt-[12px] text-[22px] font-black" style={{ color: gradeColor }}>{grade}</p>
+                    <p className="mt-[6px] text-[13px] text-[#555]">{gradeDesc}</p>
+                    <p className="mt-[8px] text-[12px] text-[#8b94a7]">
+                      {result.matched.length} of {result.total} role keywords found in your resume
+                      {!jobDescription.trim() ? '' : ' (based on job description)'}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Matched Keywords */}
@@ -215,7 +365,7 @@ export default function AtsCheckerPage() {
                 <h3 className="text-[13px] font-bold text-[#10b981]">✓ Matched Keywords ({result.matched.length})</h3>
                 <div className="mt-[10px] flex flex-wrap gap-[6px]">
                   {result.matched.map((kw, i) => (
-                    <span key={i} className="rounded-full bg-[rgba(16,185,129,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#10b981]">{kw}</span>
+                    <span key={i} className="rounded-full bg-[rgba(16,185,129,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#10b981]">{formatKeyword(kw)}</span>
                   ))}
                 </div>
               </div>
@@ -224,11 +374,11 @@ export default function AtsCheckerPage() {
             {/* Missing Keywords */}
             {result.missing.length > 0 && (
               <div className="mt-[12px] rounded-[14px] border border-[#eceef2] bg-white p-[16px]">
-                <h3 className="text-[13px] font-bold text-[#ef4444]">✗ Missing Keywords ({result.missing.length})</h3>
-                <p className="mt-[4px] text-[11px] text-[#8b94a7]">Add these to your Skills or Experience section</p>
+                <h3 className="text-[13px] font-bold text-[#ef4444]">✗ Suggested Keywords ({result.missing.length})</h3>
+                <p className="mt-[4px] text-[11px] text-[#8b94a7]">Include the ones relevant to your experience to improve ATS matching</p>
                 <div className="mt-[10px] flex flex-wrap gap-[6px]">
                   {result.missing.map((kw, i) => (
-                    <span key={i} className="rounded-full bg-[rgba(239,68,68,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#ef4444]">{kw}</span>
+                    <span key={i} className="rounded-full bg-[rgba(239,68,68,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#ef4444]">{formatKeyword(kw)}</span>
                   ))}
                 </div>
               </div>

@@ -1155,9 +1155,9 @@ export default function ResumeBuilderClient2() {
                     )}
 
                     {/* Apply Keywords Button */}
-                    <button type="button" onClick={handleApplyAtsKeywords} disabled={downloading || atsApplying || !atsInsights.hasTarget || atsInsights.missing.filter((kw) => !atsAppliedKeywords.includes(formatKeyword(kw))).length === 0}
+                    <button type="button" onClick={handleApplyAtsKeywords} disabled={downloading || atsApplying || !atsInsights.hasTarget || atsInsights.missing.filter((kw) => !atsAppliedKeywords.includes(formatKeyword(kw)) && isSkillKeyword(formatKeyword(kw))).length === 0}
                       className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-bold text-white shadow-[0_8px_20px_rgba(99,91,255,0.18)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
-                      {atsApplying ? 'Adding...' : atsInsights.missing.filter((kw) => !atsAppliedKeywords.includes(formatKeyword(kw))).length === 0 ? 'All Keywords Added' : 'Auto-Apply Missing Keywords'}
+                      {atsApplying ? 'Adding...' : atsInsights.missing.filter((kw) => !atsAppliedKeywords.includes(formatKeyword(kw)) && isSkillKeyword(formatKeyword(kw))).length === 0 ? 'No Applicable Keywords' : 'Auto-Apply Missing Keywords'}
                     </button>
 
                     {/* Transparency Note */}

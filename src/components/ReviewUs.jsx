@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function ReviewUs() {
+export default function ReviewUs({ compact = false }) {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [text, setText] = useState('');
@@ -33,28 +33,34 @@ export default function ReviewUs() {
 
   if (submitted) {
     return (
-      <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)]">
-        <div className="flex flex-col items-center">
+      <div className={compact ? '' : 'mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)] lg:hidden'}>
+        <div className="flex flex-col items-center rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)]">
           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#10b981]">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <p className="mt-[12px] text-[15px] font-bold text-[var(--text-dark)]">Thank you for your review!</p>
-          <p className="mt-[4px] text-[12px] text-[#888]">Your feedback helps us improve.</p>
+          <p className="mt-[4px] text-[12px] text-[var(--text-light)]">Your feedback helps us improve.</p>
         </div>
-      </section>
+      </div>
     );
   }
 
-  return (
-    <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pb-[40px] lg:pt-[40px] lg:rounded-none lg:mx-0">
-      <div className="lg:max-w-[520px] lg:mx-auto">
-      <h2 className="mb-[16px] text-center text-[20px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)] lg:text-[24px]">
-        Review Us
-      </h2>
-      <p className="mb-[18px] text-center text-[13px] text-[#888]">How was your experience with ResumeLab?</p>
+  const content = (
+    <div className="rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)]">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center gap-[6px] rounded-full bg-[rgba(16,185,129,0.08)] px-[12px] py-[5px] text-[11px] font-bold text-[#059669]">
+          <svg viewBox="0 0 24 24" className="h-[13px] w-[13px] fill-[#059669]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+          Leave a Review
+        </div>
+      </div>
+
+      <h3 className="mt-[14px] text-center text-[18px] font-bold text-[var(--text-dark)]">
+        How was your experience?
+      </h3>
+      <p className="mt-[6px] text-center text-[12px] text-[var(--text-light)]">Your feedback helps others find ResumeLab</p>
 
       {/* Stars */}
-      <div className="flex justify-center gap-[8px] mb-[16px]">
+      <div className="mt-[16px] flex justify-center gap-[6px]">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
@@ -62,13 +68,13 @@ export default function ReviewUs() {
             onClick={() => setRating(star)}
             onMouseEnter={() => setHovered(star)}
             onMouseLeave={() => setHovered(0)}
-            className="text-[32px] transition-transform hover:scale-110"
+            className="transition-transform hover:scale-110 active:scale-95"
             aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
           >
             {star <= (hovered || rating) ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="1"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth="0.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             )}
           </button>
         ))}
@@ -78,10 +84,10 @@ export default function ReviewUs() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Tell us about your experience (optional)"
+        placeholder="Share your experience (optional)"
         maxLength={500}
         rows={3}
-        className="w-full rounded-[12px] border border-[#e5e7eb] bg-white px-[14px] py-[10px] text-[14px] text-black placeholder-[#aaa] outline-none focus:border-[#6C63FF]"
+        className="mt-[16px] w-full rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg-soft)] px-[14px] py-[10px] text-[13px] text-[var(--text-dark)] placeholder-[var(--text-light)] outline-none focus:border-[#6C63FF] transition-colors"
       />
 
       {/* Submit */}
@@ -89,11 +95,20 @@ export default function ReviewUs() {
         type="button"
         onClick={handleSubmit}
         disabled={!rating || submitting}
-        className="mt-[14px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[12px] text-[14px] font-semibold text-white disabled:opacity-50"
+        className="mt-[14px] w-full rounded-[12px] bg-[linear-gradient(135deg,#059669_0%,#10b981_100%)] py-[12px] text-[14px] font-bold text-white shadow-[0_4px_12px_rgba(5,150,105,0.2)] transition-all hover:shadow-[0_6px_18px_rgba(5,150,105,0.3)] disabled:opacity-50 disabled:shadow-none"
       >
         {submitting ? 'Submitting...' : 'Submit Review'}
       </button>
-      </div>
+    </div>
+  );
+
+  // Compact mode: just the card (used inside FaqSection desktop slot)
+  if (compact) return content;
+
+  // Full section mode: used on mobile
+  return (
+    <section className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[28px] pt-[28px] shadow-[var(--shadow-sm)] lg:hidden">
+      {content}
     </section>
   );
 }
