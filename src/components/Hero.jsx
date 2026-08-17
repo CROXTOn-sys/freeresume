@@ -108,7 +108,7 @@ export default function Hero({ onCreateResume }) {
             </a>
             <a
               href="/interview-prep"
-              className="block w-full rounded-[50px] border-2 border-[color:var(--border)] bg-[var(--card-bg)] px-[24px] py-[14px] text-[15px] font-bold text-[var(--text-dark)] no-underline transition-colors hover:border-[var(--purple)] hover:text-[var(--purple)] sm:w-auto sm:inline-block lg:px-[36px] lg:py-[14px] lg:text-[16px] text-center"
+              className="block w-full rounded-[50px] border-2 border-[color:var(--text-dark)] bg-[var(--card-bg)] px-[24px] py-[14px] text-[15px] font-bold text-[var(--text-dark)] no-underline transition-colors hover:border-[var(--purple)] hover:text-[var(--purple)] sm:w-auto sm:inline-block lg:px-[36px] lg:py-[14px] lg:text-[16px] text-center"
             >
               Interview Prep 🎯
             </a>
