@@ -29,8 +29,25 @@ const faqs = [
 ];
 
 export default function FaqSection({ openIndex, onToggle, reviewSlot }) {
+  const faqStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.answer,
+      },
+    })),
+  };
+
   return (
     <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pt-[48px] lg:pb-[48px] lg:rounded-none lg:border-y lg:border-[color:var(--border-soft)] lg:mx-0">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
       <div className="lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
         <h2 className="mb-[22px] text-center text-[23px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)] lg:text-[28px] xl:text-[32px] lg:mb-[32px] lg:text-left">
           Still in Doubt?
