@@ -10,6 +10,8 @@ import TemplatesSection from '../components/TemplatesSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FaqSection from '../components/FaqSection';
 import ReviewUs from '../components/ReviewUs';
+import SeoContent from '../components/SeoContent';
+import SeoFaqSection from '../components/SeoFaqSection';
 import BugReport from '../components/BugReport';
 
 const themeVars = {
@@ -115,12 +117,13 @@ export default function Page() {
       setTheme('light');
     }
     setMounted(true);
-    // Auto-trigger template selection if redirected from interview-prep
+    // Auto-scroll to templates section if redirected from another page (e.g. interview-prep)
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('action') === 'templates') {
-        setTimeout(() => setShowTemplatePrompt(true), 300);
         window.history.replaceState({}, '', '/');
+        // Wait for layout to settle, then scroll + highlight
+        setTimeout(() => scrollToTemplates(), 400);
       }
     } catch {}
   }, []);
@@ -208,6 +211,16 @@ export default function Page() {
     setBuildStep(1);
   };
 
+  const scrollToTemplates = () => {
+    const el = document.getElementById('templates-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Trigger the highlight pulse, then clear it
+      setHighlightTemplates(true);
+      window.setTimeout(() => setHighlightTemplates(false), 2000);
+    }
+  };
+
   const promptTemplateSelection = () => {
     setShowBuildModal(false);
     setShowTemplatePrompt(true);
@@ -272,7 +285,7 @@ export default function Page() {
 
       <div className="mx-auto w-full max-w-[480px] lg:max-w-none xl:max-w-[1400px] xl:mx-auto 2xl:max-w-[1600px]">
         <Navbar theme={theme} onToggleTheme={onToggleTheme} />
-        <Hero onCreateResume={promptTemplateSelection} />
+        <Hero onCreateResume={scrollToTemplates} />
         <div data-animate>
           <TemplatesSection highlight={highlightTemplates} />
         </div>
@@ -285,12 +298,22 @@ export default function Page() {
         <div data-animate>
           <ReviewUs />
         </div>
+        <div data-animate>
+          <SeoContent />
+        </div>
+        <div data-animate>
+          <SeoFaqSection />
+        </div>
 
         {/* Footer - Mobile: simple links, Desktop: rich columns */}
-        <div className="lg:hidden mt-[16px] flex items-center justify-center gap-[12px] pb-[8px] text-[11px] text-[#999]">
+        <div className="lg:hidden mt-[16px] flex flex-wrap items-center justify-center gap-x-[10px] gap-y-[6px] px-[16px] pb-[8px] text-[11px] text-[#999]">
+          <a href="/about" className="hover:text-[#6C63FF] transition-colors">About Us</a>
+          <span>|</span>
+          <a href="/contact" className="hover:text-[#6C63FF] transition-colors">Contact Us</a>
+          <span>|</span>
           <a href="/privacy" className="hover:text-[#6C63FF] transition-colors">Privacy Policy</a>
           <span>|</span>
-          <a href="/terms" className="hover:text-[#6C63FF] transition-colors">Terms of Service</a>
+          <a href="/terms" className="hover:text-[#6C63FF] transition-colors">Terms &amp; Conditions</a>
           <span>|</span>
           <a href="/refund" className="hover:text-[#6C63FF] transition-colors">Refund Policy</a>
         </div>
@@ -302,22 +325,25 @@ export default function Page() {
               <ul className="list-none p-0 m-0 space-y-[10px]">
                 <li><a href="/resume-builder" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Templates</a></li>
                 <li><a href="/my-resumes" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">My Resumes</a></li>
-                <li><a href="#" onClick={(e) => { e.preventDefault(); promptTemplateSelection(); }} className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Create Resume</a></li>
+                <li><a href="#" onClick={(e) => { e.preventDefault(); scrollToTemplates(); }} className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Create Resume</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-[14px] font-bold text-[var(--text-dark)] mb-[14px]">Company</h4>
               <ul className="list-none p-0 m-0 space-y-[10px]">
-                <li><a href="/about" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">About</a></li>
+                <li><a href="/about" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">About Us</a></li>
+                <li><a href="/contact" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Contact Us</a></li>
                 <li><a href="/privacy" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Privacy Policy</a></li>
-                <li><a href="/terms" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Terms of Service</a></li>
+                <li><a href="/terms" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Terms &amp; Conditions</a></li>
                 <li><a href="/refund" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Refund Policy</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-[14px] font-bold text-[var(--text-dark)] mb-[14px]">Connect</h4>
               <ul className="list-none p-0 m-0 space-y-[10px]">
-                <li><a href="/api/reviews" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Review Us</a></li>
+                <li><a href="/contact" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Contact Support</a></li>
+                <li><a href="/interview-prep" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">Interview Prep</a></li>
+                <li><a href="/ats-checker" className="text-[13px] text-[var(--text-mid)] hover:text-[var(--purple)] transition-colors">ATS Checker</a></li>
               </ul>
             </div>
           </div>
