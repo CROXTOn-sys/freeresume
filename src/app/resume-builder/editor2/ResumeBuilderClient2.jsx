@@ -20,24 +20,24 @@ const initialData = {
 
 const Input = ({ label, value, onChange, placeholder, error = false, maxLength }) => (
   <label className="block">
-    <span className="mb-[6px] block text-[12px] font-semibold text-black">{label}</span>
+    <span className="mb-[6px] block text-[12px] font-semibold text-[var(--text-dark)]">{label}</span>
     <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} maxLength={maxLength}
-      className={`h-[44px] w-full rounded-[12px] border bg-white px-[14px] text-[14px] text-black outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
+      className={`h-[44px] w-full rounded-[12px] border bg-[var(--card-bg)] px-[14px] text-[14px] text-[var(--text-dark)] outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:var(--border)]'}`} />
   </label>
 );
 
 const TextArea = ({ label, value, onChange, placeholder, rows = 3, maxLength, error = false }) => (
   <label className="block">
-    <span className="mb-[6px] block text-[12px] font-semibold text-black">{label}</span>
+    <span className="mb-[6px] block text-[12px] font-semibold text-[var(--text-dark)]">{label}</span>
     <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} maxLength={maxLength}
-      className={`w-full rounded-[12px] border bg-white px-[14px] py-[10px] text-[14px] text-black outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
+      className={`w-full rounded-[12px] border bg-[var(--card-bg)] px-[14px] py-[10px] text-[14px] text-[var(--text-dark)] outline-none focus:border-[color:var(--purple)] ${error ? 'border-red-400' : 'border-[color:var(--border)]'}`} />
   </label>
 );
 
 const Card = ({ title, description, children, saved, celebration }) => (
-  <section className="rounded-[22px] border border-[color:rgba(229,231,235,0.95)] bg-white p-[14px] shadow-[0_10px_26px_rgba(17,24,39,0.06)] md:p-[16px]">
+  <section className="rounded-[22px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[14px] shadow-[var(--shadow-sm)] md:p-[16px]">
     <div className="flex items-center justify-between gap-[12px]">
-      <h2 className="text-[18px] font-bold tracking-[-0.02em] text-black">{title}</h2>
+      <h2 className="text-[18px] font-bold tracking-[-0.02em] text-[var(--text-dark)]">{title}</h2>
       <div className="flex items-center gap-[6px]">
         {celebration && (
           <span className="flex items-center gap-[3px] rounded-full bg-[linear-gradient(135deg,rgba(99,91,255,0.1),rgba(139,131,255,0.1))] px-[8px] py-[3px] text-[10px] font-semibold text-[#4f46e5] animate-[fadeIn_0.3s]">
@@ -52,7 +52,7 @@ const Card = ({ title, description, children, saved, celebration }) => (
         )}
       </div>
     </div>
-    {description && <p className="mt-[4px] text-[12.5px] leading-[1.5] text-[#666]">{description}</p>}
+    {description && <p className="mt-[4px] text-[12.5px] leading-[1.5] text-[var(--text-light)]">{description}</p>}
     <div className="mt-[14px]">{children}</div>
   </section>
 );
@@ -698,8 +698,8 @@ export default function ResumeBuilderClient2() {
     <Card key="skills" saved={autoSaved} celebration={scoreCelebration} title="Skills" description="Technical skills grouped by category.">
       <div className="grid gap-[12px]">
         {data.skills.map((g, gi) => (
-          <div key={g.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
-            <button type="button" onClick={() => setData((p) => ({ ...p, skills: removeItem(p.skills, gi) }))} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+          <div key={g.id} className="relative rounded-[14px] border border-[color:var(--border)] p-[12px]">
+            <button type="button" onClick={() => setData((p) => ({ ...p, skills: removeItem(p.skills, gi) }))} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-light)] hover:text-red-500 transition-colors" aria-label="Remove">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
@@ -716,8 +716,8 @@ export default function ResumeBuilderClient2() {
     <Card key="experience" saved={autoSaved} celebration={scoreCelebration} title="Work Experience" description="Your professional experience.">
       <div className="grid gap-[12px]">
         {data.experience.map((exp, ei) => (
-          <div key={exp.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
-            <button type="button" onClick={() => setConfirmModal({ message: 'Delete this experience?', onConfirm: () => setData((p) => ({ ...p, experience: removeItem(p.experience, ei) })) })} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+          <div key={exp.id} className="relative rounded-[14px] border border-[color:var(--border)] p-[12px]">
+            <button type="button" onClick={() => setConfirmModal({ message: 'Delete this experience?', onConfirm: () => setData((p) => ({ ...p, experience: removeItem(p.experience, ei) })) })} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-light)] hover:text-red-500 transition-colors" aria-label="Remove">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
@@ -730,12 +730,12 @@ export default function ResumeBuilderClient2() {
                 <Input label="Start Date" value={exp.startDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, startDate: v })) }))} placeholder="Mar 2021" maxLength={20} />
                 <Input label="End Date" value={exp.endDate} onChange={(v) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, endDate: v })) }))} placeholder="Present" maxLength={20} />
               </div>
-              <span className="text-[12px] font-semibold text-black">Bullet Points</span>
+              <span className="text-[12px] font-semibold text-[var(--text-dark)]">Bullet Points</span>
               {exp.bullets.map((b, bi) => (
                 <Fragment key={getBulletKeys(exp.id, exp.bullets.length)[bi]}>
                 <div className="flex gap-[8px]">
-                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder={suggesting === `exp-${ei}-${bi}` ? '✦ Generating suggestion...' : 'Achievement or responsibility'} maxLength={300} className={`h-[44px] flex-1 rounded-[12px] border px-[14px] text-[14px] outline-none focus:border-[color:var(--purple)] ${suggesting === `exp-${ei}-${bi}` ? 'animate-pulse border-[color:var(--purple)] bg-[rgba(108,99,255,0.03)]' : showErrors && !b.trim() ? 'border-red-400' : 'border-[color:#e5e7eb]'}`} />
-                  <button type="button" onClick={() => { removeBulletKey(exp.id, bi); setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) })); }} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:#e5e7eb] text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+                  <input value={b} onChange={(e) => setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: updateItem(item.bullets, bi, () => e.target.value) })) }))} placeholder={suggesting === `exp-${ei}-${bi}` ? '✦ Generating suggestion...' : 'Achievement or responsibility'} maxLength={300} className={`h-[44px] flex-1 rounded-[12px] border bg-[var(--card-bg)] px-[14px] text-[14px] text-[var(--text-dark)] outline-none focus:border-[color:var(--purple)] ${suggesting === `exp-${ei}-${bi}` ? 'animate-pulse border-[color:var(--purple)] bg-[rgba(108,99,255,0.03)]' : showErrors && !b.trim() ? 'border-red-400' : 'border-[color:var(--border)]'}`} />
+                  <button type="button" onClick={() => { removeBulletKey(exp.id, bi); setData((p) => ({ ...p, experience: updateItem(p.experience, ei, (item) => ({ ...item, bullets: removeItem(item.bullets, bi) })) })); }} className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] border border-[color:var(--border)] text-[var(--text-light)] hover:text-red-500 transition-colors" aria-label="Remove">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </div>
@@ -820,8 +820,8 @@ export default function ResumeBuilderClient2() {
     <Card key="education" saved={autoSaved} celebration={scoreCelebration} title="Education" description="Academic background.">
       <div className="grid gap-[12px]">
         {data.education.map((edu, ei) => (
-          <div key={edu.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
-            <button type="button" onClick={() => setConfirmModal({ message: 'Delete this education?', onConfirm: () => setData((p) => ({ ...p, education: removeItem(p.education, ei) })) })} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+          <div key={edu.id} className="relative rounded-[14px] border border-[color:var(--border)] p-[12px]">
+            <button type="button" onClick={() => setConfirmModal({ message: 'Delete this education?', onConfirm: () => setData((p) => ({ ...p, education: removeItem(p.education, ei) })) })} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-light)] hover:text-red-500 transition-colors" aria-label="Remove">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
@@ -847,8 +847,8 @@ export default function ResumeBuilderClient2() {
     <Card key="projects" saved={autoSaved} celebration={scoreCelebration} title="Project Work" description="Key projects with descriptions.">
       <div className="grid gap-[12px]">
         {data.projects.map((proj, pi) => (
-          <div key={proj.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
-            <button type="button" onClick={() => setConfirmModal({ message: 'Delete this project?', onConfirm: () => setData((p) => ({ ...p, projects: removeItem(p.projects, pi) })) })} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+          <div key={proj.id} className="relative rounded-[14px] border border-[color:var(--border)] p-[12px]">
+            <button type="button" onClick={() => setConfirmModal({ message: 'Delete this project?', onConfirm: () => setData((p) => ({ ...p, projects: removeItem(p.projects, pi) })) })} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-light)] hover:text-red-500 transition-colors" aria-label="Remove">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
@@ -899,8 +899,8 @@ export default function ResumeBuilderClient2() {
     <Card key="certifications" saved={autoSaved} celebration={scoreCelebration} title="Awards & Certificates" description="Certifications and achievements.">
       <div className="grid gap-[12px]">
         {data.certifications.map((cert, ci) => (
-          <div key={cert.id} className="relative rounded-[14px] border border-[color:#eceef2] p-[12px]">
-            <button type="button" onClick={() => setData((p) => ({ ...p, certifications: removeItem(p.certifications, ci) }))} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[#666] hover:text-red-500 transition-colors" aria-label="Remove">
+          <div key={cert.id} className="relative rounded-[14px] border border-[color:var(--border)] p-[12px]">
+            <button type="button" onClick={() => setData((p) => ({ ...p, certifications: removeItem(p.certifications, ci) }))} className="absolute right-[8px] top-[8px] flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-light)] hover:text-red-500 transition-colors" aria-label="Remove">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>
             <div className="grid gap-[10px]">
@@ -916,10 +916,10 @@ export default function ResumeBuilderClient2() {
   ];
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] text-black" style={{ overscrollBehavior: 'none' }}>
+    <main className="min-h-screen bg-[var(--page-bg-mid)] text-[var(--text-dark)] transition-colors duration-200" style={{ overscrollBehavior: 'none' }}>
       <div className="mx-auto flex min-h-[100svh] w-full max-w-[1280px] flex-col gap-[12px] px-[8px] pb-[12px] pt-[8px] md:px-[16px] lg:grid lg:min-h-0 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
         <div className={`${mobileView === 'preview' ? 'hidden lg:flex' : 'flex'} flex-1 flex-col gap-[12px] pb-[132px] md:gap-[14px] md:pb-0`}>
-          <div className="rounded-[22px] border border-[color:rgba(229,231,235,0.95)] bg-white p-[10px] shadow-[0_10px_26px_rgba(17,24,39,0.06)] md:p-[16px]">
+          <div className="rounded-[22px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[10px] shadow-[var(--shadow-sm)] md:p-[16px]">
             <div className="flex flex-col gap-[10px]">
               <div className="flex justify-center">
                 <div className="rounded-full bg-[rgba(16,185,129,0.12)] px-[12px] py-[6px] text-[12px] font-bold uppercase text-[#10b981]">ATS FRIENDLY</div>
@@ -929,18 +929,18 @@ export default function ResumeBuilderClient2() {
                 <button type="button" onClick={() => setMobileView('preview')} className={`flex-1 rounded-full px-[12px] py-[10px] text-[12px] font-bold ${mobileView === 'preview' ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-[rgba(108,99,255,0.08)] text-[color:var(--purple)]'}`}>Preview</button>
                 {/* 3-dot menu */}
                 <div className="relative">
-                  <button type="button" onClick={() => setShowMoreMenu((v) => !v)} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#f4f4f6] shadow-[0_4px_12px_rgba(17,24,39,0.06)]" aria-label="More options">
-                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-black"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                  <button type="button" onClick={() => setShowMoreMenu((v) => !v)} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--surface-soft)] shadow-[var(--shadow-sm)]" aria-label="More options">
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-[var(--text-dark)]"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
                   </button>
                   {showMoreMenu && (
                     <>
                       <div className="fixed inset-0 z-[49]" onClick={() => setShowMoreMenu(false)} />
-                      <div className="absolute right-0 top-[46px] z-[50] w-[200px] rounded-[14px] border border-[color:#eceef2] bg-white py-[6px] shadow-[0_12px_32px_rgba(17,24,39,0.14)]">
-                        <button type="button" onClick={() => { setShowMoreMenu(false); setMobileView('preview'); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                      <div className="absolute right-0 top-[46px] z-[50] w-[200px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] py-[6px] shadow-[var(--shadow-md)]">
+                        <button type="button" onClick={() => { setShowMoreMenu(false); setMobileView('preview'); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-[var(--text-dark)] hover:bg-[var(--surface-soft)]">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                           Preview Resume
                         </button>
-                        <button type="button" onClick={() => { setShowMoreMenu(false); setTimeout(() => setShowDownloadMenu(true), 50); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f8f8fa]">
+                        <button type="button" onClick={() => { setShowMoreMenu(false); setTimeout(() => setShowDownloadMenu(true), 50); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-[var(--text-dark)] hover:bg-[var(--surface-soft)]">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                           Export Resume
                         </button>
@@ -948,7 +948,7 @@ export default function ResumeBuilderClient2() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                           Duplicate Resume
                         </button>
-                        <div className="my-[4px] border-t border-[color:#eceef2]" />
+                        <div className="my-[4px] border-t border-[color:var(--border)]" />
                         <button type="button" onClick={() => { setShowMoreMenu(false); setConfirmModal({ message: 'This will delete all your resume data. This action cannot be undone.', onConfirm: () => { setData(initialData); try { window.sessionStorage.removeItem('ResumeLab-editor2-state'); } catch {} } }); }} className="flex w-full items-center gap-[10px] px-[14px] py-[10px] text-[13px] font-medium text-red-500 hover:bg-red-50">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                           Clear All Data
@@ -974,8 +974,8 @@ export default function ResumeBuilderClient2() {
                   } else {
                     router.push('/template-details?template=2');
                   }
-                }} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#f4f4f6]" aria-label="Close">
-                  <svg viewBox="0 0 24 24" className="h-[16px] w-[16px] fill-none stroke-black stroke-[2.4]"><path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" /></svg>
+                }} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[var(--surface-soft)]" aria-label="Close">
+                  <svg viewBox="0 0 24 24" className="h-[16px] w-[16px] fill-none stroke-[var(--text-dark)] stroke-[2.4]"><path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" /></svg>
                 </button>
               </div>
             </div>
@@ -988,7 +988,7 @@ export default function ResumeBuilderClient2() {
               const sectionScore = getAtsSectionScore(sectionKeys[index], data, targetJob);
               const isFilledSection = index === 3 || index === 5; // Education & Certifications: show ✓ when filled
               return (
-              <button key={label} type="button" onClick={() => setStep(index)} className={`whitespace-nowrap rounded-full px-[14px] py-[8px] text-[12px] font-bold ${step === index ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-white text-black shadow-[0_6px_16px_rgba(17,24,39,0.06)]'}`}>
+              <button key={label} type="button" onClick={() => setStep(index)} className={`whitespace-nowrap rounded-full px-[14px] py-[8px] text-[12px] font-bold ${step === index ? 'bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-white' : 'bg-[var(--card-bg)] text-[var(--text-dark)] shadow-[var(--shadow-sm)]'}`}>
                 {label}
                 <span className={`ml-[5px] rounded-full px-[6px] py-[1px] text-[9px] font-bold ${
                   isFilledSection
@@ -1011,7 +1011,7 @@ export default function ResumeBuilderClient2() {
             {(undoStack['enhance-all'] || undoStack['keywords']) && (
               <div className="mb-[8px] flex items-center justify-between rounded-[12px] border border-[rgba(99,91,255,0.2)] bg-[rgba(108,99,255,0.05)] px-[12px] py-[8px]">
                 <span className="text-[11px] font-medium text-[#4f46e5]">{undoStack['enhance-all'] ? 'AI enhancement applied' : 'Keywords added to skills'}</span>
-                <button type="button" onClick={() => { if (undoStack['enhance-all']) { setData((p) => ({ ...p, experience: undoStack['enhance-all'].experience, projects: undoStack['enhance-all'].projects, certifications: undoStack['enhance-all'].certifications, education: undoStack['enhance-all'].education })); setUndoStack((prev) => { const next = { ...prev }; delete next['enhance-all']; return next; }); } else if (undoStack['keywords']) { setData((p) => ({ ...p, skills: undoStack['keywords'] })); setAtsAppliedKeywords([]); setUndoStack((prev) => { const next = { ...prev }; delete next['keywords']; return next; }); } }} className="rounded-full bg-white border border-[rgba(99,91,255,0.2)] px-[10px] py-[4px] text-[10px] font-semibold text-[#4f46e5] hover:bg-[rgba(99,91,255,0.08)] transition-colors">
+                <button type="button" onClick={() => { if (undoStack['enhance-all']) { setData((p) => ({ ...p, experience: undoStack['enhance-all'].experience, projects: undoStack['enhance-all'].projects, certifications: undoStack['enhance-all'].certifications, education: undoStack['enhance-all'].education })); setUndoStack((prev) => { const next = { ...prev }; delete next['enhance-all']; return next; }); } else if (undoStack['keywords']) { setData((p) => ({ ...p, skills: undoStack['keywords'] })); setAtsAppliedKeywords([]); setUndoStack((prev) => { const next = { ...prev }; delete next['keywords']; return next; }); } }} className="rounded-full bg-[var(--card-bg)] border border-[rgba(99,91,255,0.2)] px-[10px] py-[4px] text-[10px] font-semibold text-[#4f46e5] hover:bg-[rgba(99,91,255,0.08)] transition-colors">
                   ↩ Undo
                 </button>
               </div>
@@ -1020,7 +1020,7 @@ export default function ResumeBuilderClient2() {
           </div>
 
           <div className="flex items-center justify-between gap-[12px] pt-[4px]">
-            <button type="button" onClick={() => setStep((p) => Math.max(p - 1, 0))} disabled={step === 0} className="rounded-[14px] border border-[color:#e5e7eb] bg-white px-[16px] py-[12px] text-[14px] font-bold text-black disabled:opacity-50">Previous</button>
+            <button type="button" onClick={() => setStep((p) => Math.max(p - 1, 0))} disabled={step === 0} className="rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[16px] py-[12px] text-[14px] font-bold text-[var(--text-dark)] disabled:opacity-50">Previous</button>
             <button type="button" onClick={handleNext} className="rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[18px] py-[12px] text-[14px] font-bold text-white">Next</button>
           </div>
           <div className="mt-[8px] rounded-[16px] border border-[color:#b7d9ef] bg-[linear-gradient(180deg,#eef8ff_0%,#dcefff_100%)] px-[14px] py-[12px] shadow-[0_8px_18px_rgba(17,24,39,0.04)]">
@@ -1043,9 +1043,9 @@ export default function ResumeBuilderClient2() {
 
         {/* Preview panel */}
         <div className={`${mobileView === 'form' ? 'hidden lg:block' : 'block'} lg:sticky lg:top-[16px] lg:h-[calc(100vh-32px)]`}>
-          <div className="flex h-full flex-col rounded-[22px] border border-[color:rgba(229,231,235,0.95)] bg-white p-[12px] shadow-[0_10px_26px_rgba(17,24,39,0.06)]">
+          <div className="flex h-full flex-col rounded-[22px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[12px] shadow-[var(--shadow-sm)]">
             <div className="mb-[12px] flex items-center justify-between relative">
-              <span className="text-[18px] font-bold text-black">PREVIEW</span>
+              <span className="text-[18px] font-bold text-[var(--text-dark)]">PREVIEW</span>
               <button
                 type="button"
                 onClick={() => setMobileView('form')}
@@ -1059,7 +1059,7 @@ export default function ResumeBuilderClient2() {
 
             {/* ATS Score Compact Banner */}
             <div className="mb-[12px] relative z-[45]">
-              <div className="flex items-center justify-between rounded-[16px] border border-[color:rgba(226,232,240,0.92)] bg-white p-[10px] shadow-[0_6px_20px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center justify-between rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[10px] shadow-[var(--shadow-sm)]">
                 <div className="flex items-center gap-[12px]">
                   <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[conic-gradient(from_220deg,#635bff_0deg,#2da6ff_70deg,#29d9c2_170deg,#7fe36a_250deg,#e5e7eb_305deg,#e5e7eb_360deg)] p-[4px] shadow-[0_4px_10px_rgba(99,91,255,0.12)]">
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
@@ -1068,10 +1068,10 @@ export default function ResumeBuilderClient2() {
                   </div>
                   <div>
                     <div className="flex items-center gap-[6px]">
-                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#64718a]">Resume Lab ATS</div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-light)]">Resume Lab ATS</div>
                       <span className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[rgba(16,185,129,0.1)] text-[9px] font-bold text-[#10b981]">✓</span>
                     </div>
-                    <div className="mt-[2px] text-[14px] font-bold text-[#0f1f44]">
+                    <div className="mt-[2px] text-[14px] font-bold text-[var(--text-dark)]">
                       {displayAtsScore >= 85 ? 'Great Match' : displayAtsScore >= 70 ? 'Strong Match' : displayAtsScore >= 55 ? 'Fair Match' : 'Needs Work'}
                     </div>
                     {targetJob.title ? (
@@ -1090,7 +1090,7 @@ export default function ResumeBuilderClient2() {
 
               {/* Floating ATS Details Modal */}
               {showAtsDetails && atsBreakdown ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[50] max-h-[420px] overflow-y-auto rounded-[20px] border border-[rgba(226,232,240,0.95)] bg-white p-[14px] shadow-[0_20px_40px_rgba(15,23,42,0.12)] [scrollbar-width:thin]">
+                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[50] max-h-[420px] overflow-y-auto rounded-[20px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[14px] shadow-[var(--shadow-md)] [scrollbar-width:thin]">
                   <div className="grid gap-[10px]">
                     {/* Score Delta */}
                     {prevAtsScore !== null && prevAtsScore !== atsOverallScore && (
@@ -1120,12 +1120,12 @@ export default function ResumeBuilderClient2() {
                     {atsBreakdown.strengths.length > 0 && (
                       <div className="rounded-[14px] border border-[rgba(16,185,129,0.15)] bg-[rgba(16,185,129,0.04)] px-[12px] py-[10px]">
                         <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#059669] mb-[6px]">Strengths</div>
-                        <div className="flex flex-wrap gap-[5px]">{atsBreakdown.strengths.map((s) => (<span key={s} className="rounded-full bg-white border border-[rgba(16,185,129,0.2)] px-[8px] py-[3px] text-[10px] font-medium text-[#059669]">✓ {s}</span>))}</div>
+                        <div className="flex flex-wrap gap-[5px]">{atsBreakdown.strengths.map((s) => (<span key={s} className="rounded-full bg-[var(--card-bg)] border border-[rgba(16,185,129,0.2)] px-[8px] py-[3px] text-[10px] font-medium text-[#059669]">✓ {s}</span>))}</div>
                       </div>
                     )}
 
                     {/* Missing Keywords — Skills (tappable) + Domain terms (info only) */}
-                    <div className="rounded-[14px] border border-[color:#eef0f4] bg-white px-[12px] py-[10px] shadow-sm">
+                    <div className="rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[12px] py-[10px] shadow-sm">
                       <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#7a7a86] mb-[6px]">Missing Keywords</div>
                       <div className="flex flex-wrap gap-[5px]">
                         {atsInsights.missing.length ? atsInsights.missing.map(formatKeyword).map((item) => (
@@ -1199,15 +1199,15 @@ export default function ResumeBuilderClient2() {
             <p className="mt-[4px] text-center text-[11px] text-[#888] md:hidden">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
             <div className="mt-[4px] hidden shrink-0 md:block">
               <p className="mb-[4px] text-center text-[11px] text-[#888]">✦ Tap Enhance All to make every bullet professional and recruiter-ready.</p>
-              <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="mb-[8px] w-full rounded-full border border-[color:#d8d2ff] bg-white py-[10px] text-[13px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
+              <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="mb-[8px] w-full rounded-full border border-[color:#d8d2ff] bg-[var(--card-bg)] py-[10px] text-[13px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
               <div className="relative" ref={downloadMenuRef} data-download-menu>
                 <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] py-[10px] text-[13px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
                 {showDownloadMenu && (
-                  <div className="absolute bottom-full left-0 right-0 z-[100] mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownload, 'pdf')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                  <div className="absolute bottom-full left-0 right-0 z-[100] mb-[6px] overflow-hidden rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[var(--shadow-md)]">
+                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownload, 'pdf')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-[var(--text-dark)] hover:bg-[var(--surface-soft)] transition-colors">
                       <span className="text-[15px]">📄</span> Download as .pdf
                     </button>
-                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx, 'docx')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                    <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx, 'docx')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-[var(--text-dark)] hover:bg-[var(--surface-soft)] transition-colors">
                       <span className="text-[15px]">📝</span> Download as .docx
                     </button>
                   </div>
@@ -1219,22 +1219,22 @@ export default function ResumeBuilderClient2() {
       </div>
       {mobileView === 'preview' && (
       <div className="fixed bottom-[72px] left-0 right-0 z-[55] px-[12px] md:hidden">
-        <div className="mx-auto max-w-[480px] rounded-[14px] border border-[#e5e7eb] bg-white px-[14px] py-[10px] text-center text-[12px] text-[#666] shadow-[0_4px_12px_rgba(17,24,39,0.04)]">Check each section in Edit mode — imported data may need manual adjustments.</div>
+        <div className="mx-auto max-w-[480px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[14px] py-[10px] text-center text-[12px] text-[var(--text-light)] shadow-[var(--shadow-sm)]">Check each section in Edit mode — imported data may need manual adjustments.</div>
       </div>
       )}
 
       {/* Mobile bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:#eceef2] bg-white px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(17,24,39,0.08)] md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[color:var(--border)] bg-[var(--card-bg)] px-[12px] pb-[12px] pt-[10px] shadow-[0_-10px_24px_rgba(0,0,0,0.35)] md:hidden">
         <div className="mx-auto flex max-w-[480px] items-center gap-[10px]">
-          <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-white px-[14px] text-[12px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
+          <button type="button" onClick={handleEnhanceAll} disabled={downloading} className="h-[42px] flex-1 rounded-full border border-[color:#d8d2ff] bg-[var(--card-bg)] px-[14px] text-[12px] font-semibold text-[color:var(--purple)] disabled:opacity-70">Enhance All</button>
           <div className="relative flex-[1.35]" data-download-menu>
             <button type="button" onClick={() => setShowDownloadMenu((v) => !v)} disabled={downloading} className="h-[42px] w-full rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[14px] text-[12px] font-semibold text-white disabled:opacity-70">{downloading ? 'Generating...' : 'Download'}</button>
             {showDownloadMenu && (
-              <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.12)]">
-                <button type="button" onClick={() => handleDownloadWithValidation(handleDownload, 'pdf')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+              <div className="absolute bottom-full left-0 right-0 mb-[6px] overflow-hidden rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[var(--shadow-md)]">
+                <button type="button" onClick={() => handleDownloadWithValidation(handleDownload, 'pdf')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-[var(--text-dark)] hover:bg-[var(--surface-soft)] transition-colors">
                   <span className="text-[15px]">📄</span> .pdf
                 </button>
-                <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx, 'docx')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-black hover:bg-[#f4f4f6] transition-colors">
+                <button type="button" onClick={() => handleDownloadWithValidation(handleDownloadDocx, 'docx')} className="flex w-full items-center gap-[8px] px-[14px] py-[10px] text-[13px] font-medium text-[var(--text-dark)] hover:bg-[var(--surface-soft)] transition-colors">
                   <span className="text-[15px]">📝</span> .docx
                 </button>
               </div>
@@ -1246,9 +1246,9 @@ export default function ResumeBuilderClient2() {
       {/* Saved to My Resumes toast */}
       {showSavedToast && (
         <div className="fixed bottom-[80px] left-1/2 z-[500] -translate-x-1/2 animate-[fadeIn_0.3s] md:bottom-[24px]">
-          <div className="flex items-center gap-[8px] rounded-full border border-[rgba(16,185,129,0.2)] bg-white px-[14px] py-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+          <div className="flex items-center gap-[8px] rounded-full border border-[rgba(16,185,129,0.2)] bg-[var(--card-bg)] px-[14px] py-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
             <img src="/images/download.png" alt="" className="h-[18px] w-[18px]" />
-            <span className="text-[12px] font-semibold text-[#333]">Resume saved to My Resumes</span>
+            <span className="text-[12px] font-semibold text-[var(--text-dark)]">Resume saved to My Resumes</span>
             <span className="text-[12px] text-[#10b981]">✓</span>
           </div>
         </div>
@@ -1256,10 +1256,10 @@ export default function ResumeBuilderClient2() {
 
       {/* Loading overlay */}
       {downloading && (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-white">
+        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-[var(--page-bg-mid)]">
           <div className="flex flex-col items-center">
             <img src="/images/loading-star.png" alt="" className="h-[60px] w-[60px] animate-spin" />
-            <p className="mt-[16px] text-[15px] font-semibold text-black animate-pulse">{loadingText}</p>
+            <p className="mt-[16px] text-[15px] font-semibold text-[var(--text-dark)] animate-pulse">{loadingText}</p>
           </div>
         </div>
       )}
@@ -1268,11 +1268,11 @@ export default function ResumeBuilderClient2() {
       {/* Confirm modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 backdrop-blur-[2px] px-[16px]">
-          <div className="w-full max-w-[320px] rounded-[20px] bg-white p-[24px] shadow-[0_20px_50px_rgba(17,24,39,0.18)]">
-            <h3 className="text-[16px] font-bold text-black">Are you sure?</h3>
-            <p className="mt-[6px] text-[13px] text-[#666]">{confirmModal.message}</p>
+          <div className="w-full max-w-[320px] rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-md)]">
+            <h3 className="text-[16px] font-bold text-[var(--text-dark)]">Are you sure?</h3>
+            <p className="mt-[6px] text-[13px] text-[var(--text-light)]">{confirmModal.message}</p>
             <div className="mt-[20px] flex gap-[10px]">
-              {!confirmModal.singleButton && <button type="button" onClick={() => setConfirmModal(null)} className="flex-1 rounded-[12px] border border-[color:#e5e7eb] bg-white py-[10px] text-[13px] font-semibold text-black">Cancel</button>}
+              {!confirmModal.singleButton && <button type="button" onClick={() => setConfirmModal(null)} className="flex-1 rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg)] py-[10px] text-[13px] font-semibold text-[var(--text-dark)]">Cancel</button>}
               <button type="button" onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }} className={`flex-1 rounded-[12px] py-[10px] text-[13px] font-semibold text-white ${confirmModal.confirmColor || 'bg-red-500'}`}>{confirmModal.confirmText || 'Delete'}</button>
             </div>
           </div>

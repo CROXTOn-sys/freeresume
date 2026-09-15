@@ -2,18 +2,19 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Navbar from '../../components/Navbar';
 
 function ChoiceCard({ title, description, children, active = false }) {
   return (
     <div
-      className={`rounded-[16px] border p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)] ${
-        active ? 'border-[color:#222] bg-[rgba(255,255,255,0.92)]' : 'border-[color:#d9d9e3] bg-white'
+      className={`rounded-[16px] border p-[18px] shadow-[var(--shadow-sm)] ${
+        active ? 'border-[color:var(--purple)] bg-[var(--card-bg-soft)]' : 'border-[color:var(--border)] bg-[var(--card-bg)]'
       }`}
     >
       {children}
       <div className="mt-[10px] text-center">
-        <h2 className="text-[15px] font-bold text-black">{title}</h2>
-        <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">{description}</p>
+        <h2 className="text-[15px] font-bold text-[var(--text-dark)]">{title}</h2>
+        <p className="mt-[6px] text-[12px] leading-[1.45] text-[var(--text-light)]">{description}</p>
       </div>
     </div>
   );
@@ -80,7 +81,10 @@ function BuilderChoice() {
   };
 
   return (
-    <main className="min-h-screen bg-white px-[14px] py-[18px] text-black">
+    <main className="min-h-screen bg-[var(--page-bg-mid)] px-[14px] pb-[18px] pt-[92px] text-[var(--text-dark)] transition-colors duration-200">
+      <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
+        <Navbar />
+      </div>
       <input
         id="resume-upload-input"
         type="file"
@@ -90,10 +94,10 @@ function BuilderChoice() {
       />
 
       <div className="mx-auto flex w-full max-w-[520px] flex-col">
-        <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">
+        <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">
           How would you like to build your resume?
         </h1>
-        <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">
+        <p className="mt-[8px] text-[15px] leading-[1.45] text-[var(--text-light)]">
           Upload an existing one or start fresh - we&apos;ll make it easy either way!
         </p>
 
@@ -111,7 +115,7 @@ function BuilderChoice() {
               description="PDF, DOCX . Max file size: 10 MB"
               active
             >
-              <div className="flex justify-center text-[30px] text-[#666]">☁</div>
+              <div className="flex justify-center text-[30px] text-[var(--text-light)]">☁</div>
             </ChoiceCard>
           </div>
           <div className="relative opacity-60">
@@ -124,14 +128,14 @@ function BuilderChoice() {
           </div>
         </div>
 
-        <div className="mt-[14px] rounded-[16px] border border-[color:#d9d9e3] bg-white p-[16px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+        <div className="mt-[14px] rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px] shadow-[var(--shadow-sm)]">
           <div className="flex items-center gap-[12px]">
             <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[18px] font-bold text-white">
               ✦
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
-              <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
+              <h2 className="text-[15px] font-bold text-[var(--text-dark)]">AI Enhancement</h2>
+              <p className="mt-[4px] text-[12px] text-[var(--text-light)]">Enhance your bullet points and descriptions with AI</p>
             </div>
             <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">
               Free
@@ -139,10 +143,10 @@ function BuilderChoice() {
           </div>
         </div>
 
-        <div className="my-[18px] flex items-center gap-[12px] text-[#a0a0ad]">
-          <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+        <div className="my-[18px] flex items-center gap-[12px] text-[var(--text-light)]">
+          <div className="h-[1px] flex-1 bg-[color:var(--border)]" />
           <span className="text-[13px]">or</span>
-          <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+          <div className="h-[1px] flex-1 bg-[color:var(--border)]" />
         </div>
 
         <button

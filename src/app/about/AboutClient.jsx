@@ -1,12 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Navbar from '../../components/Navbar';
 
 export default function AboutClient() {
   const router = useRouter();
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#FFFFFF_0%,#F4F2FF_100%)] px-[16px] pb-[40px] pt-[24px]">
+    <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200 px-[16px] pb-[40px]">
+      <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
+        <Navbar />
+      </div>
       <div className="mx-auto w-full max-w-[520px]">
         {/* Header */}
         <button
@@ -18,10 +22,10 @@ export default function AboutClient() {
           Back
         </button>
 
-        <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">
+        <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">
           How It Works
         </h1>
-        <p className="mt-[8px] text-[15px] leading-[1.5] text-[#666]">
+        <p className="mt-[8px] text-[15px] leading-[1.5] text-[var(--text-light)]">
           Build a professional, ATS-optimized resume in minutes. Here&apos;s how to get the best results.
         </p>
 
@@ -70,12 +74,12 @@ export default function AboutClient() {
         </div>
 
         {/* ATS Score Section */}
-        <div className="mt-[32px] rounded-[18px] border border-[#e8e8f0] bg-white p-[20px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-          <h2 className="text-[18px] font-bold text-black">Resume Lab ATS Score</h2>
-          <p className="mt-[10px] text-[14px] leading-[1.7] text-[#444]">
+        <div className="mt-[32px] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[20px] shadow-[var(--shadow-sm)]">
+          <h2 className="text-[18px] font-bold text-[var(--text-dark)]">Resume Lab ATS Score</h2>
+          <p className="mt-[10px] text-[14px] leading-[1.7] text-[var(--text-mid)]">
             Our built-in ATS scoring engine rates your resume from 0-100 based on 7 categories:
           </p>
-          <ul className="mt-[12px] flex flex-col gap-[8px] text-[13px] leading-[1.6] text-[#444]">
+          <ul className="mt-[12px] flex flex-col gap-[8px] text-[13px] leading-[1.6] text-[var(--text-mid)]">
             <li className="flex justify-between"><span>Job Description Match</span><span className="font-bold text-[#6C63FF]">40 pts</span></li>
             <li className="flex justify-between"><span>Resume Completeness</span><span className="font-bold text-[#6C63FF]">15 pts</span></li>
             <li className="flex justify-between"><span>Experience Quality</span><span className="font-bold text-[#6C63FF]">10 pts</span></li>
@@ -84,15 +88,15 @@ export default function AboutClient() {
             <li className="flex justify-between"><span>Contact Information</span><span className="font-bold text-[#6C63FF]">5 pts</span></li>
             <li className="flex justify-between"><span>Content Structure</span><span className="font-bold text-[#6C63FF]">10 pts</span></li>
           </ul>
-          <p className="mt-[12px] text-[12px] leading-[1.5] text-[#888]">
+          <p className="mt-[12px] text-[12px] leading-[1.5] text-[var(--text-light)]">
             This score estimates alignment with the provided job description and common ATS best practices. Different employers and ATS platforms may evaluate resumes differently.
           </p>
         </div>
 
         {/* Tips Section */}
-        <div className="mt-[20px] rounded-[18px] border border-[#e8e8f0] bg-white p-[20px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-          <h2 className="text-[18px] font-bold text-black">Tips for Best Results</h2>
-          <ul className="mt-[14px] flex flex-col gap-[12px] text-[14px] leading-[1.6] text-[#444]">
+        <div className="mt-[20px] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[20px] shadow-[var(--shadow-sm)]">
+          <h2 className="text-[18px] font-bold text-[var(--text-dark)]">Tips for Best Results</h2>
+          <ul className="mt-[14px] flex flex-col gap-[12px] text-[14px] leading-[1.6] text-[var(--text-mid)]">
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
               <span>Always paste the job description — it unlocks keyword matching and can boost your score by 40 points</span>
@@ -133,17 +137,17 @@ export default function AboutClient() {
         </div>
 
         {/* What is ATS */}
-        <div className="mt-[20px] rounded-[18px] border border-[#e8e8f0] bg-white p-[20px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-          <h2 className="text-[18px] font-bold text-black">What is ATS?</h2>
-          <p className="mt-[10px] text-[14px] leading-[1.7] text-[#444]">
+        <div className="mt-[20px] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[20px] shadow-[var(--shadow-sm)]">
+          <h2 className="text-[18px] font-bold text-[var(--text-dark)]">What is ATS?</h2>
+          <p className="mt-[10px] text-[14px] leading-[1.7] text-[var(--text-mid)]">
             ATS (Applicant Tracking System) is software that companies use to filter resumes before a human ever reads them. Over 90% of large companies use ATS to scan, rank, and shortlist candidates. If your resume isn&apos;t formatted correctly or lacks the right keywords, it gets rejected automatically — no matter how qualified you are. Our templates are specifically built to pass these scans with clean formatting, proper headings, and parseable text.
           </p>
         </div>
 
         {/* Quick Info */}
-        <div className="mt-[20px] rounded-[18px] border border-[#e8e8f0] bg-white p-[20px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-          <h2 className="text-[18px] font-bold text-black">Quick Info</h2>
-          <ul className="mt-[14px] flex flex-col gap-[10px] text-[14px] leading-[1.6] text-[#444]">
+        <div className="mt-[20px] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[20px] shadow-[var(--shadow-sm)]">
+          <h2 className="text-[18px] font-bold text-[var(--text-dark)]">Quick Info</h2>
+          <ul className="mt-[14px] flex flex-col gap-[10px] text-[14px] leading-[1.6] text-[var(--text-mid)]">
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
               <span>ATS scoring, AI enhancement, and AI suggestions are available for all users</span>
@@ -177,13 +181,13 @@ export default function AboutClient() {
 
 function StepCard({ number, title, description }) {
   return (
-    <div className="flex gap-[14px] rounded-[16px] border border-[#e8e8f0] bg-white p-[16px] shadow-[0_6px_16px_rgba(17,24,39,0.03)]">
+    <div className="flex gap-[14px] rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px] shadow-[var(--shadow-sm)]">
       <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[14px] font-bold text-white">
         {number}
       </div>
       <div>
-        <h3 className="text-[15px] font-bold text-black">{title}</h3>
-        <p className="mt-[6px] text-[13px] leading-[1.6] text-[#555]">{description}</p>
+        <h3 className="text-[15px] font-bold text-[var(--text-dark)]">{title}</h3>
+        <p className="mt-[6px] text-[13px] leading-[1.6] text-[var(--text-mid)]">{description}</p>
       </div>
     </div>
   );

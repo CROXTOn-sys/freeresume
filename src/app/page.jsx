@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
+import { useTheme } from '../components/ThemeProvider';
+import { themeVars } from '../lib/theme';
 import Hero from '../components/Hero';
 import RoleCombobox from '../components/RoleCombobox';
 import TemplatesSection from '../components/TemplatesSection';
@@ -14,88 +16,9 @@ import SeoContent from '../components/SeoContent';
 import SeoFaqSection from '../components/SeoFaqSection';
 import BugReport from '../components/BugReport';
 
-const themeVars = {
-  light: {
-    '--purple': '#5f54f0',
-    '--purple-light': '#7b73ff',
-    '--purple-dark': '#4a41c8',
-    '--overlay-1': 'rgba(95, 84, 240, 0.1)',
-    '--overlay-2': 'rgba(59, 130, 246, 0.08)',
-    '--page-bg-start': '#f8faff',
-    '--page-bg-mid': '#f4f6fb',
-    '--page-bg-end': '#eef2f8',
-    '--nav-bg': 'rgba(255, 255, 255, 0.88)',
-    '--nav-shadow': '0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 24px rgba(17, 24, 39, 0.03)',
-    '--control-bg-start': '#ffffff',
-    '--control-bg-end': '#f7f8fc',
-    '--hero-bg': 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.92) 100%)',
-    '--section-bg': 'rgba(255, 255, 255, 0.92)',
-    '--section-bg-soft': 'rgba(255, 255, 255, 0.88)',
-    '--card-bg': '#ffffff',
-    '--card-bg-soft': '#fbfcfe',
-    '--badge-bg': 'rgba(255, 255, 255, 0.92)',
-    '--badge-border': 'rgba(95, 84, 240, 0.12)',
-    '--badge-text': '#4a41c8',
-    '--surface-soft': 'rgba(255, 255, 255, 0.75)',
-    '--sticky-bg': 'rgba(255, 255, 255, 0.94)',
-    '--text-dark': '#111827',
-    '--text-mid': '#4b5563',
-    '--text-light': '#6b7280',
-    '--border': '#e5e7eb',
-    '--border-soft': 'rgba(229, 231, 235, 0.75)',
-    '--purple-bg': '#eef0ff',
-    '--mini-bg': '#ffffff',
-    '--mini-name': '#333333',
-    '--mini-line': '#ddd',
-    '--mini-section': '#555555',
-    '--mini-shadow': '0 10px 24px rgba(17, 24, 39, 0.13)',
-    '--shadow-sm': '0 8px 24px rgba(17, 24, 39, 0.06)',
-    '--shadow-md': '0 14px 40px rgba(17, 24, 39, 0.1)',
-    colorScheme: 'light',
-  },
-  dark: {
-    '--purple': '#5f54f0',
-    '--purple-light': '#7b73ff',
-    '--purple-dark': '#4a41c8',
-    '--overlay-1': 'rgba(95, 84, 240, 0.14)',
-    '--overlay-2': 'rgba(59, 130, 246, 0.1)',
-    '--page-bg-start': '#0f131a',
-    '--page-bg-mid': '#090b10',
-    '--page-bg-end': '#07090d',
-    '--nav-bg': 'rgba(10, 12, 16, 0.88)',
-    '--nav-shadow': '0 1px 0 rgba(255, 255, 255, 0.02), 0 8px 24px rgba(0, 0, 0, 0.35)',
-    '--control-bg-start': '#141922',
-    '--control-bg-end': '#0f141b',
-    '--hero-bg': 'linear-gradient(180deg, rgba(11, 13, 18, 0.98) 0%, rgba(11, 13, 18, 0.94) 100%)',
-    '--section-bg': 'rgba(11, 13, 18, 0.94)',
-    '--section-bg-soft': 'rgba(11, 13, 18, 0.94)',
-    '--card-bg': '#0f141c',
-    '--card-bg-soft': '#0f141c',
-    '--badge-bg': 'rgba(10, 12, 16, 0.94)',
-    '--badge-border': 'rgba(255, 255, 255, 0.08)',
-    '--badge-text': '#f8fafc',
-    '--surface-soft': 'rgba(17, 20, 26, 0.86)',
-    '--sticky-bg': 'rgba(10, 12, 16, 0.94)',
-    '--text-dark': '#f8fafc',
-    '--text-mid': '#c3cad6',
-    '--text-light': '#94a3b8',
-    '--border': '#232833',
-    '--border-soft': 'rgba(255, 255, 255, 0.06)',
-    '--purple-bg': 'rgba(95, 84, 240, 0.16)',
-    '--mini-bg': '#0f141c',
-    '--mini-name': '#e5e7eb',
-    '--mini-line': '#cbd5e1',
-    '--mini-section': '#f8fafc',
-    '--mini-shadow': '0 10px 24px rgba(0, 0, 0, 0.35)',
-    '--shadow-sm': '0 8px 24px rgba(0, 0, 0, 0.25)',
-    '--shadow-md': '0 14px 40px rgba(0, 0, 0, 0.3)',
-    colorScheme: 'dark',
-  },
-};
-
 export default function Page() {
   const router = useRouter();
-  const [theme, setTheme] = useState('light');
+  const { theme, canToggle, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [openIndex, setOpenIndex] = useState(null);
   const [showBuildModal, setShowBuildModal] = useState(false);
@@ -109,13 +32,6 @@ export default function Page() {
   const uploadInputRef = useRef(null);
 
   useEffect(() => {
-    try {
-      const savedTheme = window.localStorage.getItem('ResumeLab-theme');
-      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches;
-      setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
-    } catch {
-      setTheme('light');
-    }
     setMounted(true);
     // Auto-scroll to templates section if redirected from another page (e.g. interview-prep)
     try {
@@ -127,15 +43,6 @@ export default function Page() {
       }
     } catch {}
   }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      window.localStorage.setItem('ResumeLab-theme', theme);
-    } catch {
-      // no-op
-    }
-  }, [mounted, theme]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -155,9 +62,7 @@ export default function Page() {
     return () => observer.disconnect();
   }, [mounted]);
 
-  const onToggleTheme = () => {
-    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
-  };
+  const onToggleTheme = toggleTheme;
 
   const onToggleFaq = (index) => {
     setOpenIndex((current) => (current === index ? null : index));
@@ -284,7 +189,7 @@ export default function Page() {
       />
 
       <div className="mx-auto w-full max-w-[480px] lg:max-w-none xl:max-w-[1400px] xl:mx-auto 2xl:max-w-[1600px]">
-        <Navbar theme={theme} onToggleTheme={onToggleTheme} />
+        <Navbar theme={theme} onToggleTheme={onToggleTheme} canToggle={canToggle} />
         <Hero onCreateResume={scrollToTemplates} />
         <div data-animate>
           <TemplatesSection highlight={highlightTemplates} />
@@ -360,14 +265,14 @@ export default function Page() {
 
       {showTemplatePrompt ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(17,24,39,0.35)] px-[12px] backdrop-blur-[3px]" onClick={() => setShowTemplatePrompt(false)}>
-          <div className="w-full max-w-[400px] rounded-[22px] bg-white p-[24px] shadow-[0_24px_60px_rgba(17,24,39,0.22)] lg:max-w-[560px] lg:p-[32px] xl:max-w-[640px] xl:p-[36px] 2xl:max-w-[720px]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-[18px] text-center text-[18px] font-bold text-black lg:text-[22px] lg:mb-[24px]">Choose a template</h3>
+          <div className="w-full max-w-[400px] rounded-[22px] bg-[var(--card-bg)] p-[24px] shadow-[0_24px_60px_rgba(17,24,39,0.22)] lg:max-w-[560px] lg:p-[32px] xl:max-w-[640px] xl:p-[36px] 2xl:max-w-[720px]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-[18px] text-center text-[18px] font-bold text-[var(--text-dark)] lg:text-[22px] lg:mb-[24px]">Choose a template</h3>
             <div className="grid grid-cols-2 gap-[14px] lg:gap-[20px] xl:gap-[24px]">
-              <a href="/template-details?template=1" className="group block overflow-hidden rounded-[16px] border-2 border-[#e5e7eb] transition-all hover:border-[var(--purple)] hover:shadow-[0_8px_20px_rgba(99,91,255,0.15)]">
+              <a href="/template-details?template=1" className="group block overflow-hidden rounded-[16px] border-2 border-[color:var(--border)] transition-all hover:border-[var(--purple)] hover:shadow-[0_8px_20px_rgba(99,91,255,0.15)]">
                 <img src="/images/template1.png" alt="Template 1" className="w-full aspect-[3/4] object-cover object-top" />
                 <div className="px-[10px] py-[8px] text-center text-[13px] font-semibold text-[#333] group-hover:text-[var(--purple)] lg:text-[15px] lg:py-[10px]">Classic</div>
               </a>
-              <a href="/template-details?template=2" className="group block overflow-hidden rounded-[16px] border-2 border-[#e5e7eb] transition-all hover:border-[var(--purple)] hover:shadow-[0_8px_20px_rgba(99,91,255,0.15)]">
+              <a href="/template-details?template=2" className="group block overflow-hidden rounded-[16px] border-2 border-[color:var(--border)] transition-all hover:border-[var(--purple)] hover:shadow-[0_8px_20px_rgba(99,91,255,0.15)]">
                 <img src="/images/template2.png" alt="Template 2" className="w-full aspect-[3/4] object-cover object-top" />
                 <div className="px-[10px] py-[8px] text-center text-[13px] font-semibold text-[#333] group-hover:text-[var(--purple)] lg:text-[15px] lg:py-[10px]">Modern</div>
               </a>
@@ -379,47 +284,47 @@ export default function Page() {
 
       {showJobModal ? (
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">
-          <div className="relative w-full max-w-[520px] rounded-[24px] bg-white p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
+          <div className="relative w-full max-w-[520px] rounded-[24px] bg-[var(--card-bg)] p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
             <button
               type="button"
               aria-label="Close"
               onClick={closeBuildModal}
-              className="absolute right-[14px] top-[14px] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[20px] font-light leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
+              className="absolute right-[14px] top-[14px] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[20px] font-light leading-none text-[var(--text-dark)] shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
             >
               x
             </button>
 
-            <main className="bg-white px-[4px] py-[8px] text-black">
+            <main className="bg-[var(--card-bg)] px-[4px] py-[8px] text-[var(--text-dark)]">
               <div className="mx-auto flex w-full max-w-[520px] flex-col">
                 {buildStep === 0 ? (
                   <>
-                    <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">What are you applying for?</h1>
-                    <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">Tell us the target role first. We&apos;ll use it for ATS scoring and AI suggestions.</p>
+                    <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">What are you applying for?</h1>
+                    <p className="mt-[8px] text-[15px] leading-[1.45] text-[var(--text-light)]">Tell us the target role first. We&apos;ll use it for ATS scoring and AI suggestions.</p>
                     <div className="mt-[18px] grid gap-[12px]">
                       <label className="block">
-                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Target Job Title <span className="text-red-500">*</span></span>
+                        <span className="mb-[6px] block text-[12px] font-semibold text-[var(--text-dark)]">Target Job Title <span className="text-red-500">*</span></span>
                         <RoleCombobox value={targetJobTitle} onChange={setTargetJobTitle} />
                       </label>
                       <label className="block">
-                        <span className="mb-[6px] block text-[12px] font-semibold text-black">Job Description / ATS Keywords <span className="text-[#8b94a7] font-normal">(optional)</span></span>
+                        <span className="mb-[6px] block text-[12px] font-semibold text-[var(--text-dark)]">Job Description / ATS Keywords <span className="text-[var(--text-light)] font-normal">(optional)</span></span>
                         <textarea
                           value={targetJobDescription}
                           onChange={(e) => setTargetJobDescription(e.target.value)}
                           placeholder="Paste a job description from LinkedIn for best ATS accuracy, or leave blank to use role-based keywords..."
                           rows={6}
-                          className="w-full rounded-[12px] border border-[color:#e5e7eb] bg-white px-[14px] py-[12px] text-[14px] text-black outline-none focus:border-[color:var(--purple)]"
+                          className="w-full rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[14px] py-[12px] text-[14px] text-[var(--text-dark)] outline-none focus:border-[color:var(--purple)]"
                         />
                       </label>
                     </div>
                     <div className="mt-[18px] flex gap-[10px]">
-                      <button type="button" onClick={closeBuildModal} className="h-[52px] flex-1 rounded-[16px] border border-[color:#e5e7eb] bg-white text-[15px] font-bold text-black">Cancel</button>
+                      <button type="button" onClick={closeBuildModal} className="h-[52px] flex-1 rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] text-[15px] font-bold text-[var(--text-dark)]">Cancel</button>
                       <button type="button" onClick={handleBuildNext} disabled={!targetJobTitle.trim()} className="h-[52px] flex-1 rounded-[16px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[15px] font-bold text-white disabled:opacity-50">Next</button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">How would you like to build your resume?</h1>
-                    <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">Upload an existing one or start fresh - we&apos;ll make it easy either way!</p>
+                    <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">How would you like to build your resume?</h1>
+                    <p className="mt-[8px] text-[15px] leading-[1.45] text-[var(--text-light)]">Upload an existing one or start fresh - we&apos;ll make it easy either way!</p>
                     <div className="mt-[8px] rounded-[14px] bg-[rgba(95,84,240,0.06)] px-[12px] py-[10px] text-[12px] text-[#4a41c8]">Optimizing for: <span className="font-bold">{targetJobTitle}</span></div>
                     <div className="mt-[16px] grid grid-cols-2 gap-[12px]">
                       <div className="relative cursor-pointer text-left">
@@ -430,39 +335,39 @@ export default function Page() {
                           className="absolute inset-0 z-[2] h-full w-full cursor-pointer opacity-0"
                           onChange={handleHomepageFileChange}
                         />
-                        <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-                          <div className="flex justify-center text-[30px] text-[#666]">☁</div>
+                        <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[var(--shadow-sm)]">
+                          <div className="flex justify-center text-[30px] text-[var(--text-light)]">☁</div>
                           <div className="mt-[10px] text-center">
-                            <h2 className="text-[15px] font-bold text-black">{importing ? 'Importing...' : 'Upload resume'}</h2>
-                            <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">PDF, DOCX . Max file size: 10 MB</p>
+                            <h2 className="text-[15px] font-bold text-[var(--text-dark)]">{importing ? 'Importing...' : 'Upload resume'}</h2>
+                            <p className="mt-[6px] text-[12px] leading-[1.45] text-[var(--text-light)]">PDF, DOCX . Max file size: 10 MB</p>
                           </div>
                         </div>
                       </div>
-                      <div className="relative rounded-[16px] border border-[color:#d9d9e3] bg-white p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)] opacity-60">
+                      <div className="relative rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[18px] shadow-[var(--shadow-sm)] opacity-60">
                         <div className="absolute top-[10px] right-[10px]">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                         </div>
                         <div className="flex justify-center text-[34px] font-bold text-[#0a66c2]">in</div>
                         <div className="mt-[10px] text-center">
-                          <h2 className="text-[15px] font-bold text-black">Import LinkedIn</h2>
-                          <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">Coming soon</p>
+                          <h2 className="text-[15px] font-bold text-[var(--text-dark)]">Import LinkedIn</h2>
+                          <p className="mt-[6px] text-[12px] leading-[1.45] text-[var(--text-light)]">Coming soon</p>
                         </div>
                       </div>
                     </div>
-                    <div className="mt-[14px] rounded-[16px] border border-[color:#d9d9e3] bg-white p-[16px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                    <div className="mt-[14px] rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px] shadow-[var(--shadow-sm)]">
                       <div className="flex items-center gap-[12px]">
                         <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[18px] font-bold text-white">✦</div>
                         <div>
-                          <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
-                          <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
+                          <h2 className="text-[15px] font-bold text-[var(--text-dark)]">AI Enhancement</h2>
+                          <p className="mt-[4px] text-[12px] text-[var(--text-light)]">Enhance your bullet points and descriptions with AI</p>
                         </div>
                         <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">Free</span>
                       </div>
                     </div>
                     <div className="my-[18px] flex items-center gap-[12px] text-[#a0a0ad]">
-                      <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+                      <div className="h-[1px] flex-1 bg-[color:var(--border)]" />
                       <span className="text-[13px]">or</span>
-                      <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+                      <div className="h-[1px] flex-1 bg-[color:var(--border)]" />
                     </div>
                     <Link
                       href="/resume-builder/editor?template=1"
@@ -474,7 +379,7 @@ export default function Page() {
                     >
                       + Start from scratch
                     </Link>
-                    <button type="button" onClick={closeBuildModal} className="mt-[10px] h-[48px] w-full rounded-[16px] border border-[color:#e5e7eb] bg-white text-[14px] font-semibold text-black">Cancel</button>
+                    <button type="button" onClick={closeBuildModal} className="mt-[10px] h-[48px] w-full rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] text-[14px] font-semibold text-[var(--text-dark)]">Cancel</button>
                   </>
                 )}
               </div>
@@ -485,22 +390,22 @@ export default function Page() {
 
       {showBuildModal ? (
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-[rgba(17,24,39,0.42)] px-[10px] py-[10px] backdrop-blur-[6px] md:items-center">
-          <div className="relative w-full max-w-[520px] rounded-[24px] bg-white p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
+          <div className="relative w-full max-w-[520px] rounded-[24px] bg-[var(--card-bg)] p-[14px] shadow-[0_24px_60px_rgba(17,24,39,0.24)] md:p-[18px]">
             <button
               type="button"
               aria-label="Close"
               onClick={() => setShowBuildModal(false)}
-              className="absolute right-[14px] top-[14px] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[20px] font-light leading-none text-black shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
+              className="absolute right-[14px] top-[14px] flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[20px] font-light leading-none text-[var(--text-dark)] shadow-[0_8px_18px_rgba(17,24,39,0.08)]"
             >
               ×
             </button>
 
-            <main className="bg-white px-[4px] py-[8px] text-black">
+            <main className="bg-[var(--card-bg)] px-[4px] py-[8px] text-[var(--text-dark)]">
               <div className="mx-auto flex w-full max-w-[520px] flex-col">
-                <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-black">
+                <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-[var(--text-dark)]">
                   How would you like to build your resume?
                 </h1>
-                <p className="mt-[8px] text-[15px] leading-[1.45] text-[#7a7a86]">
+                <p className="mt-[8px] text-[15px] leading-[1.45] text-[var(--text-light)]">
                   Upload an existing one or start fresh - we&apos;ll make it easy either way!
                 </p>
 
@@ -513,38 +418,38 @@ export default function Page() {
                       className="absolute inset-0 z-[2] h-full w-full cursor-pointer opacity-0"
                       onChange={handleHomepageFileChange}
                     />
-                    <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
-                      <div className="flex justify-center text-[30px] text-[#666]">☁</div>
+                    <div className="rounded-[16px] border border-[color:#222] bg-[rgba(255,255,255,0.92)] p-[18px] shadow-[var(--shadow-sm)]">
+                      <div className="flex justify-center text-[30px] text-[var(--text-light)]">☁</div>
                       <div className="mt-[10px] text-center">
-                        <h2 className="text-[15px] font-bold text-black">
+                        <h2 className="text-[15px] font-bold text-[var(--text-dark)]">
                           {importing ? 'Importing...' : 'Upload resume'}
                         </h2>
-                        <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">
+                        <p className="mt-[6px] text-[12px] leading-[1.45] text-[var(--text-light)]">
                           PDF, DOCX . Max file size: 10 MB
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="relative rounded-[16px] border border-[color:#d9d9e3] bg-white p-[18px] shadow-[0_8px_20px_rgba(17,24,39,0.04)] opacity-60">
+                  <div className="relative rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[18px] shadow-[var(--shadow-sm)] opacity-60">
                     <div className="absolute top-[10px] right-[10px]">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                     </div>
                     <div className="flex justify-center text-[34px] font-bold text-[#0a66c2]">in</div>
                     <div className="mt-[10px] text-center">
-                      <h2 className="text-[15px] font-bold text-black">Import LinkedIn</h2>
-                      <p className="mt-[6px] text-[12px] leading-[1.45] text-[#666]">Coming soon</p>
+                      <h2 className="text-[15px] font-bold text-[var(--text-dark)]">Import LinkedIn</h2>
+                      <p className="mt-[6px] text-[12px] leading-[1.45] text-[var(--text-light)]">Coming soon</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-[14px] rounded-[16px] border border-[color:#d9d9e3] bg-white p-[16px] shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                <div className="mt-[14px] rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px] shadow-[var(--shadow-sm)]">
                   <div className="flex items-center gap-[12px]">
                     <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[18px] font-bold text-white">
                       ✦
                     </div>
                     <div>
-                      <h2 className="text-[15px] font-bold text-black">AI Enhancement</h2>
-                      <p className="mt-[4px] text-[12px] text-[#666]">Enhance your bullet points and descriptions with AI</p>
+                      <h2 className="text-[15px] font-bold text-[var(--text-dark)]">AI Enhancement</h2>
+                      <p className="mt-[4px] text-[12px] text-[var(--text-light)]">Enhance your bullet points and descriptions with AI</p>
                     </div>
                     <span className="ml-auto rounded-full bg-[rgba(108,99,255,0.12)] px-[10px] py-[4px] text-[11px] font-bold text-[color:var(--purple)]">
                       Free
@@ -553,9 +458,9 @@ export default function Page() {
                 </div>
 
                 <div className="my-[18px] flex items-center gap-[12px] text-[#a0a0ad]">
-                  <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+                  <div className="h-[1px] flex-1 bg-[color:var(--border)]" />
                   <span className="text-[13px]">or</span>
-                  <div className="h-[1px] flex-1 bg-[color:#e5e7eb]" />
+                  <div className="h-[1px] flex-1 bg-[color:var(--border)]" />
                 </div>
 
                 <Link

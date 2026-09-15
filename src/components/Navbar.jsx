@@ -3,9 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from './ThemeToggle';
+import { useTheme } from './ThemeProvider';
 import { supabase } from '../lib/supabase';
 
-export default function Navbar({ theme, onToggleTheme }) {
+export default function Navbar(props = {}) {
+  const ctx = useTheme();
+  // Fall back to context so the Navbar works on any page without explicit props.
+  const theme = props.theme ?? ctx.theme;
+  const onToggleTheme = props.onToggleTheme ?? ctx.toggleTheme;
+  const canToggle = props.canToggle ?? ctx.canToggle;
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -50,7 +56,7 @@ export default function Navbar({ theme, onToggleTheme }) {
         </div>
 
         <div className="flex items-center gap-[10px]">
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          {canToggle && <ThemeToggle theme={theme} onToggle={onToggleTheme} />}
 
           {user ? (
             <>
@@ -94,17 +100,17 @@ export default function Navbar({ theme, onToggleTheme }) {
       {menuOpen && (
         <div className="fixed inset-0 z-[200] bg-black/30 backdrop-blur-[4px]" onClick={() => setMenuOpen(false)}>
           <div
-            className="absolute right-0 top-0 flex h-full w-[280px] flex-col bg-white shadow-[-10px_0_40px_rgba(17,24,39,0.12)]"
+            className="absolute right-0 top-0 flex h-full w-[280px] flex-col bg-[var(--card-bg)] shadow-[-10px_0_40px_rgba(0,0,0,0.35)]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[color:#eceef2] px-[20px] py-[16px]">
-              <span className="text-[15px] font-bold text-black">Menu</span>
+            <div className="flex items-center justify-between border-b border-[color:var(--border)] px-[20px] py-[16px]">
+              <span className="text-[15px] font-bold text-[var(--text-dark)]">Menu</span>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMenuOpen(false)}
-                className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[color:#e5e7eb] bg-white text-[16px] font-semibold text-black"
+                className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[16px] font-semibold text-[var(--text-dark)]"
               >
                 ×
               </button>
@@ -115,7 +121,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => scrollTo('templates-section')}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Templates
@@ -123,7 +129,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => { setMenuOpen(false); router.push('/my-resumes'); }}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                 My Resumes
@@ -131,7 +137,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => { setMenuOpen(false); router.push('/interview-prep'); }}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 Interview Prep
@@ -139,7 +145,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => { setMenuOpen(false); router.push('/ats-checker'); }}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                 ATS Checker
@@ -147,7 +153,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => scrollTo('reviews-section')}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 Reviews
@@ -155,7 +161,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => { setMenuOpen(false); router.push('/about'); }}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 About
@@ -163,7 +169,7 @@ export default function Navbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => { setMenuOpen(false); window.open('https://www.croxton.in/#products', '_blank'); }}
-                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+                className="flex items-center gap-[12px] rounded-[12px] px-[14px] py-[12px] text-left text-[14px] font-semibold text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Explore More Apps
@@ -171,8 +177,8 @@ export default function Navbar({ theme, onToggleTheme }) {
             </div>
 
             {/* Footer */}
-            <div className="mt-auto border-t border-[color:#eceef2] px-[20px] py-[16px]">
-              <p className="mb-[12px] text-center text-[12px] text-[#999]">
+            <div className="mt-auto border-t border-[color:var(--border)] px-[20px] py-[16px]">
+              <p className="mb-[12px] text-center text-[12px] text-[var(--text-light)]">
                 powered by <a href="https://croxton.in/" target="_blank" rel="noopener noreferrer" className="font-semibold text-[color:var(--purple)] no-underline">Croxton.in</a>
               </p>
               <button
