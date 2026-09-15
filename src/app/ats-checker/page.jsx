@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import Navbar from '../../components/Navbar';
 import { rolesList, getKeywordsForRole } from '../../lib/ats-keywords-data';
 import { normalizeText, splitKeywords, formatKeyword } from '../../lib/ats-score';
 
@@ -25,17 +26,17 @@ function RoleDropdown({ value, onChange }) {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 200)}
         placeholder="e.g. Data Analyst, DevOps Engineer..."
-        className="h-[48px] w-full rounded-[14px] border border-[#e5e7eb] bg-white px-[16px] text-[14px] text-black outline-none focus:border-[#6C63FF]"
+        className="h-[48px] w-full rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[16px] text-[14px] text-[var(--text-dark)] outline-none focus:border-[#6C63FF]"
         autoComplete="off"
       />
       {open && filtered.length > 0 && (
-        <div className="absolute left-0 right-0 top-[52px] z-[100] max-h-[180px] overflow-y-auto rounded-[12px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(17,24,39,0.1)]">
+        <div className="absolute left-0 right-0 top-[52px] z-[100] max-h-[180px] overflow-y-auto rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[var(--shadow-sm)]">
           {filtered.slice(0, 10).map((role) => (
             <button
               key={role}
               type="button"
               onMouseDown={() => { onChange(role); setOpen(false); }}
-              className="flex w-full items-center px-[14px] py-[10px] text-left text-[13px] text-black hover:bg-[rgba(108,99,255,0.06)] transition-colors"
+              className="flex w-full items-center px-[14px] py-[10px] text-left text-[13px] text-[var(--text-dark)] hover:bg-[rgba(108,99,255,0.06)] transition-colors"
             >
               {role}
             </button>
@@ -265,7 +266,10 @@ export default function AtsCheckerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#fafafa]">
+    <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200">
+      <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
+        <Navbar />
+      </div>
       {/* Header */}
       <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[36px] text-center md:py-[48px] xl:py-[56px] 2xl:py-[64px]">
         <Link
@@ -286,45 +290,45 @@ export default function AtsCheckerPage() {
       <div className="mx-auto max-w-[560px] xl:max-w-[640px] 2xl:max-w-[720px] px-[16px] py-[32px]">
         {/* Step 0: Upload */}
         {step === 0 && (
-          <div className="animate-[fadeIn_0.2s] rounded-[18px] border border-[#eceef2] bg-white p-[24px] shadow-[0_8px_24px_rgba(17,24,39,0.06)] text-center">
+          <div className="animate-[fadeIn_0.2s] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-sm)] text-center">
             <div className="mx-auto mb-[16px] flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[rgba(108,99,255,0.08)]">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/>
               </svg>
             </div>
-            <h2 className="text-[18px] font-bold text-black">Upload Your Resume</h2>
-            <p className="mt-[6px] text-[13px] text-[#8b94a7]">PDF or DOCX — we'll extract the text and check it against ATS keywords.</p>
+            <h2 className="text-[18px] font-bold text-[var(--text-dark)]">Upload Your Resume</h2>
+            <p className="mt-[6px] text-[13px] text-[var(--text-light)]">PDF or DOCX — we'll extract the text and check it against ATS keywords.</p>
             <label className="mt-[20px] inline-flex cursor-pointer items-center gap-[8px] rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[24px] py-[14px] text-[14px] font-bold text-white transition-opacity hover:opacity-90">
               {uploading ? 'Extracting...' : 'Choose File'}
               <input type="file" accept=".pdf,.docx" onChange={handleUpload} className="hidden" disabled={uploading} />
             </label>
-            {fileName && <p className="mt-[10px] text-[12px] text-[#8b94a7]">{fileName}</p>}
+            {fileName && <p className="mt-[10px] text-[12px] text-[var(--text-light)]">{fileName}</p>}
           </div>
         )}
 
         {/* Step 1: Select Role / Paste JD */}
         {step === 1 && (
-          <div className="animate-[fadeIn_0.2s] rounded-[18px] border border-[#eceef2] bg-white p-[24px] shadow-[0_8px_24px_rgba(17,24,39,0.06)]">
-            <h2 className="text-[18px] font-bold text-black">What role are you targeting?</h2>
-            <p className="mt-[4px] text-[13px] text-[#8b94a7]">Select a role or paste a job description for comparison.</p>
+          <div className="animate-[fadeIn_0.2s] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-sm)]">
+            <h2 className="text-[18px] font-bold text-[var(--text-dark)]">What role are you targeting?</h2>
+            <p className="mt-[4px] text-[13px] text-[var(--text-light)]">Select a role or paste a job description for comparison.</p>
             <div className="mt-[16px] grid gap-[12px]">
               <label className="block">
-                <span className="mb-[6px] block text-[12px] font-semibold text-black">Job Title <span className="text-red-500">*</span></span>
+                <span className="mb-[6px] block text-[12px] font-semibold text-[var(--text-dark)]">Job Title <span className="text-red-500">*</span></span>
                 <RoleDropdown value={jobTitle} onChange={setJobTitle} />
               </label>
               <label className="block">
-                <span className="mb-[6px] block text-[12px] font-semibold text-black">Job Description <span className="text-[#8b94a7] font-normal">(optional)</span></span>
+                <span className="mb-[6px] block text-[12px] font-semibold text-[var(--text-dark)]">Job Description <span className="text-[var(--text-light)] font-normal">(optional)</span></span>
                 <textarea
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste a job description for more accurate scoring, or leave blank to use role keywords..."
                   rows={5}
-                  className="w-full rounded-[12px] border border-[#e5e7eb] bg-white px-[14px] py-[12px] text-[14px] text-black outline-none focus:border-[#6C63FF]"
+                  className="w-full rounded-[12px] border border-[color:var(--border)] bg-[var(--card-bg)] px-[14px] py-[12px] text-[14px] text-[var(--text-dark)] outline-none focus:border-[#6C63FF]"
                 />
               </label>
             </div>
             <div className="mt-[18px] flex gap-[10px]">
-              <button type="button" onClick={handleReset} className="h-[48px] flex-1 rounded-[14px] border border-[#e5e7eb] bg-white text-[14px] font-bold text-black">Back</button>
+              <button type="button" onClick={handleReset} className="h-[48px] flex-1 rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] text-[14px] font-bold text-[var(--text-dark)]">Back</button>
               <button type="button" onClick={handleCheck} disabled={!jobTitle.trim()} className="h-[48px] flex-1 rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[14px] font-bold text-white disabled:opacity-50">Check Score</button>
             </div>
           </div>
@@ -334,7 +338,7 @@ export default function AtsCheckerPage() {
         {step === 2 && result && (
           <div className="animate-[fadeIn_0.2s]">
             {/* Grade display */}
-            <div className="rounded-[18px] border border-[#eceef2] bg-white p-[24px] shadow-[0_8px_24px_rgba(17,24,39,0.06)] text-center">
+            <div className="rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-sm)] text-center">
               {(() => {
                 const count = result.matched.length;
                 let grade, gradeColor, gradeEmoji, gradeDesc;
@@ -349,8 +353,8 @@ export default function AtsCheckerPage() {
                       <span className="text-[36px]">{gradeEmoji}</span>
                     </div>
                     <p className="mt-[12px] text-[22px] font-black" style={{ color: gradeColor }}>{grade}</p>
-                    <p className="mt-[6px] text-[13px] text-[#555]">{gradeDesc}</p>
-                    <p className="mt-[8px] text-[12px] text-[#8b94a7]">
+                    <p className="mt-[6px] text-[13px] text-[var(--text-mid)]">{gradeDesc}</p>
+                    <p className="mt-[8px] text-[12px] text-[var(--text-light)]">
                       {result.matched.length} of {result.total} role keywords found in your resume
                       {!jobDescription.trim() ? '' : ' (based on job description)'}
                     </p>
@@ -361,7 +365,7 @@ export default function AtsCheckerPage() {
 
             {/* Matched Keywords */}
             {result.matched.length > 0 && (
-              <div className="mt-[16px] rounded-[14px] border border-[#eceef2] bg-white p-[16px]">
+              <div className="mt-[16px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px]">
                 <h3 className="text-[13px] font-bold text-[#10b981]">✓ Matched Keywords ({result.matched.length})</h3>
                 <div className="mt-[10px] flex flex-wrap gap-[6px]">
                   {result.matched.map((kw, i) => (
@@ -373,9 +377,9 @@ export default function AtsCheckerPage() {
 
             {/* Missing Keywords */}
             {result.missing.length > 0 && (
-              <div className="mt-[12px] rounded-[14px] border border-[#eceef2] bg-white p-[16px]">
+              <div className="mt-[12px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px]">
                 <h3 className="text-[13px] font-bold text-[#ef4444]">✗ Suggested Keywords ({result.missing.length})</h3>
-                <p className="mt-[4px] text-[11px] text-[#8b94a7]">Include the ones relevant to your experience to improve ATS matching</p>
+                <p className="mt-[4px] text-[11px] text-[var(--text-light)]">Include the ones relevant to your experience to improve ATS matching</p>
                 <div className="mt-[10px] flex flex-wrap gap-[6px]">
                   {result.missing.map((kw, i) => (
                     <span key={i} className="rounded-full bg-[rgba(239,68,68,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#ef4444]">{formatKeyword(kw)}</span>
@@ -386,7 +390,7 @@ export default function AtsCheckerPage() {
 
             {/* Actions */}
             <div className="mt-[20px] flex gap-[10px]">
-              <button type="button" onClick={handleReset} className="h-[48px] flex-1 rounded-[14px] border border-[#e5e7eb] bg-white text-[14px] font-bold text-black">Check Another</button>
+              <button type="button" onClick={handleReset} className="h-[48px] flex-1 rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] text-[14px] font-bold text-[var(--text-dark)]">Check Another</button>
               <Link href="/?action=templates" className="flex h-[48px] flex-1 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] text-[14px] font-bold text-white">
                 Build Resume →
               </Link>

@@ -1,7 +1,26 @@
 import './globals.css';
 import Script from 'next/script';
+import ThemeProvider from '../components/ThemeProvider';
+import { themeVars, THEME_STORAGE_KEY, DESKTOP_BREAKPOINT } from '../lib/theme';
 
 const SITE_URL = 'https://resumelab.duckdns.org';
+
+// Runs before paint to apply the correct theme CSS variables and avoid a
+// light-mode flash. Mirrors ThemeProvider logic: desktop (>= breakpoint) is
+// always dark; mobile uses the saved preference (or OS preference as fallback).
+const THEME_INIT_SCRIPT = `(function(){try{
+  var vars=${JSON.stringify(themeVars)};
+  var isDesktop=window.matchMedia('(min-width: ${DESKTOP_BREAKPOINT}px)').matches;
+  var theme;
+  if(isDesktop){theme='dark';}
+  else{
+    var saved=localStorage.getItem('${THEME_STORAGE_KEY}');
+    if(saved==='light'||saved==='dark'){theme=saved;}
+    else{theme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}
+  }
+  var map=vars[theme]||vars.light;var root=document.documentElement;
+  for(var k in map){if(k==='colorScheme'){root.style.colorScheme=map[k];}else{root.style.setProperty(k,map[k]);}}
+}catch(e){}})();`;
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -106,6 +125,7 @@ export default function RootLayout({ children }) {
         <meta name="application-name" content="ResumeLab" />
         <meta name="msapplication-TileColor" content="#6C63FF" />
         <meta name="msapplication-TileImage" content="/images/logo.png" />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body>
         <Script id="structured-data-app" type="application/ld+json" strategy="afterInteractive">
@@ -156,7 +176,7 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-0JKSFPH61G');
           `}
         </Script>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

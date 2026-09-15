@@ -2,20 +2,21 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import Navbar from '../../components/Navbar';
 import interviewData from '../../lib/interview-data';
 
 const categories = [...new Set(interviewData.map((r) => r.category))];
 
 function QuestionAccordion({ question, answer, isOpen, onToggle }) {
   return (
-    <div className="border-b border-[#eceef2] last:border-b-0">
+    <div className="border-b border-[color:var(--border)] last:border-b-0">
       <button
         type="button"
         onClick={onToggle}
         className="flex w-full items-center justify-between gap-[12px] px-[16px] py-[14px] text-left transition-colors hover:bg-[rgba(108,99,255,0.03)]"
         aria-expanded={isOpen}
       >
-        <span className="text-[14px] font-medium leading-[1.5] text-[#1a1a2e] md:text-[15px]">{question}</span>
+        <span className="text-[14px] font-medium leading-[1.5] text-[var(--text-dark)] md:text-[15px]">{question}</span>
         <svg
           className={`h-[18px] w-[18px] shrink-0 text-[#6C63FF] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           viewBox="0 0 24 24"
@@ -35,11 +36,11 @@ function QuestionAccordion({ question, answer, isOpen, onToggle }) {
         <div className="overflow-hidden">
           <div className="px-[16px] pb-[16px] pt-[4px]">
             {answer ? (
-              <p className="rounded-[12px] bg-[rgba(108,99,255,0.04)] px-[14px] py-[12px] text-[13px] leading-[1.7] text-[#444] md:text-[14px]">
+              <p className="rounded-[12px] bg-[rgba(108,99,255,0.04)] px-[14px] py-[12px] text-[13px] leading-[1.7] text-[var(--text-mid)] md:text-[14px]">
                 {answer}
               </p>
             ) : (
-              <p className="rounded-[12px] bg-[rgba(245,245,250,0.8)] px-[14px] py-[12px] text-[13px] italic leading-[1.6] text-[#999]">
+              <p className="rounded-[12px] bg-[rgba(245,245,250,0.8)] px-[14px] py-[12px] text-[13px] italic leading-[1.6] text-[var(--text-light)]">
                 Answer coming soon — check back shortly.
               </p>
             )}
@@ -69,7 +70,7 @@ function RoleView({ role, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#666] hover:text-red-500 hover:border-red-200 transition-colors"
+          className="flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-light)] hover:text-red-500 hover:border-red-200 transition-colors"
           aria-label="Close"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,7 +79,7 @@ function RoleView({ role, onBack }) {
         </button>
       </div>
 
-      <div className="rounded-[18px] border border-[#eceef2] bg-white shadow-[0_8px_24px_rgba(17,24,39,0.06)]">
+      <div className="rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] shadow-[var(--shadow-sm)]">
         {/* Header */}
         <div className="rounded-t-[18px] bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[20px] py-[18px]">
           <h2 className="text-[20px] font-bold text-white md:text-[22px]">{role.title}</h2>
@@ -105,8 +106,8 @@ function RoleView({ role, onBack }) {
       </div>
 
       {/* CTA */}
-      <div className="mt-[24px] rounded-[14px] border border-[#eceef2] bg-[rgba(108,99,255,0.03)] p-[16px] text-center">
-        <p className="text-[13px] text-[#555]">Ready to build a resume tailored for this role?</p>
+      <div className="mt-[24px] rounded-[14px] border border-[color:var(--border)] bg-[rgba(108,99,255,0.03)] p-[16px] text-center">
+        <p className="text-[13px] text-[var(--text-mid)]">Ready to build a resume tailored for this role?</p>
         <Link
           href="/?action=templates"
           className="mt-[10px] inline-block rounded-[12px] bg-[linear-gradient(135deg,#6C63FF_0%,#8B83FF_100%)] px-[20px] py-[10px] text-[13px] font-bold text-white transition-opacity hover:opacity-90"
@@ -135,14 +136,20 @@ export default function InterviewPrepPage() {
 
   if (selectedRole) {
     return (
-      <main className="min-h-screen bg-[#fafafa] px-[16px] py-[24px] md:px-[40px] xl:px-[64px] 2xl:px-[80px] md:py-[40px]">
+      <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200 px-[16px] py-[24px] md:px-[40px] xl:px-[64px] 2xl:px-[80px] md:py-[40px]">
+        <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
+          <Navbar />
+        </div>
         <RoleView role={selectedRole} onBack={() => setSelectedRole(null)} />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#fafafa]">
+    <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200">
+      <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
+        <Navbar />
+      </div>
       {/* Header */}
       <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[40px] text-center md:py-[56px] xl:py-[64px] 2xl:py-[72px]">
         <Link
@@ -177,7 +184,7 @@ export default function InterviewPrepPage() {
           <button
             type="button"
             onClick={() => setActiveCategory('All')}
-            className={`shrink-0 rounded-full px-[14px] py-[7px] text-[12px] font-semibold transition-colors ${activeCategory === 'All' ? 'bg-[#6C63FF] text-white' : 'bg-white text-[#555] border border-[#e5e7eb] hover:border-[#6C63FF] hover:text-[#6C63FF]'}`}
+            className={`shrink-0 rounded-full px-[14px] py-[7px] text-[12px] font-semibold transition-colors ${activeCategory === 'All' ? 'bg-[#6C63FF] text-white' : 'bg-[var(--card-bg)] text-[var(--text-mid)] border border-[color:var(--border)] hover:border-[#6C63FF] hover:text-[#6C63FF]'}`}
           >
             All ({interviewData.length})
           </button>
@@ -186,7 +193,7 @@ export default function InterviewPrepPage() {
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 rounded-full px-[14px] py-[7px] text-[12px] font-semibold transition-colors ${activeCategory === cat ? 'bg-[#6C63FF] text-white' : 'bg-white text-[#555] border border-[#e5e7eb] hover:border-[#6C63FF] hover:text-[#6C63FF]'}`}
+              className={`shrink-0 rounded-full px-[14px] py-[7px] text-[12px] font-semibold transition-colors ${activeCategory === cat ? 'bg-[#6C63FF] text-white' : 'bg-[var(--card-bg)] text-[var(--text-mid)] border border-[color:var(--border)] hover:border-[#6C63FF] hover:text-[#6C63FF]'}`}
             >
               {cat}
             </button>
@@ -197,7 +204,7 @@ export default function InterviewPrepPage() {
       {/* Role cards grid */}
       <div className="px-[16px] pb-[40px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
         {filtered.length === 0 ? (
-          <p className="py-[40px] text-center text-[14px] text-[#999]">No roles found matching &ldquo;{search}&rdquo;</p>
+          <p className="py-[40px] text-center text-[14px] text-[var(--text-light)]">No roles found matching &ldquo;{search}&rdquo;</p>
         ) : (
           <div className="grid gap-[12px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map((role) => (
@@ -205,9 +212,9 @@ export default function InterviewPrepPage() {
                 key={role.id}
                 type="button"
                 onClick={() => setSelectedRole(role)}
-                className="group flex flex-col rounded-[16px] border border-[#eceef2] bg-white p-[16px] text-left shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-all hover:border-[#6C63FF] hover:shadow-[0_6px_20px_rgba(108,99,255,0.1)]"
+                className="group flex flex-col rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px] text-left shadow-[var(--shadow-sm)] transition-all hover:border-[#6C63FF] hover:shadow-[0_6px_20px_rgba(108,99,255,0.1)]"
               >
-                <h3 className="text-[14px] font-bold text-[#1a1a2e] group-hover:text-[#6C63FF] transition-colors md:text-[15px]">
+                <h3 className="text-[14px] font-bold text-[var(--text-dark)] group-hover:text-[#6C63FF] transition-colors md:text-[15px]">
                   {role.title}
                 </h3>
                 <div className="mt-[8px] flex items-center gap-[8px]">
@@ -216,7 +223,7 @@ export default function InterviewPrepPage() {
                   </span>
                   <span className="text-[11px] font-medium text-[#10b981]">{role.salary}</span>
                 </div>
-                <p className="mt-[8px] text-[11px] text-[#8b94a7]">10 Questions</p>
+                <p className="mt-[8px] text-[11px] text-[var(--text-light)]">10 Questions</p>
               </button>
             ))}
           </div>
