@@ -5,19 +5,19 @@ const testimonials = [
     title: 'Unlike other websites',
     text: 'Unlike other websites This website allows for downloading all the hard work you did to lift yourself up and make a great resume.',
     name: 'Rama Rao A',
-    timeAgo: '2 days ago',
+    timeAgo: '1 week ago',
   },
   {
     title: 'Super easy to use with ...',
     text: 'Super easy to use with the integrated AI tools and seamless transition between different designs and styles.',
     name: 'Pragathi K',
-    timeAgo: '5 days ago',
+    timeAgo: '1 month ago',
   },
   {
     title: 'Easy to understand',
     text: 'Easy to understand, navigate, and create suitable documentation to apply for new jobs. Ultimate outcome of a professional resume.',
     name: 'Yashwanth P',
-    timeAgo: '7 days ago',
+    timeAgo: '2 month ago',
   },
 ];
 
