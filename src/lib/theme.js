@@ -2,9 +2,9 @@
 // Single source of truth for the app's light/dark CSS variable maps.
 
 export const THEME_STORAGE_KEY = 'ResumeLab-theme';
+export const DESKTOP_THEME_STORAGE_KEY = 'ResumeLab-desktop-theme';
 
-// Tailwind `lg` breakpoint. At or above this width we treat it as "desktop"
-// and force dark mode (no toggle). Below it is "mobile" (light/dark toggle).
+// Tailwind `lg` breakpoint. At or above this width we treat it as "desktop".
 export const DESKTOP_BREAKPOINT = 1024;
 
 export const themeVars = {
@@ -83,6 +83,21 @@ export const themeVars = {
     '--shadow-sm': '0 8px 24px rgba(0, 0, 0, 0.25)',
     '--shadow-md': '0 14px 40px rgba(0, 0, 0, 0.3)',
     colorScheme: 'dark',
+  },
+};
+
+export const desktopThemeVars = {
+  ...themeVars,
+  light: {
+    ...themeVars.light,
+    '--page-bg-start': '#f1f2f3',
+    '--page-bg-mid': '#e9eaec',
+    '--page-bg-end': '#e2e4e7',
+    '--hero-bg': 'linear-gradient(180deg, #f1f2f3 0%, #e9eaec 100%)',
+    '--section-bg': '#e9eaec',
+    '--section-bg-soft': '#e9eaec',
+    '--border': 'rgba(17, 24, 39, 0.16)',
+    '--border-soft': 'rgba(17, 24, 39, 0.1)',
   },
 };
 

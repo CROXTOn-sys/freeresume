@@ -1588,7 +1588,10 @@ export default function ResumeBuilderClient() {
         message: `Please fill all fields in "${sectionName}" before downloading, or delete unused entries.`,
         onConfirm: () => {
           setConfirmModal(null);
-          if (emptyStep !== -1) setStep(emptyStep);
+          if (emptyStep !== -1) {
+            setMobileView('form');
+            setStep(emptyStep);
+          }
         },
         singleButton: true,
         confirmText: `Go to ${sectionName}`,

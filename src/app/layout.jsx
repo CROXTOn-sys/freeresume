@@ -1,24 +1,28 @@
 import './globals.css';
 import Script from 'next/script';
 import ThemeProvider from '../components/ThemeProvider';
-import { themeVars, THEME_STORAGE_KEY, DESKTOP_BREAKPOINT } from '../lib/theme';
+import { themeVars, desktopThemeVars, THEME_STORAGE_KEY, DESKTOP_THEME_STORAGE_KEY, DESKTOP_BREAKPOINT } from '../lib/theme';
 
 const SITE_URL = 'https://resumebuilderlab.com';
 
 // Runs before paint to apply the correct theme CSS variables and avoid a
-// light-mode flash. Mirrors ThemeProvider logic: desktop (>= breakpoint) is
-// always dark; mobile uses the saved preference (or OS preference as fallback).
+// theme flash. Mirrors ThemeProvider logic: desktop defaults to light and uses
+// its saved preference; mobile uses its saved preference or the OS preference.
 const THEME_INIT_SCRIPT = `(function(){try{
   var vars=${JSON.stringify(themeVars)};
+  var desktopVars=${JSON.stringify(desktopThemeVars)};
   var isDesktop=window.matchMedia('(min-width: ${DESKTOP_BREAKPOINT}px)').matches;
   var theme;
-  if(isDesktop){theme='dark';}
+  if(isDesktop){
+    var savedDesktop=localStorage.getItem('${DESKTOP_THEME_STORAGE_KEY}');
+    theme=savedDesktop==='light'||savedDesktop==='dark'?savedDesktop:'light';
+  }
   else{
     var saved=localStorage.getItem('${THEME_STORAGE_KEY}');
     if(saved==='light'||saved==='dark'){theme=saved;}
     else{theme=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}
   }
-  var map=vars[theme]||vars.light;var root=document.documentElement;
+  var map=(isDesktop?desktopVars:vars)[theme]||(isDesktop?desktopVars:vars).light;var root=document.documentElement;
   for(var k in map){if(k==='colorScheme'){root.style.colorScheme=map[k];}else{root.style.setProperty(k,map[k]);}}
 }catch(e){}})();`;
 

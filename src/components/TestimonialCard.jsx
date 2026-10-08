@@ -12,7 +12,7 @@ function StarRating() {
 
 export default function TestimonialCard({ text, name, role, avatar, avatarClass = '', title, timeAgo }) {
   return (
-    <div className="flex w-[280px] flex-none flex-col rounded-[16px] bg-[var(--card-bg)] px-[20px] pb-[20px] pt-[22px] shadow-[0_2px_12px_rgba(17,24,39,0.05)] lg:w-auto lg:flex-1 lg:rounded-[18px] lg:px-[24px] lg:pb-[24px] lg:pt-[26px] transition-all duration-200 lg:hover:shadow-[0_8px_28px_rgba(17,24,39,0.09)] lg:hover:-translate-y-[1px]">
+    <div className="flex w-[280px] flex-none flex-col rounded-[16px] bg-[var(--card-bg)] px-[20px] pb-[20px] pt-[22px] shadow-[0_2px_12px_rgba(17,24,39,0.05)] lg:w-auto lg:flex-1 lg:rounded-[18px] lg:border lg:border-[color:var(--border)] lg:px-[24px] lg:pb-[24px] lg:pt-[26px] transition-all duration-200 lg:hover:shadow-[0_8px_28px_rgba(17,24,39,0.09)] lg:hover:-translate-y-[1px]">
       {/* Stars */}
       <StarRating />
 
