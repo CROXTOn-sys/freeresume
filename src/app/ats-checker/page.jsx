@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import { rolesList, getKeywordsForRole } from '../../lib/ats-keywords-data';
-import { normalizeText, splitKeywords, formatKeyword } from '../../lib/ats-score';
+import { getAtsGrade, getKeywordMatch, normalizeText, splitKeywords, formatKeyword } from '../../lib/ats-score';
 
 function RoleDropdown({ value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -50,168 +50,39 @@ function RoleDropdown({ value, onChange }) {
 function computeAtsCheck(resumeText, jobTitle, jobDescription) {
   if (!resumeText.trim()) return null;
 
-  let keywords = [];
-  if (jobDescription.trim()) {
-    keywords = splitKeywords(jobDescription);
-  } else if (jobTitle.trim()) {
-    keywords = getKeywordsForRole(jobTitle) || [];
-  }
+  const usesJobDescription = Boolean(jobDescription.trim());
+  const keywords = usesJobDescription
+    ? splitKeywords(jobDescription)
+    : getKeywordsForRole(jobTitle) || [];
+  if (!keywords.length) return { score: 0, matched: [], missing: [] };
 
-  if (!keywords.length) return { score: 0, matched: [], missing: [], total: 0 };
-
-  const resumeNorm = normalizeText(resumeText);
   const matched = [];
   const missing = [];
 
-  // Synonym groups for better matching (same as the resume builder engine)
-  const SYNONYM_GROUPS = [
-    ['react', 'reactjs', 'react.js'],
-    ['javascript', 'js'],
-    ['typescript', 'ts'],
-    ['node', 'nodejs', 'node.js'],
-    ['next', 'nextjs', 'next.js'],
-    ['vue', 'vuejs', 'vue.js'],
-    ['angular', 'angularjs'],
-    ['express', 'expressjs', 'express.js'],
-    ['postgres', 'postgresql', 'psql'],
-    ['mongo', 'mongodb'],
-    ['artificial intelligence', 'ai'],
-    ['machine learning', 'ml'],
-    ['deep learning', 'dl'],
-    ['natural language processing', 'nlp'],
-    ['computer vision', 'cv'],
-    ['amazon web services', 'aws'],
-    ['google cloud platform', 'gcp', 'google cloud'],
-    ['microsoft azure', 'azure'],
-    ['kubernetes', 'k8s'],
-    ['continuous integration', 'ci'],
-    ['continuous deployment', 'cd'],
-    ['ci/cd', 'ci cd', 'cicd'],
-    ['docker', 'containerization'],
-    ['rest', 'restful', 'rest api', 'restful api'],
-    ['graphql', 'graph ql'],
-    ['tensorflow', 'tf'],
-    ['pytorch', 'torch'],
-    ['scikit-learn', 'sklearn', 'scikit learn'],
-    ['pandas', 'pd'],
-    ['numpy', 'np'],
-    ['dotnet', '.net', 'asp.net'],
-    ['csharp', 'c#', 'c sharp'],
-    ['cpp', 'c++'],
-    ['golang', 'go'],
-    ['ruby on rails', 'rails', 'ror'],
-    ['spring boot', 'springboot', 'spring'],
-    ['tailwind', 'tailwindcss', 'tailwind css'],
-    ['sass', 'scss'],
-    ['mysql', 'my sql'],
-    ['redis', 'redis cache'],
-    ['elasticsearch', 'elastic search', 'es'],
-    ['rabbitmq', 'rabbit mq'],
-    ['apache kafka', 'kafka'],
-    ['power bi', 'powerbi'],
-    ['user experience', 'ux'],
-    ['user interface', 'ui'],
-    ['microservices', 'micro services'],
-    ['serverless', 'lambda', 'cloud functions'],
-    ['infrastructure as code', 'iac', 'terraform'],
-    ['object oriented', 'oop', 'object-oriented'],
-    ['test driven development', 'tdd'],
-    ['behavior driven development', 'bdd'],
-    ['agile', 'scrum', 'kanban'],
-    ['devops', 'dev ops'],
-    ['mlops', 'ml ops'],
-    ['data warehouse', 'dwh', 'data warehousing'],
-    ['etl', 'extract transform load'],
-    ['business intelligence', 'bi'],
-    ['version control', 'git', 'github', 'gitlab', 'bitbucket'],
-    ['solid principles', 'solid'],
-    ['design patterns', 'design pattern'],
-    ['data structures', 'data structure'],
-    ['algorithms', 'algorithm'],
-    ['message queues', 'message queue', 'rabbitmq', 'kafka', 'sqs'],
-    ['caching', 'cache', 'redis cache', 'memcached'],
-    ['clean code', 'clean architecture'],
-    ['code review', 'code reviews', 'peer review'],
-    ['linux', 'unix', 'ubuntu', 'centos', 'debian'],
-    ['nginx', 'apache'],
-    ['embedded c', 'embedded-c'],
-    ['rtos', 'freertos', 'real-time operating system'],
-    ['pcb design', 'pcb layout'],
-    ['emi/emc', 'emi', 'emc', 'electromagnetic interference', 'electromagnetic compatibility'],
-    ['dfm', 'design for manufacturing'],
-    ['dft', 'design for testability'],
-    ['bom', 'bill of materials'],
-    ['pid controller', 'pid control', 'pid'],
-    ['plc', 'programmable logic controller'],
-    ['scada', 'supervisory control'],
-    ['hvac', 'heating ventilation air conditioning'],
-    ['fea', 'finite element analysis'],
-    ['cad', 'solidworks', 'autocad', 'catia', 'creo'],
-    ['six sigma', '6 sigma', 'dmaic'],
-    ['lean manufacturing', 'lean'],
-    ['oee', 'overall equipment effectiveness'],
-    ['tpm', 'total productive maintenance'],
-    ['rcm', 'reliability-centered maintenance'],
-    ['mtbf', 'mean time between failures'],
-    ['mttr', 'mean time to repair'],
-    ['bms', 'battery management system'],
-    ['soc', 'state of charge'],
-    ['soh', 'state of health'],
-    ['can', 'can bus', 'can protocol'],
-    ['autosar', 'autosar classic', 'autosar adaptive'],
-    ['iso 26262', 'functional safety'],
-    ['spc', 'statistical process control'],
-    ['cmp', 'chemical-mechanical planarization'],
-    ['feol', 'front-end-of-line'],
-    ['beol', 'back-end-of-line'],
-    ['vrf', 'variable refrigerant flow'],
-    ['etp', 'effluent treatment plant'],
-    ['stp', 'sewage treatment plant'],
-    ['eia', 'environmental impact assessment'],
-    ['cpm', 'critical path method'],
-    ['gis', 'geographic information system', 'arcgis', 'qgis'],
-    ['fsi', 'far', 'floor space index', 'floor area ratio'],
-    ['tod', 'transit-oriented development'],
-    ['cbr', 'california bearing ratio'],
-    ['spt', 'standard penetration test'],
-  ];
-
-  // Build synonym lookup
-  const synonymLookup = new Map();
-  for (const group of SYNONYM_GROUPS) {
-    const normalized = group.map((t) => normalizeText(t));
-    for (const term of normalized) {
-      if (!synonymLookup.has(term)) synonymLookup.set(term, new Set());
-      for (const syn of normalized) {
-        if (syn !== term) synonymLookup.get(term).add(syn);
-      }
-    }
-  }
-
-  const hasSynonymMatch = (haystack, term) => {
-    if (haystack.includes(term)) return true;
-    const syns = synonymLookup.get(term);
-    if (syns) {
-      for (const syn of syns) {
-        if (haystack.includes(syn)) return true;
-      }
-    }
-    return false;
-  };
-
   keywords.forEach((kw) => {
-    const kwNorm = normalizeText(kw);
-    if (kwNorm && hasSynonymMatch(resumeNorm, kwNorm)) {
-      matched.push(kw);
-    } else if (kwNorm) {
+    const match = getKeywordMatch(resumeText, kw);
+    if (match) {
+      matched.push({ keyword: kw, ...match });
+    } else if (normalizeText(kw)) {
       missing.push(kw);
     }
   });
 
+  const jobText = normalizeText(jobDescription);
+  const prioritizedMissing = usesJobDescription
+    ? missing
+      .map((keyword, index) => {
+        const term = normalizeText(keyword);
+        const occurrences = jobText.split(term).length - 1;
+        return { keyword, index, occurrences, words: term.split(' ').length };
+      })
+      .sort((a, b) => b.occurrences - a.occurrences || b.words - a.words || a.index - b.index)
+      .map(({ keyword }) => keyword)
+    : missing;
   const total = matched.length + missing.length;
   const score = total > 0 ? Math.round((matched.length / total) * 100) : 0;
 
-  return { score, matched, missing, total };
+  return { score, matched, missing: prioritizedMissing };
 }
 
 export default function AtsCheckerPage() {
@@ -337,27 +208,26 @@ export default function AtsCheckerPage() {
         {/* Step 2: Result */}
         {step === 2 && result && (
           <div className="animate-[fadeIn_0.2s]">
-            {/* Grade display */}
+            {/* ATS score */}
             <div className="rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-sm)] text-center">
               {(() => {
-                const count = result.matched.length;
-                let grade, gradeColor, gradeEmoji, gradeDesc;
-                if (count >= 20) { grade = 'Excellent'; gradeColor = '#10b981'; gradeEmoji = '🏆'; gradeDesc = 'Your resume is very well aligned with this role.'; }
-                else if (count >= 15) { grade = 'Strong'; gradeColor = '#22c55e'; gradeEmoji = '💪'; gradeDesc = 'Great keyword coverage — you\'re a strong match.'; }
-                else if (count >= 10) { grade = 'Good'; gradeColor = '#6C63FF'; gradeEmoji = '👍'; gradeDesc = 'Solid match. A few more keywords could strengthen it.'; }
-                else if (count >= 5) { grade = 'Fair'; gradeColor = '#f59e0b'; gradeEmoji = '📝'; gradeDesc = 'You have some relevant keywords. Consider adding more from the missing list.'; }
-                else { grade = 'Needs Work'; gradeColor = '#ef4444'; gradeEmoji = '⚠️'; gradeDesc = 'Low keyword match — tailor your resume to include relevant skills for this role.'; }
+                const grade = getAtsGrade(result.score);
+                const gradeColor = grade === 'Strong' ? '#10b981' : grade === 'Good' ? '#22c55e' : grade === 'Fair' ? '#f59e0b' : '#ef4444';
+                const gradeDesc = grade === 'Strong'
+                  ? 'Your resume shows strong alignment with this role.'
+                  : grade === 'Good'
+                    ? 'Your resume is aligned with this role, with a few areas to strengthen.'
+                    : grade === 'Fair'
+                      ? 'Your resume has some relevant alignment; focused updates can make it clearer.'
+                      : 'Your resume may benefit from stronger role alignment. Review the suggestions and focus on experience you can support.';
                 return (
                   <>
-                    <div className="mx-auto flex h-[100px] w-[100px] items-center justify-center rounded-full border-[6px]" style={{ borderColor: gradeColor }}>
-                      <span className="text-[36px]">{gradeEmoji}</span>
+                    <div className="mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full border-[5px]" style={{ borderColor: gradeColor }}>
+                      <span className="text-[18px] font-black" style={{ color: gradeColor }}>ATS</span>
                     </div>
                     <p className="mt-[12px] text-[22px] font-black" style={{ color: gradeColor }}>{grade}</p>
                     <p className="mt-[6px] text-[13px] text-[var(--text-mid)]">{gradeDesc}</p>
-                    <p className="mt-[8px] text-[12px] text-[var(--text-light)]">
-                      {result.matched.length} of {result.total} role keywords found in your resume
-                      {!jobDescription.trim() ? '' : ' (based on job description)'}
-                    </p>
+                    <p className="mt-[8px] text-[12px] text-[var(--text-light)]">Estimated alignment for {jobTitle}{jobDescription.trim() ? ' and the job description' : ''}.</p>
                   </>
                 );
               })()}
@@ -366,10 +236,18 @@ export default function AtsCheckerPage() {
             {/* Matched Keywords */}
             {result.matched.length > 0 && (
               <div className="mt-[16px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px]">
-                <h3 className="text-[13px] font-bold text-[#10b981]">✓ Matched Keywords ({result.matched.length})</h3>
-                <div className="mt-[10px] flex flex-wrap gap-[6px]">
-                  {result.matched.map((kw, i) => (
-                    <span key={i} className="rounded-full bg-[rgba(16,185,129,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#10b981]">{formatKeyword(kw)}</span>
+                <h3 className="text-[13px] font-bold text-[#059669]">✓ Matched skills and keywords</h3>
+                <div className="mt-[10px] grid gap-[8px] sm:grid-cols-2">
+                  {result.matched.map(({ keyword, type, matchedTerm, explanation }) => (
+                    <div key={keyword} className="rounded-[10px] border border-[rgba(16,185,129,0.16)] bg-[rgba(16,185,129,0.05)] px-[10px] py-[8px]">
+                      <div className="flex flex-wrap items-center gap-[6px]">
+                        <span className="text-[12px] font-semibold text-[#047857]">{formatKeyword(keyword)}</span>
+                        <span className="rounded-full bg-white px-[7px] py-[2px] text-[9px] font-semibold text-[#059669]">
+                          {type === 'exact' ? 'Exact match' : type === 'synonym' ? `Equivalent: ${formatKeyword(matchedTerm)}` : `Related: ${formatKeyword(matchedTerm)}`}
+                        </span>
+                      </div>
+                      <p className="mt-[4px] text-[10px] leading-[1.4] text-[var(--text-mid)]">{explanation}</p>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -377,14 +255,19 @@ export default function AtsCheckerPage() {
 
             {/* Missing Keywords */}
             {result.missing.length > 0 && (
-              <div className="mt-[12px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[16px]">
-                <h3 className="text-[13px] font-bold text-[#ef4444]">✗ Suggested Keywords ({result.missing.length})</h3>
-                <p className="mt-[4px] text-[11px] text-[var(--text-light)]">Include the ones relevant to your experience to improve ATS matching</p>
+              <div className="mt-[12px] rounded-[14px] border border-[rgba(16,185,129,0.2)] bg-[var(--card-bg)] p-[16px]">
+                <h3 className="text-[13px] font-bold text-[#059669]">Priority suggestions</h3>
+                <p className="mt-[4px] text-[11px] text-[var(--text-light)]">{jobDescription.trim() ? 'Prioritized by prominence in the job description. Start with the most relevant suggestions.' : 'Prioritized from the selected role’s keyword list. Start with the most relevant suggestions.'}</p>
                 <div className="mt-[10px] flex flex-wrap gap-[6px]">
-                  {result.missing.map((kw, i) => (
-                    <span key={i} className="rounded-full bg-[rgba(239,68,68,0.08)] px-[10px] py-[4px] text-[11px] font-medium text-[#ef4444]">{formatKeyword(kw)}</span>
+                  {result.missing.slice(0, 8).map((kw, i) => (
+                    <span key={kw} className={`rounded-full border px-[10px] py-[5px] text-[11px] font-medium ${i < 3 ? 'border-[rgba(16,185,129,0.24)] bg-[rgba(16,185,129,0.10)] text-[#047857]' : 'border-[rgba(16,185,129,0.14)] bg-[rgba(16,185,129,0.05)] text-[#059669]'}`}>
+                      {i < 3 ? 'Priority · ' : ''}{formatKeyword(kw)}
+                    </span>
                   ))}
                 </div>
+                <p className="mt-[14px] rounded-[10px] border border-[color:var(--border)] bg-[var(--page-bg-mid)] px-[12px] py-[10px] text-[12px] font-semibold leading-[1.5] text-black">
+                  “Add a suggested skill only if it genuinely reflects your experience. You can demonstrate it in your skills, projects, or work history.”
+                </p>
               </div>
             )}
 
