@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     title: 'Refund Policy | ResumeLab',
     description: 'The refund policy for ResumeLab, the free AI resume builder.',
-    url: 'https://resumelab.duckdns.org/refund',
+    url: 'https://resumebuilderlab.com/refund',
     type: 'website',
   },
 };

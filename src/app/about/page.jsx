@@ -9,7 +9,7 @@ export const metadata = {
     title: 'About Us - How Our Free Resume Builder Works | ResumeLab',
     description:
       'Discover how ResumeLab helps you build an ATS-friendly resume with AI-powered tools and professional templates — completely free.',
-    url: 'https://resumelab.duckdns.org/about',
+    url: 'https://resumebuilderlab.com/about',
     type: 'website',
   },
 };
