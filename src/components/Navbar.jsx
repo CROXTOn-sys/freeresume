@@ -14,6 +14,7 @@ export default function Navbar(props = {}) {
   const canToggle = props.canToggle ?? ctx.canToggle;
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -25,13 +26,19 @@ export default function Navbar(props = {}) {
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      window.alert('Unable to sign out. Please try again.');
+      return;
+    }
     setUser(null);
     setMenuOpen(false);
+    setProfileOpen(false);
   };
 
   const scrollTo = (id) => {
     setMenuOpen(false);
+    setProfileOpen(false);
     setTimeout(() => {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
@@ -60,15 +67,54 @@ export default function Navbar(props = {}) {
 
           {user ? (
             <>
-              <span className="hidden lg:inline-flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]">
-                {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
-              </span>
-              <button type="button" onClick={handleSignOut} className="hidden lg:inline-flex items-center gap-[5px] rounded-[22px] border border-[color:#d8d2ff] bg-[rgba(108,99,255,0.04)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)] hover:bg-[rgba(108,99,255,0.1)] transition-colors">
-                Sign Out
-              </button>
-              <span className="lg:hidden flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]">
-                {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
-              </span>
+              <div
+                className="relative hidden lg:block"
+                onMouseEnter={() => setProfileOpen(true)}
+                onMouseLeave={() => setProfileOpen(false)}
+              >
+                <button
+                  type="button"
+                  aria-expanded={profileOpen}
+                  onClick={() => setProfileOpen((open) => !open)}
+                  className="inline-flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]"
+                >
+                  {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+                </button>
+                {profileOpen && (
+                  <div className="absolute right-0 top-full z-[110] mt-[8px] w-[240px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[12px] shadow-[var(--shadow-md)]">
+                    <p className="break-all px-[4px] py-[4px] text-[12px] text-[var(--text-mid)]">{user.email}</p>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="mt-[8px] w-full rounded-[10px] border border-[color:var(--border)] px-[12px] py-[8px] text-left text-[13px] font-semibold text-[var(--text-dark)] hover:bg-[var(--surface-soft)]"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="relative lg:hidden">
+                <button
+                  type="button"
+                  aria-expanded={profileOpen}
+                  onClick={() => setProfileOpen((open) => !open)}
+                  className="flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]"
+                >
+                  {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+                </button>
+                {profileOpen && (
+                  <div className="absolute right-0 top-full z-[110] mt-[8px] w-[240px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[12px] shadow-[var(--shadow-md)]">
+                    <p className="break-all px-[4px] py-[4px] text-[12px] text-[var(--text-mid)]">{user.email}</p>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="mt-[8px] w-full rounded-[10px] border border-[color:var(--border)] px-[12px] py-[8px] text-left text-[13px] font-semibold text-[var(--text-dark)] hover:bg-[var(--surface-soft)]"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <a
