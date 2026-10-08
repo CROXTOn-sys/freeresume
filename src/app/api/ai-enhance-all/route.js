@@ -81,7 +81,7 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': 'https://resumelab.duckdns.org',
+            'HTTP-Referer': 'https://resumebuilderlab.com',
             'X-OpenRouter-Title': 'ResumeLab',
           },
           body: JSON.stringify({

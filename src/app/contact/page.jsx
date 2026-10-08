@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     title: 'Contact Us | ResumeLab',
     description: 'Get in touch with the ResumeLab team for support with our free AI resume builder.',
-    url: 'https://resumelab.duckdns.org/contact',
+    url: 'https://resumebuilderlab.com/contact',
     type: 'website',
   },
 };

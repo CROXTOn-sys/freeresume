@@ -48,7 +48,7 @@ export async function POST(request) {
           customer_phone: '9999999999',
         },
         order_meta: {
-          return_url: `https://resumelab.duckdns.org/api/verify-payment?order_id=${orderId}`,
+          return_url: `https://resumebuilderlab.com/api/verify-payment?order_id=${orderId}`,
         },
       }),
     });

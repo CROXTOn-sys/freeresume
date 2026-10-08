@@ -47,7 +47,7 @@ export async function POST(request) {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': 'https://resumelab.duckdns.org',
+            'HTTP-Referer': 'https://resumebuilderlab.com',
             'X-OpenRouter-Title': 'ResumeLab',
           },
           body: JSON.stringify({

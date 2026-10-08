@@ -3,7 +3,7 @@ import Script from 'next/script';
 import ThemeProvider from '../components/ThemeProvider';
 import { themeVars, THEME_STORAGE_KEY, DESKTOP_BREAKPOINT } from '../lib/theme';
 
-const SITE_URL = 'https://resumelab.duckdns.org';
+const SITE_URL = 'https://resumebuilderlab.com';
 
 // Runs before paint to apply the correct theme CSS variables and avoid a
 // light-mode flash. Mirrors ThemeProvider logic: desktop (>= breakpoint) is
@@ -45,6 +45,22 @@ export const metadata = {
     'online resume builder',
     'ATS resume builder',
     'ATS friendly resume',
+    'ats',
+    'ats resume',
+    'ats resume checker',
+    'ats score checker',
+    'ats score',
+    'ats resume builder',
+    'resume ats checker',
+    'ats friendly cv',
+    'interview questions',
+    'common interview questions',
+    'job interview questions',
+    'interview preparation',
+    'interview prep',
+    'interview questions and answers',
+    'common interview questions and answers',
+    'job interview prep',
   ],
   applicationName: 'ResumeLab',
   authors: [{ name: 'ResumeLab' }],

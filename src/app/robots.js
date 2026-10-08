@@ -1,4 +1,4 @@
-const SITE_URL = 'https://resumelab.duckdns.org';
+const SITE_URL = 'https://resumebuilderlab.com';
 
 export default function robots() {
   return {

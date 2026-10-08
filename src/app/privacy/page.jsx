@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     title: 'Privacy Policy | ResumeLab',
     description: 'How ResumeLab collects, uses, and protects your data on our free AI resume builder.',
-    url: 'https://resumelab.duckdns.org/privacy',
+    url: 'https://resumebuilderlab.com/privacy',
     type: 'website',
   },
 };

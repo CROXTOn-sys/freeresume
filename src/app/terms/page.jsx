@@ -8,7 +8,7 @@ export const metadata = {
   openGraph: {
     title: 'Terms and Conditions | ResumeLab',
     description: 'The terms of service for using ResumeLab, the free AI resume builder.',
-    url: 'https://resumelab.duckdns.org/terms',
+    url: 'https://resumebuilderlab.com/terms',
     type: 'website',
   },
 };
