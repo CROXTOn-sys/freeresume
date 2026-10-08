@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { useTheme } from '../components/ThemeProvider';
-import { themeVars } from '../lib/theme';
+import { themeVars, desktopThemeVars } from '../lib/theme';
 import Hero from '../components/Hero';
 import RoleCombobox from '../components/RoleCombobox';
 import TemplatesSection from '../components/TemplatesSection';
@@ -18,7 +18,7 @@ import BugReport from '../components/BugReport';
 
 export default function Page() {
   const router = useRouter();
-  const { theme, canToggle, toggleTheme } = useTheme();
+  const { theme, isDesktop, canToggle, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [openIndex, setOpenIndex] = useState(null);
   const [showBuildModal, setShowBuildModal] = useState(false);
@@ -177,7 +177,7 @@ export default function Page() {
 
   return (
     <main
-      style={themeVars[theme]}
+      style={(isDesktop ? desktopThemeVars : themeVars)[theme]}
       className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,var(--overlay-1),transparent_26%),radial-gradient(circle_at_top_right,var(--overlay-2),transparent_22%),linear-gradient(180deg,var(--page-bg-start)_0%,var(--page-bg-mid)_42%,var(--page-bg-end)_100%)] pb-0 pt-[68px] text-[var(--text-dark)] transition-colors duration-200"
     >
       <input

@@ -34,7 +34,7 @@ export default function ReviewUs({ compact = false }) {
   if (submitted) {
     return (
       <div className={compact ? '' : 'mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[28px] shadow-[var(--shadow-sm)] lg:hidden'}>
-        <div className="flex flex-col items-center rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)]">
+        <div className="flex flex-col items-center rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)] lg:border lg:border-[color:var(--border)]">
           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#10b981]">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
@@ -46,7 +46,7 @@ export default function ReviewUs({ compact = false }) {
   }
 
   const content = (
-    <div className="rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)]">
+    <div className="rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)] lg:border lg:border-[color:var(--border)]">
       <div className="text-center">
         <div className="inline-flex items-center justify-center gap-[6px] rounded-full bg-[rgba(16,185,129,0.08)] px-[12px] py-[5px] text-[11px] font-bold text-[#059669]">
           <svg viewBox="0 0 24 24" className="h-[13px] w-[13px] fill-[#059669]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>

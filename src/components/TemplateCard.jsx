@@ -39,7 +39,7 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
       {/* Card */}
       <CardTag
         {...cardProps}
-        className={`group relative block w-full overflow-hidden rounded-[14px] bg-white shadow-[0_4px_20px_rgba(17,24,39,0.07)] transition-all duration-300 lg:rounded-[16px] ${
+        className={`group relative block w-full overflow-hidden rounded-[14px] bg-white shadow-[0_4px_20px_rgba(17,24,39,0.07)] transition-all duration-300 lg:rounded-[16px] lg:border lg:border-[color:var(--border)] ${
           isComingSoon
             ? 'opacity-60 cursor-default'
             : 'hover:shadow-[0_10px_36px_rgba(17,24,39,0.13)] hover:-translate-y-[2px]'
