@@ -116,18 +116,112 @@ for (const group of SYNONYM_GROUPS) {
   }
 }
 
-/**
- * Check if `haystack` contains `term` or any of its synonyms.
- */
-const hasSynonymMatch = (haystack, term) => {
-  if (haystack.includes(term)) return true;
-  const syns = _synonymLookup.get(term);
-  if (syns) {
-    for (const syn of syns) {
-      if (haystack.includes(syn)) return true;
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const hasTextTerm = (haystack, term) => {
+  const normalizedTerm = normalizeText(term);
+  if (!normalizedTerm) return false;
+  return new RegExp(`(?:^|\\s)${escapeRegExp(normalizedTerm)}(?=\\s|$)`).test(haystack);
+};
+
+const RELATED_KEYWORD_GROUPS = [
+  {
+    concept: 'programming language',
+    examples: ['python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'go', 'rust', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'matlab'],
+  },
+  {
+    concept: 'cloud platform',
+    examples: ['aws', 'amazon web services', 'azure', 'microsoft azure', 'gcp', 'google cloud', 'google cloud platform'],
+  },
+  {
+    concept: 'relational database',
+    examples: ['postgresql', 'postgres', 'mysql', 'sql server', 'oracle database', 'mariadb'],
+  },
+  {
+    concept: 'data visualization tool',
+    examples: ['tableau', 'power bi', 'matplotlib', 'seaborn', 'looker', 'qlik'],
+  },
+  {
+    concept: 'container orchestration platform',
+    examples: ['kubernetes', 'k8s', 'openshift', 'amazon eks', 'gke', 'aks'],
+  },
+  {
+    concept: 'large language model',
+    aliases: ['large language models'],
+    examples: ['claude', 'gemini', 'gpt', 'gpt-4', 'gpt-4o', 'chatgpt', 'llama', 'mistral', 'mixtral', 'command r', 'deepseek', 'qwen', 'llm', 'llms'],
+  },
+];
+
+const findRelatedConcept = (term) => RELATED_KEYWORD_GROUPS.find((group) =>
+  normalizeText(group.concept) === term || group.aliases?.some((alias) => normalizeText(alias) === term)
+);
+
+const findRelatedExample = (haystack, term) => {
+  const relatedGroup = RELATED_KEYWORD_GROUPS.find((group) =>
+    group.examples.some((example) => normalizeText(example) === term)
+  );
+  if (!relatedGroup) return null;
+  const matchedExample = relatedGroup.examples.find((example) =>
+    normalizeText(example) !== term && hasTextTerm(haystack, example)
+  );
+  return matchedExample ? { concept: relatedGroup.concept, example: matchedExample } : null;
+};
+
+const hasKeywordMatch = (haystack, term) => {
+  if (hasTextTerm(haystack, term)) return true;
+  const synonyms = _synonymLookup.get(term);
+  if (synonyms) {
+    for (const synonym of synonyms) {
+      if (hasTextTerm(haystack, synonym)) return true;
     }
   }
-  return false;
+  const relatedGroup = findRelatedConcept(term);
+  return Boolean(relatedGroup?.examples.some((item) => hasTextTerm(haystack, item)) || findRelatedExample(haystack, term));
+};
+
+/**
+ * Match a job keyword to resume text and explain whether the match is exact,
+ * an established synonym, or a specific example of a broader concept.
+ */
+export const getKeywordMatch = (resumeText, keyword) => {
+  const haystack = normalizeText(resumeText);
+  const term = normalizeText(keyword);
+  if (!term) return null;
+  if (hasTextTerm(haystack, term)) {
+    return { type: 'exact', matchedTerm: keyword, explanation: 'Exact term found in your resume.' };
+  }
+
+  const synonyms = _synonymLookup.get(term);
+  if (synonyms) {
+    for (const synonym of synonyms) {
+      if (hasTextTerm(haystack, synonym)) {
+        return {
+          type: 'synonym',
+          matchedTerm: synonym,
+          explanation: `Matched the equivalent term "${synonym}".`,
+        };
+      }
+    }
+  }
+
+  const relatedGroup = findRelatedConcept(term);
+  let related = null;
+  if (relatedGroup) {
+    const example = relatedGroup.examples.find((item) => hasTextTerm(haystack, item));
+    if (example) related = { example, concept: relatedGroup.concept, isConcept: true };
+  } else {
+    related = findRelatedExample(haystack, term);
+  }
+  if (related) {
+    return {
+      type: 'related',
+      matchedTerm: related.example,
+      explanation: related.isConcept
+        ? `${formatKeyword(related.example)} is a ${related.concept}.`
+        : `${formatKeyword(related.example)} is another ${related.concept}; the models have different capabilities.`,
+    };
+  }
+  return null;
 };
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -136,6 +230,9 @@ const hasSynonymMatch = (haystack, term) => {
 
 export const KNOWN_PHRASES = [
   'machine learning', 'deep learning', 'natural language processing', 'computer vision',
+  'large language models', 'large language model',
+  'programming language', 'cloud platform', 'relational database', 'data visualization tool',
+  'container orchestration platform',
   'full stack', 'data science', 'data engineering', 'data analysis', 'data visualization',
   'business intelligence', 'project management', 'product management', 'software development',
   'cloud computing', 'version control', 'continuous integration', 'continuous deployment',
@@ -218,7 +315,10 @@ export const splitKeywords = (text) => {
   const found = new Set();
   // First pass: extract known multi-word phrases as units
   for (const phrase of KNOWN_PHRASES) {
-    if (normalized.includes(phrase)) found.add(phrase);
+    const coveredByLongerPhrase = KNOWN_PHRASES.some((other) =>
+      other.length > phrase.length && other.includes(phrase) && normalized.includes(other)
+    );
+    if (normalized.includes(phrase) && !coveredByLongerPhrase) found.add(phrase);
   }
   // Second pass: single meaningful words not already covered by a phrase
   normalized.split(' ').forEach((word) => {
@@ -352,7 +452,7 @@ function scoreJobDescriptionMatch(data, targetJob, fieldMap = {}) {
   const matched = [];
   const missing = [];
   for (const term of jdTerms) {
-    if (hasSynonymMatch(resumeHaystack, term)) matched.push(term);
+    if (hasKeywordMatch(resumeHaystack, term)) matched.push(term);
     else missing.push(term);
   }
 
@@ -516,7 +616,7 @@ function scoreProjectsQuality(data, targetJob, fieldMap = {}) {
   const jdTerms = splitKeywords(`${targetJob.title || ''} ${targetJob.description || ''}`);
   if (jdTerms.length) {
     const projText = normalizeText(filled.map((p) => [p[f.projects.name], p[f.projects.tech], ...(Array.isArray(p.bullets) ? p.bullets : []), f.projects.description ? p[f.projects.description] : ''].join(' ')).join(' '));
-    const matchCount = jdTerms.filter((term) => hasSynonymMatch(projText, term)).length;
+    const matchCount = jdTerms.filter((term) => hasKeywordMatch(projText, term)).length;
     const relevance = matchCount / jdTerms.length;
     totalPoints += Math.round(relevance * 30);
     if (relevance >= 0.3) strengths.push('Projects relevant to target role');
@@ -550,7 +650,7 @@ function scoreSkillsQuality(data, targetJob, fieldMap = {}) {
   const jdTerms = splitKeywords(`${targetJob.title || ''} ${targetJob.description || ''}`);
   if (jdTerms.length) {
     const skillsText = normalizeText(allItems.join(' '));
-    const matchCount = jdTerms.filter((term) => hasSynonymMatch(skillsText, term)).length;
+    const matchCount = jdTerms.filter((term) => hasKeywordMatch(skillsText, term)).length;
     const relevance = matchCount / Math.min(jdTerms.length, 20);
     totalPoints += Math.round(Math.min(relevance, 1) * 40);
     if (relevance >= 0.4) strengths.push('Skills match job requirements');
@@ -574,7 +674,7 @@ function scoreSkillsQuality(data, targetJob, fieldMap = {}) {
     // Also check synonym equivalence
     let foundDup = false;
     for (const [existing] of seen) {
-      if (existing === key || hasSynonymMatch(existing, key) || hasSynonymMatch(key, existing)) {
+      if (existing === key || hasKeywordMatch(existing, key) || hasKeywordMatch(key, existing)) {
         duplicates.push(item);
         foundDup = true;
         break;
@@ -819,7 +919,7 @@ export const getAtsSectionScore = (section, data, targetJob = { title: '', descr
   const countKeywordMatches = (text) => {
     if (!jdTerms.length) return 0;
     const haystack = normalizeText(text);
-    return jdTerms.filter((term) => hasSynonymMatch(haystack, term)).length;
+    return jdTerms.filter((term) => hasKeywordMatch(haystack, term)).length;
   };
   const kwBonus = (text, max) => jdTerms.length ? Math.min(Math.round((countKeywordMatches(text) / Math.min(jdTerms.length, 10)) * max), max) : 0;
 
