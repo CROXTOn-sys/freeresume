@@ -30,22 +30,22 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
   const isComingSoon = !isPreview;
 
   return (
-    <div className="flex flex-col items-center gap-[12px] lg:gap-[14px]">
+    <div className="rl-template-card flex flex-col items-center gap-[12px] lg:gap-[14px]">
       {/* Label above card */}
-      <span className={`text-[11px] font-bold uppercase tracking-[0.1em] lg:text-[12px] ${isComingSoon ? 'text-[var(--text-light)]' : 'text-[var(--purple)]'}`}>
+      <span className={`rl-template-badge text-[11px] font-bold uppercase tracking-[0.1em] lg:text-[12px] ${isComingSoon ? 'text-[var(--text-light)]' : 'text-[var(--purple)]'}`}>
         {badge}
       </span>
 
       {/* Card */}
       <CardTag
         {...cardProps}
-        className={`group relative block w-full overflow-hidden rounded-[14px] bg-white shadow-[0_4px_20px_rgba(17,24,39,0.07)] transition-all duration-300 lg:rounded-[16px] lg:border lg:border-[color:var(--border)] ${
+        className={`rl-template-link group relative block w-full overflow-hidden rounded-[14px] bg-white shadow-[0_4px_20px_rgba(17,24,39,0.07)] transition-all duration-300 lg:rounded-[16px] lg:border lg:border-[color:var(--border)] ${
           isComingSoon
             ? 'opacity-60 cursor-default'
             : 'hover:shadow-[0_10px_36px_rgba(17,24,39,0.13)] hover:-translate-y-[2px]'
         }`}
       >
-        <div className={`relative flex w-full items-center justify-center overflow-hidden ${isComingSoon ? 'bg-[#f9fafb]' : 'bg-[#f8f9fb]'} p-[8px] lg:p-[12px]`}>
+        <div className={`rl-template-thumbnail relative flex w-full items-center justify-center overflow-hidden ${isComingSoon ? 'bg-[#f9fafb]' : 'bg-[#f8f9fb]'} p-[8px] lg:p-[12px]`}>
           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[6px] lg:rounded-[8px]">
             {isPreview && templateId === 1 && (
               <Image
@@ -72,7 +72,7 @@ export default function TemplateCard({ badge, title, users, variant, thumbClass 
       </CardTag>
 
       {/* Info below */}
-      <div className="text-center">
+      <div className="rl-template-info text-center">
         <div className="text-[13px] font-bold text-[var(--text-dark)] lg:text-[15px]">
           {title}
         </div>

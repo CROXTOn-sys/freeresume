@@ -45,12 +45,13 @@ export default function TemplatesSection({ highlight = false }) {
   return (
     <section
       id="templates-section"
-      className={`mt-[6px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[32px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 lg:mt-[0px] lg:px-[64px] lg:pb-[56px] lg:pt-[48px] lg:rounded-none lg:border-x-0 lg:mx-0 ${
+      className={`rl-template-section mt-[6px] border-y border-[color:var(--border-soft)] bg-[var(--section-bg-soft)] px-[18px] pb-[32px] pt-[28px] shadow-[var(--shadow-sm)] transition-all duration-300 lg:mt-[0px] lg:px-[64px] lg:pb-[56px] lg:pt-[48px] lg:rounded-none lg:border-x-0 lg:mx-0 ${
         highlight ? 'ring-4 ring-[rgba(95,84,240,0.22)] ring-offset-2 ring-offset-transparent' : ''
       }`}
     >
-      <div className="lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
+      <div className="rl-template-section-inner lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
         <div className="mb-[24px] text-center lg:mb-[36px]">
+          <span className="rl-template-eyebrow hidden lg:inline-flex">TEMPLATES</span>
           <h2 className="text-[20px] font-extrabold tracking-[-0.02em] text-[var(--text-dark)] lg:text-[28px] xl:text-[32px]">
             Get started with a template
           </h2>
@@ -69,7 +70,7 @@ export default function TemplatesSection({ highlight = false }) {
         </div>
 
         {/* Desktop: 4 columns showing all templates */}
-        <div className="hidden lg:grid lg:grid-cols-4 lg:gap-[24px] xl:gap-[32px]">
+        <div className="rl-template-grid hidden lg:grid lg:grid-cols-4 lg:gap-[24px] xl:gap-[32px]">
           {templates.map((template) => (
             <TemplateCard key={template.title} {...template} />
           ))}
