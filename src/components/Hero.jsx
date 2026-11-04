@@ -49,7 +49,7 @@ export default function Hero({ onCreateResume }) {
 
   return (
     <section
-      className="relative overflow-hidden border-b border-[color:var(--border-soft)] px-[22px] pb-[28px] pt-[30px] text-center shadow-[var(--shadow-sm)] lg:px-[64px] lg:pb-[64px] lg:pt-[64px] lg:text-left lg:rounded-none lg:border-x-0 lg:mx-0"
+      className="rl-hero relative overflow-hidden border-b border-[color:var(--border-soft)] px-[22px] pb-[28px] pt-[30px] text-center shadow-[var(--shadow-sm)] lg:px-[64px] lg:pb-[64px] lg:pt-[64px] lg:text-left lg:rounded-none lg:border-x-0 lg:mx-0"
       style={{ background: 'var(--hero-bg)' }}
     >
       {/* Mobile background resume decoration */}
@@ -61,9 +61,9 @@ export default function Hero({ onCreateResume }) {
       </div>
 
       {/* Desktop two-column layout */}
-      <div className="relative z-[1] lg:flex lg:items-center lg:gap-[56px] lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
+      <div className="rl-hero-layout relative z-[1] lg:flex lg:items-center lg:gap-[56px] lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto">
         {/* Left: Resume mockup (desktop only) */}
-        <div className="hidden lg:block lg:flex-shrink-0 lg:relative lg:z-[2]">
+        <div className="rl-hero-preview hidden lg:block lg:flex-shrink-0 lg:relative lg:z-[2]">
           <div className="relative">
             <div className="w-[340px] xl:w-[380px] 2xl:w-[420px] rounded-[16px] border border-[color:var(--border-soft)] bg-white p-[8px] shadow-[0_20px_50px_rgba(17,24,39,0.12)] rotate-[-2deg]">
               <img src="/images/template1.png" alt="Resume template preview" className="w-full rounded-[8px] border border-[#d1d5db]" />
@@ -75,7 +75,7 @@ export default function Hero({ onCreateResume }) {
         </div>
 
         {/* Right: Content */}
-        <div className="lg:flex-1 lg:overflow-hidden">
+        <div className="rl-hero-content lg:flex-1 lg:overflow-hidden">
           <div className="mb-[16px] inline-flex items-center gap-[8px] rounded-full border border-[color:rgba(95,84,240,0.08)] bg-[var(--purple-bg)] px-[12px] py-[7px] text-[12px] font-bold uppercase tracking-[0.12em] text-[var(--purple-dark)] lg:text-[13px] lg:px-[16px] lg:py-[8px]">
             ATS resume builder
           </div>
@@ -116,7 +116,7 @@ export default function Hero({ onCreateResume }) {
           <a href="/ats-checker" className="mt-[12px] inline-block text-[13px] font-medium text-[var(--text-light)] transition-colors hover:text-[var(--purple)]">or check your resume&apos;s <span className="text-[var(--purple)] underline">ATS score</span> →</a>
 
           {/* Desktop marquee — constrained to right column, goes behind left resume */}
-          <div className="mt-[24px] hidden lg:block">
+          <div className="rl-hero-desktop-stats mt-[24px] hidden lg:block">
             <MarqueeStrip />
             <p className="mt-[14px] text-[13px] text-[var(--text-light)]">Your first resume download is free. Upgrade to a plan for unlimited downloads.</p>
           </div>

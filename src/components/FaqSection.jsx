@@ -43,7 +43,7 @@ export default function FaqSection({ openIndex, onToggle, reviewSlot }) {
   };
 
   return (
-    <section id="talk-to-us-section" className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pt-[48px] lg:pb-[48px] lg:rounded-none lg:border-y lg:border-[color:var(--border-soft)] lg:mx-0">
+    <section id="talk-to-us-section" className="rl-faq-section mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[24px] pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pt-[48px] lg:pb-[48px] lg:rounded-none lg:border-y lg:border-[color:var(--border-soft)] lg:mx-0">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}

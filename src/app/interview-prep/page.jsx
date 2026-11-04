@@ -136,7 +136,7 @@ export default function InterviewPrepPage() {
 
   if (selectedRole) {
     return (
-      <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200 px-[16px] py-[24px] md:px-[40px] xl:px-[64px] 2xl:px-[80px] md:py-[40px]">
+      <main className="rl-interview-page min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200 px-[16px] py-[24px] md:px-[40px] xl:px-[64px] 2xl:px-[80px] md:py-[40px]">
         <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
           <Navbar />
         </div>
@@ -146,12 +146,12 @@ export default function InterviewPrepPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200">
+    <main className="rl-interview-page min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200">
       <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
         <Navbar />
       </div>
       {/* Header */}
-      <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[40px] text-center md:py-[56px] xl:py-[64px] 2xl:py-[72px]">
+      <section className="rl-screen-header relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[40px] text-center md:py-[56px] xl:py-[64px] 2xl:py-[72px]">
         <Link
           href="/"
           className="absolute right-[16px] top-[16px] flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] text-[#b0b0c8] hover:text-white hover:border-[rgba(255,255,255,0.4)] transition-colors"
@@ -179,7 +179,7 @@ export default function InterviewPrepPage() {
       </section>
 
       {/* Category filters */}
-      <div className="overflow-x-auto px-[16px] py-[16px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
+      <div className="rl-interview-filters overflow-x-auto px-[16px] py-[16px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
         <div className="flex gap-[8px]">
           <button
             type="button"
@@ -202,7 +202,7 @@ export default function InterviewPrepPage() {
       </div>
 
       {/* Role cards grid */}
-      <div className="px-[16px] pb-[40px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
+      <div className="rl-interview-roles px-[16px] pb-[40px] md:px-[40px] xl:px-[64px] 2xl:px-[80px]">
         {filtered.length === 0 ? (
           <p className="py-[40px] text-center text-[14px] text-[var(--text-light)]">No roles found matching &ldquo;{search}&rdquo;</p>
         ) : (

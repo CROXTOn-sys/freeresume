@@ -137,12 +137,12 @@ export default function AtsCheckerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200">
+    <main className="rl-ats-page min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200">
       <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
         <Navbar />
       </div>
       {/* Header */}
-      <section className="relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[36px] text-center md:py-[48px] xl:py-[56px] 2xl:py-[64px]">
+      <section className="rl-screen-header relative bg-[linear-gradient(135deg,#1a1a2e_0%,#2d2b55_100%)] px-[16px] py-[36px] text-center md:py-[48px] xl:py-[56px] 2xl:py-[64px]">
         <Link
           href="/"
           className="absolute right-[16px] top-[16px] flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.08)] text-[#b0b0c8] hover:text-white hover:border-[rgba(255,255,255,0.4)] transition-colors"
@@ -158,7 +158,7 @@ export default function AtsCheckerPage() {
         </p>
       </section>
 
-      <div className="mx-auto max-w-[560px] xl:max-w-[640px] 2xl:max-w-[720px] px-[16px] py-[32px]">
+      <div className="rl-ats-content mx-auto max-w-[560px] xl:max-w-[640px] 2xl:max-w-[720px] px-[16px] py-[32px]">
         {/* Step 0: Upload */}
         {step === 0 && (
           <div className="animate-[fadeIn_0.2s] rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-sm)] text-center">
@@ -212,7 +212,7 @@ export default function AtsCheckerPage() {
             <div className="rounded-[18px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[24px] shadow-[var(--shadow-sm)] text-center">
               {(() => {
                 const grade = getAtsGrade(result.score);
-                const gradeColor = grade === 'Strong' ? '#10b981' : grade === 'Good' ? '#22c55e' : grade === 'Fair' ? '#f59e0b' : '#ef4444';
+                const gradeColor = result.score >= 80 ? '#12b76a' : result.score >= 60 ? '#f79009' : '#f04438';
                 const gradeDesc = grade === 'Strong'
                   ? 'Your resume shows strong alignment with this role.'
                   : grade === 'Good'
@@ -222,7 +222,7 @@ export default function AtsCheckerPage() {
                       : 'Your resume may benefit from stronger role alignment. Review the suggestions and focus on experience you can support.';
                 return (
                   <>
-                    <div className="mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full border-[5px]" style={{ borderColor: gradeColor }}>
+                    <div className="rl-ats-score-ring mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full border-[5px]" style={{ borderColor: gradeColor, background: `conic-gradient(${gradeColor} 0 ${result.score}%, var(--border) ${result.score}% 100%)` }}>
                       <span className="text-[18px] font-black" style={{ color: gradeColor }}>ATS</span>
                     </div>
                     <p className="mt-[12px] text-[22px] font-black" style={{ color: gradeColor }}>{grade}</p>

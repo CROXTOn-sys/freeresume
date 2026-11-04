@@ -12,13 +12,13 @@ function StarRating() {
 
 export default function TestimonialCard({ text, name, role, avatar, avatarClass = '', title, timeAgo }) {
   return (
-    <div className="flex w-[280px] flex-none flex-col rounded-[16px] bg-[var(--card-bg)] px-[20px] pb-[20px] pt-[22px] shadow-[0_2px_12px_rgba(17,24,39,0.05)] lg:w-auto lg:flex-1 lg:rounded-[18px] lg:border lg:border-[color:var(--border)] lg:px-[24px] lg:pb-[24px] lg:pt-[26px] transition-all duration-200 lg:hover:shadow-[0_8px_28px_rgba(17,24,39,0.09)] lg:hover:-translate-y-[1px]">
+    <div className="rl-testimonial-card relative flex w-[280px] flex-none flex-col rounded-[16px] bg-[var(--card-bg)] px-[20px] pb-[20px] pt-[22px] shadow-[0_2px_12px_rgba(17,24,39,0.05)] lg:w-auto lg:flex-1 lg:rounded-[18px] lg:border lg:border-[color:var(--border)] lg:px-[24px] lg:pb-[24px] lg:pt-[26px] transition-all duration-200 lg:hover:shadow-[0_8px_28px_rgba(17,24,39,0.09)] lg:hover:-translate-y-[1px]">
       {/* Stars */}
       <StarRating />
 
       {/* Title */}
       <h3 className="mt-[14px] text-[15px] font-bold leading-[1.3] text-[var(--text-dark)] lg:text-[16px]">
-        {title || text.split(' ').slice(0, 5).join(' ') + '...'}
+        {title || text}
       </h3>
 
       {/* Review text */}
@@ -28,7 +28,10 @@ export default function TestimonialCard({ text, name, role, avatar, avatarClass 
 
       {/* Reviewer */}
       <div className="mt-[16px] text-[12px] text-[var(--text-light)] lg:text-[13px]">
-        <span className="font-medium text-[var(--text-mid)]">{name}</span> · {timeAgo || role}
+        <span className="rl-reviewer-avatar" aria-hidden="true">{name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span>
+        <span className="font-medium text-[var(--text-mid)]">{name}</span>
+        <svg className="rl-verified-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.2 9.6 2l1.8-.1.8 1.6 1.5 1-.2 1.8.7 1.7-1.1 1.4-.5 1.8-1.8.3L9.4 13l-1.7-.7-1.7.7-1.4-1.1-1.8-.3-.5-1.8-1.1-1.4.7-1.7-.2-1.8 1.5-1 .8-1.6 1.8.1L8 1.2Zm-1 8.9 4.1-4.2-.9-.9L7 8.3 5.8 7.1l-.9.9L7 10.1Z" /></svg>
+        <span className="rl-review-time">· {timeAgo || role}</span>
       </div>
     </div>
   );

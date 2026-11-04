@@ -80,7 +80,7 @@ export default function SeoFaqSection() {
   return (
     <section
       id="faq-seo-section"
-      className="mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[32px] pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pb-[56px] lg:pt-[48px] lg:rounded-none lg:border-t lg:border-[color:var(--border-soft)] lg:mx-0"
+      className="rl-seo-faq mt-[12px] bg-[var(--section-bg)] px-[18px] pb-[32px] pt-[32px] shadow-[var(--shadow-sm)] lg:mt-[0px] lg:px-[64px] lg:pb-[56px] lg:pt-[48px] lg:rounded-none lg:border-t lg:border-[color:var(--border-soft)] lg:mx-0"
     >
       <script
         type="application/ld+json"

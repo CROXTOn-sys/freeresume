@@ -46,7 +46,7 @@ export default function Navbar(props = {}) {
 
   return (
     <>
-      <nav className="fixed left-0 right-0 top-0 z-[100] mx-auto flex w-full max-w-[480px] items-center justify-between border-b border-[color:var(--border-soft)] bg-[var(--nav-bg)] px-[18px] py-[14px] shadow-[var(--nav-shadow)] backdrop-blur-[18px] lg:max-w-none lg:px-[64px] lg:py-[16px] lg:rounded-none">
+      <nav className="rl-navbar fixed left-0 right-0 top-0 z-[100] mx-auto flex w-full max-w-[480px] items-center justify-between border-b border-[color:var(--border-soft)] bg-[var(--nav-bg)] px-[18px] py-[14px] shadow-[var(--nav-shadow)] backdrop-blur-[18px] lg:max-w-none lg:px-[64px] lg:py-[16px] lg:rounded-none">
         <a href="#" className="flex items-center gap-[8px] text-[17px] font-bold text-[var(--text-dark)] no-underline lg:text-[19px]">
           <img src="/images/logo.png" alt="ResumeLab" className="h-[32px] w-[32px] rounded-[10px]" />
           ResumeLab

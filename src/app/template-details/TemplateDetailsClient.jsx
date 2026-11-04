@@ -201,7 +201,7 @@ export default function TemplateDetailsClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200 [scroll-behavior:smooth]">
+    <main className="rl-template-details min-h-screen bg-[var(--page-bg-mid)] pt-[68px] text-[var(--text-dark)] transition-colors duration-200 [scroll-behavior:smooth]">
       <div className="mx-auto w-full max-w-[480px] lg:max-w-none">
         <Navbar />
       </div>
@@ -224,11 +224,11 @@ export default function TemplateDetailsClient() {
         </svg>
       </button>
 
-      <div className="mx-auto flex w-full max-w-[920px] flex-col gap-[18px] px-[16px] pb-[96px] pt-[18px] lg:max-w-[1120px] lg:pt-[0px] lg:pb-[40px] lg:min-h-[calc(100vh-40px)] lg:justify-center">
+      <div className="rl-template-details-layout mx-auto flex w-full max-w-[920px] flex-col gap-[18px] px-[16px] pb-[96px] pt-[18px] lg:max-w-[1120px] lg:pt-[0px] lg:pb-[40px] lg:min-h-[calc(100vh-40px)] lg:justify-center">
         {/* Desktop: two-column layout, Mobile: stacked */}
         <div className="lg:flex lg:items-start lg:gap-[48px]">
           {/* Left: Resume preview */}
-          <section className="flex justify-center pt-[38px] lg:pt-0 lg:sticky lg:top-[24px] lg:w-[55%]">
+          <section className="rl-template-preview flex justify-center pt-[38px] lg:pt-0 lg:sticky lg:top-[24px] lg:w-[55%]">
             <div className="w-[90%] max-w-[720px] lg:w-full">
               <div className="overflow-hidden rounded-[18px] bg-[var(--card-bg)] p-[14px] shadow-[var(--shadow-sm)] transition-transform duration-300 hover:scale-[1.01] active:scale-[0.995]">
                 <div className="relative h-[40vh] min-h-[280px] w-full lg:h-[60vh] lg:min-h-[480px] border border-[color:var(--border)] rounded-[8px]">
@@ -246,7 +246,7 @@ export default function TemplateDetailsClient() {
           </section>
 
           {/* Right: Features + CTA */}
-          <section className="px-[4px] lg:w-[45%] lg:pt-[38px] lg:px-0">
+          <section className="rl-template-copy px-[4px] lg:w-[45%] lg:pt-[38px] lg:px-0">
             <h1 className="text-[22px] font-bold tracking-[-0.02em] text-[var(--text-dark)] lg:text-[26px]">{template.title}</h1>
             <div className="mt-[16px] grid gap-[12px]">
               {template.features.map((feature) => (

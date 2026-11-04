@@ -46,7 +46,7 @@ export default function ReviewUs({ compact = false }) {
   }
 
   const content = (
-    <div className="rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)] lg:border lg:border-[color:var(--border)]">
+    <div className="rl-review-form rounded-[20px] bg-[var(--card-bg)] p-[24px] shadow-[0_4px_20px_rgba(17,24,39,0.06)] lg:border lg:border-[color:var(--border)]">
       <div className="text-center">
         <div className="inline-flex items-center justify-center gap-[6px] rounded-full bg-[rgba(16,185,129,0.08)] px-[12px] py-[5px] text-[11px] font-bold text-[#059669]">
           <svg viewBox="0 0 24 24" className="h-[13px] w-[13px] fill-[#059669]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>

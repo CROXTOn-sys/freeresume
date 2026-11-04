@@ -178,7 +178,7 @@ export default function Page() {
   return (
     <main
       style={(isDesktop ? desktopThemeVars : themeVars)[theme]}
-      className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,var(--overlay-1),transparent_26%),radial-gradient(circle_at_top_right,var(--overlay-2),transparent_22%),linear-gradient(180deg,var(--page-bg-start)_0%,var(--page-bg-mid)_42%,var(--page-bg-end)_100%)] pb-0 pt-[68px] text-[var(--text-dark)] transition-colors duration-200"
+      className="rl-home min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,var(--overlay-1),transparent_26%),radial-gradient(circle_at_top_right,var(--overlay-2),transparent_22%),linear-gradient(180deg,var(--page-bg-start)_0%,var(--page-bg-mid)_42%,var(--page-bg-end)_100%)] pb-0 pt-[68px] text-[var(--text-dark)] transition-colors duration-200"
     >
       <input
         ref={uploadInputRef}
@@ -223,7 +223,7 @@ export default function Page() {
           <a href="/refund" className="hover:text-[#6C63FF] transition-colors">Refund Policy</a>
         </div>
 
-        <footer className="hidden lg:block lg:mt-[48px] lg:border-t lg:border-[color:var(--border-soft)] lg:pt-[40px] lg:pb-[32px] lg:px-[64px]">
+        <footer className="rl-home-footer hidden lg:block lg:mt-[48px] lg:border-t lg:border-[color:var(--border-soft)] lg:pt-[40px] lg:pb-[32px] lg:px-[64px]">
           <div className="lg:max-w-[1120px] xl:max-w-[1280px] 2xl:max-w-[1400px] lg:mx-auto lg:grid lg:grid-cols-3 lg:gap-[48px]">
             <div>
               <h4 className="text-[14px] font-bold text-[var(--text-dark)] mb-[14px]">Product</h4>
@@ -259,7 +259,7 @@ export default function Page() {
       </div>
       <BugReport />
       {/* My Resumes shortcut button */}
-      <button type="button" onClick={() => router.push('/my-resumes')} className="fixed bottom-[80px] right-[16px] z-[95] flex h-[46px] w-[46px] items-center justify-center rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.15)]" aria-label="My Resumes">
+      <button type="button" onClick={() => router.push('/my-resumes')} className="rl-home-resumes-shortcut fixed bottom-[80px] right-[16px] z-[95] flex h-[46px] w-[46px] items-center justify-center rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.15)]" aria-label="My Resumes">
         <img src="/images/download.png" alt="My Resumes" className="h-[46px] w-[46px] rounded-full" />
       </button>
 

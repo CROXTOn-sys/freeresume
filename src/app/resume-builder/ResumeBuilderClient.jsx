@@ -1658,7 +1658,7 @@ export default function ResumeBuilderClient() {
   const errorBorder = (value) => showErrors && !String(value || '').trim() ? 'border-red-400' : 'border-[color:var(--border)]';
 
   return (
-    <main className="min-h-screen bg-[var(--page-bg-mid)] text-[var(--text-dark)] transition-colors duration-200" style={{ overscrollBehavior: 'none' }}>
+    <main className="rl-resume-editor min-h-screen bg-[var(--page-bg-mid)] text-[var(--text-dark)] transition-colors duration-200" style={{ overscrollBehavior: 'none' }}>
 
       <div className="mx-auto flex min-h-[100svh] w-full max-w-[1280px] flex-col gap-[12px] px-[8px] pb-[12px] pt-[8px] md:px-[16px] lg:grid lg:min-h-0 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
         <div
@@ -1870,7 +1870,7 @@ export default function ResumeBuilderClient() {
             <div className="mb-[12px] relative z-[45]">
               <div className="flex items-center justify-between rounded-[16px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[10px] shadow-[var(--shadow-sm)]">
                 <div className="flex items-center gap-[12px]">
-                  <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[conic-gradient(from_220deg,#635bff_0deg,#2da6ff_70deg,#29d9c2_170deg,#7fe36a_250deg,#e5e7eb_305deg,#e5e7eb_360deg)] p-[4px] shadow-[0_4px_10px_rgba(99,91,255,0.12)]">
+                  <div className="rl-ats-progress-ring flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[conic-gradient(from_220deg,#635bff_0deg,#2da6ff_70deg,#29d9c2_170deg,#7fe36a_250deg,#e5e7eb_305deg,#e5e7eb_360deg)] p-[4px] shadow-[0_4px_10px_rgba(99,91,255,0.12)]" style={{ background: `conic-gradient(${displayAtsScore >= 80 ? 'var(--success)' : displayAtsScore >= 60 ? 'var(--warning)' : 'var(--danger)'} 0 ${displayAtsScore}%, var(--border) ${displayAtsScore}% 100%)` }}>
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
                       <span className="text-[15px] font-black tracking-[-0.03em] text-[#0f1f44]">{displayAtsScore}</span>
                     </div>

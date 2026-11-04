@@ -1,9 +1,18 @@
 import './globals.css';
 import Script from 'next/script';
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import ThemeProvider from '../components/ThemeProvider';
 import { themeVars, desktopThemeVars, THEME_STORAGE_KEY, DESKTOP_THEME_STORAGE_KEY, DESKTOP_BREAKPOINT } from '../lib/theme';
 
 const SITE_URL = 'https://resumebuilderlab.com';
+const inter = Inter({ subsets: ['latin'], display: 'swap', preload: false, variable: '--font-inter' });
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-plus-jakarta-sans',
+  weight: ['600', '700', '800'],
+});
 
 // Runs before paint to apply the correct theme CSS variables and avoid a
 // theme flash. Mirrors ThemeProvider logic: desktop defaults to light and uses
@@ -135,7 +144,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${plusJakartaSans.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/images/logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/images/logo.png" />
