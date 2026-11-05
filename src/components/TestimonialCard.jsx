@@ -30,7 +30,7 @@ export default function TestimonialCard({ text, name, role, avatar, avatarClass 
       <div className="mt-[16px] text-[12px] text-[var(--text-light)] lg:text-[13px]">
         <span className="rl-reviewer-avatar" aria-hidden="true">{name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span>
         <span className="font-medium text-[var(--text-mid)]">{name}</span>
-        <svg className="rl-verified-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.2 9.6 2l1.8-.1.8 1.6 1.5 1-.2 1.8.7 1.7-1.1 1.4-.5 1.8-1.8.3L9.4 13l-1.7-.7-1.7.7-1.4-1.1-1.8-.3-.5-1.8-1.1-1.4.7-1.7-.2-1.8 1.5-1 .8-1.6 1.8.1L8 1.2Zm-1 8.9 4.1-4.2-.9-.9L7 8.3 5.8 7.1l-.9.9L7 10.1Z" /></svg>
+        <svg className="rl-verified-icon hidden lg:block" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.2 9.6 2l1.8-.1.8 1.6 1.5 1-.2 1.8.7 1.7-1.1 1.4-.5 1.8-1.8.3L9.4 13l-1.7-.7-1.7.7-1.4-1.1-1.8-.3-.5-1.8-1.1-1.4.7-1.7-.2-1.8 1.5-1 .8-1.6 1.8.1L8 1.2Zm-1 8.9 4.1-4.2-.9-.9L7 8.3 5.8 7.1l-.9.9L7 10.1Z" /></svg>
         <span className="rl-review-time">· {timeAgo || role}</span>
       </div>
     </div>
