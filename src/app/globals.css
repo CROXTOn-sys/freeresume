@@ -382,6 +382,15 @@ html[style*="color-scheme: dark"] main .rl-hero-content > a.hero-ats-check-link:
     --hero-muted: #A0A0B4;
     --hero-line: #2A2A38;
     --hero-accent: #9C89FF;
+    background: #0F0F16 !important;
+  }
+
+  html[style*="color-scheme: dark"] .rl-hero-content > div[class*="flex-col"] > a:first-child {
+    color: #0F0F16 !important;
+  }
+
+  html[style*="color-scheme: dark"] .rl-hero-content > div[class*="flex-col"] > a:last-child {
+    border-color: #3A3A52 !important;
   }
 
   .hero-mobile-stats {
