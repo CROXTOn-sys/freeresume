@@ -8,6 +8,7 @@ module.exports = {
     extend: {
       fontFamily: {
         inter: ['var(--font-inter)'],
+        'serif-display': ['var(--font-newsreader)', 'Georgia', 'serif'],
         heading: ['var(--font-plus-jakarta-sans)', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
