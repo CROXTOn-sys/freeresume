@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { rateLimit } from '../../../lib/rate-limit.js';
+import { authorizeAiRequest, fetchWithTimeout, readJsonBody } from '../../../lib/ai-request.js';
 
 const MODEL_FALLBACKS = [
   'google/gemma-3-12b-it:free',
@@ -60,8 +60,8 @@ function extractText(payload) {
 }
 
 export async function POST(request) {
-  const { success } = rateLimit(request, { limit: 8, windowMs: 60000 });
-  if (!success) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+  const access = await authorizeAiRequest({ route: 'ai-enhance', limit: 8 });
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   console.log('[ai-enhance] env status', {
@@ -76,7 +76,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing OPENROUTER_API_KEY' }, { status: 500 });
     }
 
-    const body = await request.json();
+    const bodyResult = await readJsonBody(request, 12 * 1024);
+    if (!bodyResult.ok) {
+      return NextResponse.json({ error: bodyResult.error }, { status: bodyResult.status });
+    }
+    const body = bodyResult.data;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be an object' }, { status: 400 });
+    }
     const { section, text, context } = body || {};
 
     console.log('[ai-enhance] incoming payload', {
@@ -87,8 +94,14 @@ export async function POST(request) {
       contextPreview: typeof context === 'string' ? context.slice(0, 120) : '',
     });
 
-    if (!section || !text || !String(text).trim()) {
+    if (!['summary', 'experience_bullet', 'project_bullet', 'issuer'].includes(section)
+      || typeof text !== 'string'
+      || !text.trim()
+      || (context !== undefined && typeof context !== 'string')) {
       return NextResponse.json({ error: 'Missing text to enhance' }, { status: 400 });
+    }
+    if (text.length > 5000 || (context && context.length > 4000)) {
+      return NextResponse.json({ error: 'Text or context is too long' }, { status: 413 });
     }
 
     const prompt = buildPrompt({
@@ -104,7 +117,9 @@ export async function POST(request) {
     for (const model of MODEL_FALLBACKS) {
       console.log('[ai-enhance] selected model', { model });
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      let response;
+      try {
+        response = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +139,13 @@ export async function POST(request) {
           top_p: 0.95,
           max_tokens: 256,
         }),
-      });
+        });
+      } catch (error) {
+        const timedOut = error?.name === 'AbortError' || error?.name === 'TimeoutError';
+        lastErrorStatus = timedOut ? 504 : 502;
+        lastErrorDetails = timedOut ? `${model} timed out` : error?.message || 'Provider request failed';
+        continue;
+      }
 
       console.log('[ai-enhance] openrouter response', {
         model,

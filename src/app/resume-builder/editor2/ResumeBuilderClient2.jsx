@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Template2Preview from '../../../components/template-previews/Template2Preview';
 import { supabase } from '../../../lib/supabase';
-import { checkDownloadAccess, initiatePayment, invalidateDownloadCache, prefetchDownloadAccess } from '../../../lib/payment';
+import { prefetchDownloadAccess } from '../../../lib/payment';
 
 const steps = ['Personal Info', 'Skills', 'Work Experience', 'Education', 'Projects', 'Certifications'];
 const makeId = () => Date.now() + Math.random();
@@ -638,36 +638,6 @@ export default function ResumeBuilderClient2() {
   };
 
   const proceedWithDownload2 = async (downloadFn) => {
-    // Check payment status
-    try {
-      const access = await checkDownloadAccess();
-      if (!access.canDownload && !access.isPaid) {
-        setConfirmModal({
-          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
-          onConfirm: async () => {
-            setConfirmModal(null);
-            setLoadingText('Processing...');
-            setDownloading(true);
-            try {
-              const result = await initiatePayment();
-              setDownloading(false);
-              if (result.paid || result.alreadyPaid) {
-                downloadFn();
-              }
-            } catch (err) {
-              setDownloading(false);
-              if (err.message !== 'Payment cancelled') {
-                window.alert('Payment failed. Please try again.');
-              }
-            }
-          },
-          confirmText: 'Pay ₹19',
-          confirmColor: 'bg-[#10b981]',
-        });
-        return;
-      }
-    } catch {}
-
     downloadFn();
   };
 

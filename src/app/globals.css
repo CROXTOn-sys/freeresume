@@ -223,6 +223,33 @@
   animation: marquee 20s linear infinite;
 }
 
+@keyframes rl-announcement-scroll {
+  to { transform: translateX(-50%); }
+}
+
+.rl-announcement-track {
+  animation: rl-announcement-scroll 48s linear infinite;
+}
+
+.rl-announcement:hover .rl-announcement-track,
+.rl-announcement:focus-within .rl-announcement-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rl-announcement-track {
+    animation: none;
+  }
+
+  .rl-announcement-copy[aria-hidden="true"] {
+    display: none;
+  }
+
+  .rl-announcement {
+    overflow-x: auto;
+  }
+}
+
 .stat-strip-desktop {
   --ss-value: #14141F;
   --ss-label: #5E5E70;

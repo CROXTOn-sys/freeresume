@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
-import { rateLimit } from '../../../lib/rate-limit.js';
+import { authorizeAiRequest, fetchWithTimeout, readJsonBody } from '../../../lib/ai-request.js';
+
+const FIELD_TYPES = [
+  'experience_bullet',
+  'project_bullet',
+  'project_description',
+  'certification_description',
+  'summary',
+  'coursework',
+];
 
 const MODEL_FALLBACKS = [
   'google/gemma-3-12b-it:free',
@@ -8,18 +17,33 @@ const MODEL_FALLBACKS = [
 ];
 
 export async function POST(request) {
-  const { success } = rateLimit(request, { limit: 10, windowMs: 60000 });
-  if (!success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  const access = await authorizeAiRequest({ route: 'ai-suggest', limit: 10 });
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'Missing API key' }, { status: 500 });
 
   try {
-    const body = await request.json();
+    const bodyResult = await readJsonBody(request, 8 * 1024);
+    if (!bodyResult.ok) {
+      return NextResponse.json({ error: bodyResult.error }, { status: bodyResult.status });
+    }
+    const body = bodyResult.data;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be an object' }, { status: 400 });
+    }
     const { context, fieldType, targetJobTitle, targetJobDescription } = body;
 
-    if (!context || !context.trim()) {
+    if (typeof context !== 'string' || !context.trim()
+      || !FIELD_TYPES.includes(fieldType)
+      || (targetJobTitle !== undefined
+        && (typeof targetJobTitle !== 'string' || targetJobTitle.length > 200))
+      || (targetJobDescription !== undefined
+        && (typeof targetJobDescription !== 'string' || targetJobDescription.length > 5000))) {
       return NextResponse.json({ error: 'Need context (title/role) to generate suggestion' }, { status: 400 });
+    }
+    if (context.length > 2000) {
+      return NextResponse.json({ error: 'Context is too long' }, { status: 413 });
     }
 
     const jobContext = targetJobTitle 
@@ -35,14 +59,12 @@ export async function POST(request) {
       coursework: `Based on the degree "${context}", suggest 5-6 relevant courses separated by commas. Return ONLY the course names, no numbering.`,
     };
 
-    const prompt = prompts[fieldType] || prompts.experience_bullet;
+    const prompt = prompts[fieldType];
 
     let lastError = '';
     for (const model of MODEL_FALLBACKS) {
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout per model
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -56,9 +78,7 @@ export async function POST(request) {
             temperature: 0.7,
             max_tokens: 150,
           }),
-          signal: controller.signal,
         });
-        clearTimeout(timeout);
 
         if (!response.ok) { lastError = await response.text(); continue; }
         const payload = await response.json();
@@ -66,7 +86,7 @@ export async function POST(request) {
         if (text) return NextResponse.json({ suggestion: text, modelUsed: model });
         lastError = 'Empty response';
       } catch (err) {
-        lastError = err.name === 'AbortError' ? `${model} timed out` : err.message;
+        lastError = err.name === 'AbortError' || err.name === 'TimeoutError' ? `${model} timed out` : err.message;
         continue;
       }
     }
@@ -74,7 +94,7 @@ export async function POST(request) {
     // OpenAI fallback
     const openaiKey = process.env.OPENAI_API_KEY;
     if (openaiKey) {
-      const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      const openaiRes = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
         body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 150 }),

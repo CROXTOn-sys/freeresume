@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Template1Preview from '../../components/template-previews/Template1Preview';
 import Template2Preview from '../../components/template-previews/Template2Preview';
 import { supabase } from '../../lib/supabase';
-import { checkDownloadAccess, initiatePayment, invalidateDownloadCache, prefetchDownloadAccess } from '../../lib/payment';
+import { prefetchDownloadAccess } from '../../lib/payment';
 
 const steps = ['Personal Information', 'Summary', 'Skills', 'Experience', 'Projects', 'Certifications', 'Education'];
 const makeId = () => Date.now() + Math.random();
@@ -1618,39 +1618,6 @@ export default function ResumeBuilderClient() {
   };
 
   const proceedWithDownload = async (downloadFn) => {
-    const actionType = downloadFn === handleDownloadDocx ? 'docx' : 'pdf';
-
-    // Check payment status
-    try {
-      const access = await checkDownloadAccess();
-      if (!access.canDownload && !access.isPaid) {
-        // Need to pay
-        setConfirmModal({
-          message: 'Your free download has been used. Upgrade to unlimited downloads for just ₹19.',
-          onConfirm: async () => {
-            setConfirmModal(null);
-            setLoadingText('Processing...');
-            setDownloading(true);
-            try {
-              const result = await initiatePayment();
-              setDownloading(false);
-              if (result.paid || result.alreadyPaid) {
-                (downloadFn || handleDownload)();
-              }
-            } catch (err) {
-              setDownloading(false);
-              if (err.message !== 'Payment cancelled') {
-                window.alert('Payment failed. Please try again.');
-              }
-            }
-          },
-          confirmText: 'Pay ₹19',
-          confirmColor: 'bg-[#10b981]',
-        });
-        return;
-      }
-    } catch {}
-
     (downloadFn || handleDownload)();
   };
 
