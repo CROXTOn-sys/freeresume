@@ -207,7 +207,6 @@ export default function Hero({ onCreateResume }) {
           {/* Desktop marquee — constrained to right column, goes behind left resume */}
           <div className="rl-hero-desktop-stats mt-[24px] hidden lg:block">
             <StatsStripDesktop />
-            <p className="mt-[14px] text-[13px] text-[var(--text-light)]">Your first resume download is free. Upgrade to a plan for unlimited downloads.</p>
           </div>
         </div>
       </div>
@@ -218,7 +217,6 @@ export default function Hero({ onCreateResume }) {
           <MarqueeStrip />
         </div>
         <StatsStripMobile />
-        <p className="mt-[10px] text-center text-[11px] text-[var(--text-light)] max-lg:!-mx-6 max-lg:!mt-0 max-lg:!px-6 max-lg:!pb-[22px] max-lg:!text-[12px] max-lg:!text-[var(--hero-muted)]">Your first resume download is free. Upgrade to a plan for unlimited downloads.</p>
       </div>
     </section>
   );

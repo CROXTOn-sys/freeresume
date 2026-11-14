@@ -398,6 +398,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Resume API error:', error);
+    if (error?.code === 'PDF_QUEUE_FULL') {
+      return new Response('PDF rendering is busy. Please try again shortly.', { status: 503 });
+    }
     return new Response('PDF generation failed', { status: 500 });
   } finally {
     if (release) release();

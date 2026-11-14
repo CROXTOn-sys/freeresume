@@ -6,6 +6,39 @@ import ThemeToggle from './ThemeToggle';
 import { useTheme } from './ThemeProvider';
 import { supabase } from '../lib/supabase';
 
+const announcementMessages = [
+  'Build an ATS-friendly resume',
+  'Choose from professional templates',
+  'Enhance your resume with AI',
+  'Unlimited Resume Downloads — Free Until December 15, 2026.',
+];
+const announcementLoop = [...announcementMessages, ...announcementMessages, ...announcementMessages];
+
+function ProfileAvatar({ user }) {
+  const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState(null);
+  const showImage = typeof avatarUrl === 'string' && avatarUrl.length > 0 && failedAvatarUrl !== avatarUrl;
+
+  return (
+    <span className="flex h-[36px] w-[36px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--border)] bg-[rgba(108,99,255,0.08)] text-[color:var(--purple)]">
+      {showImage ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          referrerPolicy="no-referrer"
+          onError={() => setFailedAvatarUrl(avatarUrl)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M5 21a7 7 0 0 1 14 0" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export default function Navbar(props = {}) {
   const ctx = useTheme();
   // Fall back to context so the Navbar works on any page without explicit props.
@@ -15,6 +48,7 @@ export default function Navbar(props = {}) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profilePinned, setProfilePinned] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -34,11 +68,13 @@ export default function Navbar(props = {}) {
     setUser(null);
     setMenuOpen(false);
     setProfileOpen(false);
+    setProfilePinned(false);
   };
 
   const scrollTo = (id) => {
     setMenuOpen(false);
     setProfileOpen(false);
+    setProfilePinned(false);
     setTimeout(() => {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 150);
@@ -69,16 +105,29 @@ export default function Navbar(props = {}) {
             <>
               <div
                 className="relative hidden lg:block"
-                onMouseEnter={() => setProfileOpen(true)}
-                onMouseLeave={() => setProfileOpen(false)}
+                onMouseEnter={() => {
+                  if (!profilePinned) setProfileOpen(true);
+                }}
+                onMouseLeave={() => {
+                  if (!profilePinned) setProfileOpen(false);
+                }}
               >
                 <button
                   type="button"
+                  aria-label={user.email ? `Account menu for ${user.email}` : 'Account menu'}
                   aria-expanded={profileOpen}
-                  onClick={() => setProfileOpen((open) => !open)}
-                  className="inline-flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]"
+                  onClick={() => {
+                    if (profilePinned) {
+                      setProfileOpen(false);
+                      setProfilePinned(false);
+                    } else {
+                      setProfileOpen(true);
+                      setProfilePinned(true);
+                    }
+                  }}
+                  className="inline-flex h-[40px] w-[40px] items-center justify-center rounded-full"
                 >
-                  {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+                  <ProfileAvatar user={user} />
                 </button>
                 {profileOpen && (
                   <div className="absolute right-0 top-full z-[110] mt-[8px] w-[240px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[12px] shadow-[var(--shadow-md)]">
@@ -96,11 +145,15 @@ export default function Navbar(props = {}) {
               <div className="relative lg:hidden">
                 <button
                   type="button"
+                  aria-label={user.email ? `Account menu for ${user.email}` : 'Account menu'}
                   aria-expanded={profileOpen}
-                  onClick={() => setProfileOpen((open) => !open)}
-                  className="flex items-center gap-[6px] rounded-[22px] bg-[rgba(108,99,255,0.08)] px-[14px] py-[8px] text-[13px] font-semibold text-[color:var(--purple)]"
+                  onClick={() => {
+                    setProfilePinned(false);
+                    setProfileOpen((open) => !open);
+                  }}
+                  className="flex h-[40px] w-[40px] items-center justify-center rounded-full"
                 >
-                  {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User'}
+                  <ProfileAvatar user={user} />
                 </button>
                 {profileOpen && (
                   <div className="absolute right-0 top-full z-[110] mt-[8px] w-[240px] rounded-[14px] border border-[color:var(--border)] bg-[var(--card-bg)] p-[12px] shadow-[var(--shadow-md)]">
@@ -141,6 +194,27 @@ export default function Navbar(props = {}) {
           </button>
         </div>
       </nav>
+
+      <div className="rl-announcement fixed left-0 right-0 top-[65px] z-[99] flex h-[32px] items-center overflow-hidden bg-[#171525] text-[11px] font-medium text-white lg:top-[77px] lg:h-[32px] lg:text-[13px]" role="region">
+        <span className="sr-only">Build an ATS-friendly resume with professional templates and AI. Unlimited Resume Downloads — Free Until December 15, 2026.</span>
+        <div className="rl-announcement-track flex w-max items-center" aria-hidden="true">
+          {[false, true].map((isDuplicate) => (
+            <div
+              key={String(isDuplicate)}
+              className="rl-announcement-copy flex shrink-0 items-center"
+              aria-hidden={isDuplicate ? 'true' : undefined}
+            >
+              {announcementLoop.map((message, index) => (
+                <span key={`${index}-${message}`} className={`inline-flex items-center gap-[10px] whitespace-nowrap px-[14px] ${message === 'Unlimited Resume Downloads — Free Until December 15, 2026.' ? 'font-bold text-[#c4b5fd]' : ''}`}>
+                  {message}
+                  <span className="h-[4px] w-[4px] rounded-full bg-[#a99cff]" aria-hidden="true" />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="h-[32px] lg:h-[41px]" aria-hidden="true" />
 
       {/* Menu overlay */}
       {menuOpen && (

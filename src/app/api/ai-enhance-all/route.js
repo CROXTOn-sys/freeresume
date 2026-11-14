@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { rateLimit } from '../../../lib/rate-limit.js';
+import { authorizeAiRequest, fetchWithTimeout, readJsonBody } from '../../../lib/ai-request.js';
 
 const MODEL_FALLBACKS = [
   'google/gemma-3-12b-it:free',
@@ -8,15 +8,60 @@ const MODEL_FALLBACKS = [
 ];
 
 export async function POST(request) {
-  const { success } = rateLimit(request, { limit: 3, windowMs: 60000 });
-  if (!success) return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+  const access = await authorizeAiRequest({ route: 'ai-enhance-all', limit: 3 });
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'Missing API key' }, { status: 500 });
 
   try {
-    const body = await request.json();
+    const bodyResult = await readJsonBody(request, 48 * 1024);
+    if (!bodyResult.ok) {
+      return NextResponse.json({ error: bodyResult.error }, { status: bodyResult.status });
+    }
+    const body = bodyResult.data;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be an object' }, { status: 400 });
+    }
     const { experience, projects, certifications, education, targetJobTitle, targetJobDescription } = body || {};
+    const collections = [
+      ['experience', experience],
+      ['projects', projects],
+      ['certifications', certifications],
+      ['education', education],
+    ];
+    for (const [name, items] of collections) {
+      if (items !== undefined && (!Array.isArray(items) || items.length > 15)) {
+        return NextResponse.json({ error: `${name} must be an array of at most 15 items` }, { status: 400 });
+      }
+      if (Array.isArray(items) && items.some((item) => !item || typeof item !== 'object' || Array.isArray(item))) {
+        return NextResponse.json({ error: `${name} contains an invalid item` }, { status: 400 });
+      }
+    }
+    if (experience?.some((item) => (
+      (item.bullets !== undefined
+        && (!Array.isArray(item.bullets)
+          || item.bullets.length > 10
+          || item.bullets.some((bullet) => typeof bullet !== 'string' || bullet.length > 1500)))
+    ))) {
+      return NextResponse.json({ error: 'Experience bullets must be strings of at most 1500 characters' }, { status: 400 });
+    }
+    for (const [items, field] of [
+      [projects, 'description'],
+      [certifications, 'description'],
+      [education, 'coursework'],
+    ]) {
+      if (items?.some((item) => item[field] !== undefined
+        && (typeof item[field] !== 'string' || item[field].length > 2000))) {
+        return NextResponse.json({ error: `${field} must be a string of at most 2000 characters` }, { status: 400 });
+      }
+    }
+    if ((targetJobTitle !== undefined
+      && (typeof targetJobTitle !== 'string' || targetJobTitle.length > 200))
+      || (targetJobDescription !== undefined
+        && (typeof targetJobDescription !== 'string' || targetJobDescription.length > 5000))) {
+      return NextResponse.json({ error: 'Target job details are too long or invalid' }, { status: 400 });
+    }
 
     // Build a structured prompt
     const inputData = { experience: [], projects: [], certifications: [], education: [] };
@@ -74,9 +119,7 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
     let lastError = '';
     for (const model of MODEL_FALLBACKS) {
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout per model
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -91,9 +134,7 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
             top_p: 0.95,
             max_tokens: 2000,
           }),
-          signal: controller.signal,
         });
-        clearTimeout(timeout);
 
         if (!response.ok) { lastError = await response.text(); continue; }
         const payload = await response.json();
@@ -112,7 +153,7 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
           continue;
         }
       } catch (err) {
-        lastError = err.name === 'AbortError' ? `${model} timed out` : err.message;
+        lastError = err.name === 'AbortError' || err.name === 'TimeoutError' ? `${model} timed out` : err.message;
         continue;
       }
     }
@@ -121,9 +162,7 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
     const openaiKey = process.env.OPENAI_API_KEY;
     if (openaiKey) {
       try {
-        const openaiController = new AbortController();
-        const openaiTimeout = setTimeout(() => openaiController.abort(), 5000); // 5s for OpenAI
-        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        const openaiRes = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -135,9 +174,7 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
             temperature: 0.3,
             max_tokens: 2000,
           }),
-          signal: openaiController.signal,
         });
-        clearTimeout(openaiTimeout);
 
         if (openaiRes.ok) {
           const openaiPayload = await openaiRes.json();
@@ -155,7 +192,9 @@ Return the enhanced version in the EXACT same JSON structure. Only change the te
           lastError = await openaiRes.text();
         }
       } catch (err) {
-        lastError = err.message || 'OpenAI request failed';
+        lastError = err.name === 'AbortError' || err.name === 'TimeoutError'
+          ? 'OpenAI request timed out'
+          : err.message || 'OpenAI request failed';
       }
     }
 

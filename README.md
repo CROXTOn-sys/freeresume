@@ -37,7 +37,8 @@ A modern, AI-powered resume builder with real-time ATS scoring. Built with Next.
 npm install
 
 # Set up environment variables
-# Required: OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, RAZORPAY keys
+# Required: OPENROUTER_API_KEY, Supabase URL and anon key, and SUPABASE_SERVICE_ROLE_KEY
+# Apply the SQL migration in supabase/migrations before enabling AI endpoints.
 
 # Run development server
 npm run dev
@@ -52,6 +53,7 @@ npm run build
 |----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase key used for shared AI rate limiting; never expose to the browser |
 | `OPENROUTER_API_KEY` | OpenRouter API key for AI features |
 | `RAZORPAY_KEY_ID` | Razorpay key ID |
 | `RAZORPAY_KEY_SECRET` | Razorpay secret key |

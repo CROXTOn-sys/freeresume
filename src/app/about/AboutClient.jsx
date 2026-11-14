@@ -158,7 +158,7 @@ export default function AboutClient() {
             </li>
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>
-              <span>First download is free — unlimited downloads for ₹19</span>
+              <span>Unlimited Resume Downloads — Free Until December 15, 2026.</span>
             </li>
             <li className="flex gap-[10px]">
               <span className="mt-[2px] text-[#6C63FF]">●</span>

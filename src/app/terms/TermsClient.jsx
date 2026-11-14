@@ -32,11 +32,10 @@ export default function TermsClient() {
           </section>
 
           <section>
-            <h2 className="text-[16px] font-bold text-[var(--text-dark)] mb-[6px]">Free & Paid Usage</h2>
+            <h2 className="text-[16px] font-bold text-[var(--text-dark)] mb-[6px]">Download Promotion</h2>
             <ul className="list-disc pl-[20px] flex flex-col gap-[4px]">
-              <li>Your first resume download is free of charge</li>
-              <li>Additional downloads require a one-time payment of ₹19 for unlimited access</li>
-              <li>AI enhancement is available to all users</li>
+              <li>Unlimited Resume Downloads — Free Until December 15, 2026.</li>
+              <li>PDF and DOCX exports and AI features are subject to usage limits</li>
               <li>Sign-in (via Google or email) is required to download</li>
             </ul>
           </section>
@@ -46,7 +45,7 @@ export default function TermsClient() {
             <ul className="list-disc pl-[20px] flex flex-col gap-[4px]">
               <li>You are responsible for the accuracy of the information in your resume</li>
               <li>You must not use the service for any unlawful purpose</li>
-              <li>You must not attempt to bypass payment mechanisms or abuse the service</li>
+              <li>You must not misuse the service or attempt to bypass its usage limits</li>
             </ul>
           </section>
 

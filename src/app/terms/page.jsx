@@ -3,7 +3,7 @@ import TermsClient from './TermsClient';
 export const metadata = {
   title: 'Terms and Conditions',
   description:
-    'Read the ResumeLab Terms and Conditions. Understand the terms of using our free AI resume builder, including free and paid usage, user responsibilities, and more.',
+    'Read the ResumeLab Terms and Conditions, including the 30-day free-access promotion, usage limits, and user responsibilities.',
   alternates: { canonical: '/terms' },
   openGraph: {
     title: 'Terms and Conditions | ResumeLab',
