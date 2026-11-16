@@ -71,6 +71,23 @@ export default function Navbar(props = {}) {
     setProfilePinned(false);
   };
 
+  const handleShare = async () => {
+    const message = 'I found a free resume builder that might be useful: https://resumebuilderlab.com';
+
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ text: message });
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          window.alert('Unable to share right now. Please try again.');
+        }
+      }
+      return;
+    }
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+  };
+
   const scrollTo = (id) => {
     setMenuOpen(false);
     setProfileOpen(false);
@@ -182,6 +199,21 @@ export default function Navbar(props = {}) {
           )}
 
           <a href="https://www.croxton.in/" target="_blank" rel="noopener noreferrer" className="hidden lg:inline-flex text-[12px] font-medium text-[var(--text-light)] hover:text-[var(--purple)] transition-colors">Croxton.in</a>
+          <button
+            type="button"
+            aria-label="Share ResumeBuilderLab"
+            title="Share ResumeBuilderLab"
+            onClick={handleShare}
+            className="inline-flex h-[40px] w-[40px] items-center justify-center gap-[7px] rounded-[22px] border border-[color:var(--border)] bg-[var(--card-bg)] text-[var(--text-mid)] transition-colors hover:border-[color:var(--purple)] hover:text-[var(--purple)] lg:w-auto lg:px-[14px]"
+          >
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <path d="m8.7 10.7 6.6-4.4m-6.6 7 6.6 4.4" />
+            </svg>
+            <span className="hidden text-[13px] font-semibold lg:inline">Share</span>
+          </button>
           <button
             type="button"
             aria-label="Menu"
