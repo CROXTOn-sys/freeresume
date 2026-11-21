@@ -227,7 +227,7 @@ export default function Navbar(props = {}) {
         </div>
       </nav>
 
-      <div className="rl-announcement fixed left-0 right-0 top-[65px] z-[99] flex h-[32px] items-center overflow-hidden bg-[#171525] text-[11px] font-medium text-white lg:top-[77px] lg:h-[32px] lg:text-[13px]" role="region">
+      <div className="rl-announcement fixed left-0 right-0 top-[69px] z-[99] flex h-[32px] items-center overflow-hidden bg-[#171525] text-[11px] font-medium text-white lg:top-[77px] lg:h-[32px] lg:text-[13px]" role="region">
         <span className="sr-only">Build an ATS-friendly resume with professional templates and AI. Unlimited Resume Downloads — Free Until December 15, 2026.</span>
         <div className="rl-announcement-track flex w-max items-center" aria-hidden="true">
           {[false, true].map((isDuplicate) => (
@@ -246,7 +246,7 @@ export default function Navbar(props = {}) {
           ))}
         </div>
       </div>
-      <div className="h-[32px] lg:h-[41px]" aria-hidden="true" />
+      <div className="h-[33px] lg:h-[41px]" aria-hidden="true" />
 
       {/* Menu overlay */}
       {menuOpen && (
